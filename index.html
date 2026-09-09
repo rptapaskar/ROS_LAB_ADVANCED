@@ -1,0 +1,390 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>ROS 2 Mobile Robotics Lab | Department of Automation & Robotics</title>
+<meta name="description" content="Student introduction website for the ROS 2 Mobile Robotics Laboratory, 26EARP302.">
+<style>
+:root{
+  --bg:#07070a; --panel:#111117; --panel2:#171720; --text:#f5f5f7; --muted:#a7a7b4;
+  --line:#292934; --lime:#c7ff2e; --cyan:#52e8ff; --pink:#ff4fd8; --orange:#ff9d3d;
+  --max:1180px; --radius:24px;
+}
+*{box-sizing:border-box;margin:0;padding:0}
+html{scroll-behavior:smooth}
+body{
+  font-family:Inter,ui-sans-serif,system-ui,-apple-system,BlinkMacSystemFont,"Segoe UI",sans-serif;
+  background:
+    radial-gradient(circle at 85% 8%,rgba(199,255,46,.09),transparent 28%),
+    radial-gradient(circle at 12% 30%,rgba(82,232,255,.07),transparent 26%),
+    var(--bg);
+  color:var(--text);line-height:1.55;overflow-x:hidden;
+}
+a{color:inherit;text-decoration:none}
+.container{width:min(var(--max),92%);margin:auto}
+nav{
+  position:sticky;top:0;z-index:50;backdrop-filter:blur(16px);
+  background:rgba(7,7,10,.78);border-bottom:1px solid rgba(255,255,255,.08)
+}
+.navin{height:68px;display:flex;align-items:center;justify-content:space-between;gap:20px}
+.brand{font-weight:900;letter-spacing:-.04em}
+.brand span{color:var(--lime)}
+.navlinks{display:flex;gap:20px;font-size:.88rem;color:#c9c9d2}
+.navlinks a:hover{color:var(--lime)}
+.btn{
+  display:inline-flex;align-items:center;justify-content:center;padding:12px 18px;border-radius:999px;
+  font-weight:800;border:1px solid #34343f;background:#17171f;transition:.2s
+}
+.btn:hover{transform:translateY(-2px);border-color:var(--lime)}
+.btn.primary{background:var(--lime);color:#090a06;border-color:var(--lime)}
+.hero{min-height:calc(100vh - 68px);display:grid;align-items:center;padding:70px 0 90px}
+.hero-grid{display:grid;grid-template-columns:1.05fr .95fr;gap:55px;align-items:center}
+.kicker{
+  display:inline-flex;gap:9px;align-items:center;border:1px solid #303039;background:#111117;
+  padding:7px 11px;border-radius:999px;font-size:.78rem;font-weight:800;color:#d9d9e0;margin-bottom:22px
+}
+.dot{width:8px;height:8px;background:var(--lime);border-radius:50%;box-shadow:0 0 18px var(--lime)}
+h1{font-size:clamp(3.4rem,8vw,7.5rem);line-height:.9;letter-spacing:-.075em;max-width:850px}
+.grad{background:linear-gradient(100deg,var(--lime),var(--cyan),var(--pink));-webkit-background-clip:text;background-clip:text;color:transparent}
+.hero p{font-size:1.12rem;color:#c0c0ca;max-width:680px;margin:28px 0}
+.actions{display:flex;gap:12px;flex-wrap:wrap}
+.hero-stats{display:flex;gap:12px;flex-wrap:wrap;margin-top:30px}
+.stat{padding:12px 15px;border:1px solid var(--line);background:rgba(255,255,255,.025);border-radius:14px}
+.stat b{display:block;font-size:1.2rem}.stat small{color:var(--muted)}
+.robot-stage{
+  position:relative;min-height:510px;border:1px solid #2d2d37;background:
+  linear-gradient(rgba(255,255,255,.035) 1px,transparent 1px),
+  linear-gradient(90deg,rgba(255,255,255,.035) 1px,transparent 1px),#0c0c12;
+  background-size:36px 36px;border-radius:32px;overflow:hidden;
+  box-shadow:0 25px 90px rgba(0,0,0,.45)
+}
+.scan{position:absolute;inset:12%;border-radius:50%;border:1px dashed rgba(82,232,255,.24);animation:spin 16s linear infinite}
+.scan:after{content:"";position:absolute;left:50%;top:50%;width:48%;height:2px;transform-origin:left;background:linear-gradient(90deg,var(--cyan),transparent);box-shadow:0 0 14px var(--cyan)}
+@keyframes spin{to{transform:rotate(360deg)}}
+.robot{
+  position:absolute;left:50%;top:51%;width:150px;height:112px;transform:translate(-50%,-50%);
+  background:#24242e;border:2px solid #555562;border-radius:26px;box-shadow:0 0 35px rgba(199,255,46,.12)
+}
+.robot:before{content:"ROS 2";position:absolute;left:50%;top:42%;transform:translate(-50%,-50%);font-weight:900;font-size:1.25rem;color:var(--lime)}
+.robot:after{content:"";position:absolute;left:50%;top:-17px;transform:translateX(-50%);width:28px;height:28px;border-radius:50%;background:var(--cyan);box-shadow:0 0 24px var(--cyan)}
+.wheel{position:absolute;width:25px;height:58px;background:#09090d;border:2px solid #3d3d48;border-radius:10px;top:27px}
+.wheel.l{left:-17px}.wheel.r{right:-17px}
+.badge{
+  position:absolute;padding:8px 11px;border-radius:12px;font-size:.72rem;font-weight:900;
+  background:#16161f;border:1px solid #34343e;box-shadow:0 8px 30px #0008
+}
+.b1{left:9%;top:15%;color:var(--cyan)}.b2{right:9%;top:24%;color:var(--lime)}
+.b3{left:10%;bottom:18%;color:var(--pink)}.b4{right:10%;bottom:14%;color:var(--orange)}
+section{padding:100px 0}
+.eyebrow{font-size:.78rem;font-weight:900;letter-spacing:.16em;color:var(--lime);text-transform:uppercase;margin-bottom:10px}
+h2{font-size:clamp(2.4rem,5vw,4.5rem);line-height:.95;letter-spacing:-.06em;margin-bottom:18px}
+.lead{font-size:1.05rem;color:#b9b9c4;max-width:760px}
+.panel{background:linear-gradient(145deg,#111117,#0c0c11);border:1px solid var(--line);border-radius:var(--radius)}
+.what{display:grid;grid-template-columns:1fr 1fr;gap:18px;margin-top:35px}
+.card{padding:28px;border:1px solid var(--line);border-radius:20px;background:rgba(255,255,255,.025)}
+.card h3{font-size:1.25rem;margin-bottom:8px}.card p{color:var(--muted)}
+.icon{font-size:1.7rem;margin-bottom:14px}
+.flow{margin-top:45px;display:grid;grid-template-columns:repeat(5,1fr);gap:10px}
+.flow div{padding:22px 15px;border:1px solid var(--line);background:#111117;border-radius:18px;position:relative}
+.flow div:not(:last-child):after{content:"→";position:absolute;right:-15px;top:50%;color:#555;z-index:2}
+.flow b{display:block;margin-bottom:7px}.flow span{color:var(--muted);font-size:.86rem}
+.path{margin-top:42px;display:grid;grid-template-columns:repeat(4,1fr);gap:14px}
+.stage{padding:24px;border-radius:20px;border:1px solid var(--line);background:#111117}
+.stage .num{font-size:.72rem;color:var(--muted);font-weight:900}.stage h3{margin:9px 0}.stage p{color:var(--muted);font-size:.92rem}
+.stage:nth-child(1){border-top:3px solid var(--cyan)}.stage:nth-child(2){border-top:3px solid var(--lime)}
+.stage:nth-child(3){border-top:3px solid var(--pink)}.stage:nth-child(4){border-top:3px solid var(--orange)}
+.exp-grid{margin-top:40px;display:grid;grid-template-columns:repeat(2,1fr);gap:14px}
+.exp{
+  padding:25px;border:1px solid var(--line);border-radius:20px;background:#101016;
+  transition:.2s;cursor:pointer
+}
+.exp:hover{transform:translateY(-3px);border-color:#555563}
+.exp-top{display:flex;justify-content:space-between;gap:20px}.tag{font-size:.68rem;padding:5px 8px;border-radius:999px;background:#1b1b24;color:#bbb}
+.exp h3{font-size:1.25rem;margin:11px 0 7px}.exp p{color:var(--muted);font-size:.92rem}
+.exp .learn{margin-top:14px;color:#ddd;font-size:.84rem}.learn b{color:var(--lime)}
+.highlight{margin-top:42px;padding:32px;border-radius:25px;border:1px solid #303038;background:linear-gradient(120deg,rgba(199,255,46,.07),rgba(82,232,255,.05),rgba(255,79,216,.05))}
+.highlight h3{font-size:1.5rem;margin-bottom:8px}.highlight p{color:#c4c4cd}
+.skills{display:grid;grid-template-columns:repeat(3,1fr);gap:14px;margin-top:35px}
+.skill{padding:25px;border:1px solid var(--line);border-radius:20px;background:#101016}
+.skill b{display:block;margin-bottom:6px}.skill span{color:var(--muted);font-size:.9rem}
+.challenge{display:grid;grid-template-columns:1fr 1fr;gap:18px;margin-top:38px}
+.challenge .panel{padding:30px}.challenge ul{list-style:none;margin-top:16px}.challenge li{padding:9px 0;border-bottom:1px solid #26262e;color:#c5c5cf}
+.challenge li:before{content:"✓";color:var(--lime);font-weight:900;margin-right:10px}
+.marks{display:grid;grid-template-columns:repeat(4,1fr);gap:12px;margin-top:35px}
+.mark{padding:23px;border:1px solid var(--line);border-radius:18px;background:#101016}.mark strong{font-size:2rem;display:block}.mark span{color:var(--muted);font-size:.82rem}
+.project{
+  padding:40px;border-radius:30px;border:1px solid #34343c;background:
+  radial-gradient(circle at 80% 20%,rgba(255,79,216,.09),transparent 30%),
+  radial-gradient(circle at 20% 80%,rgba(199,255,46,.09),transparent 30%),#101016;
+}
+.project-grid{display:grid;grid-template-columns:1.2fr .8fr;gap:35px;align-items:center}.project h3{font-size:2.1rem;line-height:1.05;margin-bottom:15px}.project p{color:#bbb}
+.examples{display:flex;flex-wrap:wrap;gap:8px;margin-top:20px}.pill{padding:8px 11px;border:1px solid #33333d;border-radius:999px;color:#d2d2da;background:#15151c;font-size:.8rem}
+.checklist{display:grid;gap:9px}.check{padding:13px 15px;border:1px solid #292932;border-radius:13px;background:#14141b}.check:before{content:"01";display:inline-block;margin-right:10px;color:var(--lime);font-weight:900}
+.check:nth-child(2):before{content:"02"}.check:nth-child(3):before{content:"03"}.check:nth-child(4):before{content:"04"}
+footer{padding:50px 0 70px;border-top:1px solid var(--line);color:#858592}
+footer strong{color:#ddd}
+.mono{font-family:"SFMono-Regular",Consolas,monospace;color:#d7d7df}
+.reveal{opacity:0;transform:translateY(18px);transition:.65s ease}.reveal.show{opacity:1;transform:none}
+@media(max-width:900px){
+ .hero-grid,.what,.challenge,.project-grid{grid-template-columns:1fr}.robot-stage{min-height:430px}
+ .flow{grid-template-columns:1fr 1fr}.flow div:not(:last-child):after{display:none}
+ .path{grid-template-columns:1fr 1fr}.skills{grid-template-columns:1fr 1fr}.marks{grid-template-columns:1fr 1fr}
+ .navlinks{display:none}
+}
+@media(max-width:600px){
+ section{padding:75px 0}.hero{padding:55px 0 70px}.hero-stats{display:grid;grid-template-columns:1fr 1fr}
+ .exp-grid,.skills,.path,.flow{grid-template-columns:1fr}.robot-stage{min-height:360px}.marks{grid-template-columns:1fr 1fr}
+ h1{font-size:3.7rem}.project{padding:27px}
+}
+</style>
+</head>
+<body>
+
+<nav>
+  <div class="container navin">
+    <div class="brand">ROS<span>²</span> LAB <small style="color:#777">· 26EARP302</small></div>
+    <div class="navlinks">
+      <a href="#why">Why</a><a href="#journey">Journey</a><a href="#experiments">Experiments</a>
+      <a href="#skills">Skills</a><a href="#project">Capstone</a>
+    </div>
+    <a class="btn primary" href="#start">START THE MISSION →</a>
+  </div>
+</nav>
+
+<header class="hero">
+ <div class="container hero-grid">
+  <div class="reveal">
+    <div class="kicker"><span class="dot"></span> 5TH SEMESTER · 2026–27 · DEPARTMENT OF AUTOMATION & ROBOTICS</div>
+    <h1>Don't just <span class="grad">learn robotics.</span><br>Make the robot think.</h1>
+    <p>
+      Welcome to the <b>ROS 2 Mobile Robotics Laboratory</b> — a 48-hour, hands-on journey from
+      robot hardware and Linux all the way to sensing, odometry, navigation, SLAM and an autonomous
+      mobile-robot application.
+    </p>
+    <div class="actions">
+      <a class="btn primary" href="#experiments">SEE WHAT YOU'LL BUILD</a>
+      <a class="btn" href="#journey">SEE YOUR JOURNEY ↓</a>
+    </div>
+    <div class="hero-stats">
+      <div class="stat"><b>24</b><small>lab sessions</small></div>
+      <div class="stat"><b>48 h</b><small>contact hours</small></div>
+      <div class="stat"><b>11</b><small>experiments/jobs</small></div>
+      <div class="stat"><b>100</b><small>total marks</small></div>
+    </div>
+  </div>
+  <div class="robot-stage reveal">
+    <div class="scan"></div>
+    <div class="robot"><span class="wheel l"></span><span class="wheel r"></span></div>
+    <div class="badge b1">/scan · LiDAR</div>
+    <div class="badge b2">/odom · pose</div>
+    <div class="badge b3">RGB-D · depth</div>
+    <div class="badge b4">Nav2 · autonomy</div>
+  </div>
+ </div>
+</header>
+
+<section id="why">
+ <div class="container">
+  <div class="eyebrow">01 · FIRST, KNOW WHAT YOU'RE GETTING INTO</div>
+  <h2>So… what is this lab?</h2>
+  <p class="lead">
+    It is not a “follow the manual and get the output” lab. The course is deliberately designed to
+    move you from guided learning → implementation → investigation → open-ended engineering.
+  </p>
+  <div class="what">
+   <div class="card reveal"><div class="icon">🤖</div><h3>A real mobile robot</h3><p>You work with a differential-drive platform and its drive train, wheel encoders, IMU, RPLIDAR, RealSense depth camera, controller, computing unit, battery and emergency stop.</p></div>
+   <div class="card reveal"><div class="icon">🧠</div><h3>A real robotics software stack</h3><p>You learn Linux, ROS 2 workspaces and packages, nodes, topics, messages, launch files, RViz2, data recording, transforms and the tools used to make robot software run.</p></div>
+   <div class="card reveal"><div class="icon">📡</div><h3>Robotics is a sensing problem</h3><p>You will work with LiDAR, IMU, odometry and RGB-D data — including invalid readings, sensor limitations, bias, drift and fault conditions.</p></div>
+   <div class="card reveal"><div class="icon">🧪</div><h3>Engineering, not just coding</h3><p>You will measure, repeat trials, analyse data, diagnose faults, justify parameters and defend conclusions from evidence.</p></div>
+  </div>
+  <div class="flow">
+    <div><b>COMMAND</b><span>Software tells the robot what to do.</span></div>
+    <div><b>COMPUTE</b><span>ROS 2 moves information between nodes.</span></div>
+    <div><b>ACTUATE</b><span>Controller → motors → wheels.</span></div>
+    <div><b>SENSE</b><span>Encoders, IMU, LiDAR, RGB-D.</span></div>
+    <div><b>DECIDE</b><span>Estimate → plan → control → repeat.</span></div>
+  </div>
+ </div>
+</section>
+
+<section id="journey">
+ <div class="container">
+  <div class="eyebrow">02 · YOUR 48-HOUR JOURNEY</div>
+  <h2>You don't start as an expert.<br><span class="grad">You become one.</span></h2>
+  <p class="lead">The lab changes what is expected from you as you progress.</p>
+  <div class="path">
+   <div class="stage reveal"><div class="num">PHASE 01 · EXPT 1–2</div><h3>👀 Understand</h3><p>Robot hardware, Linux, ROS 2 computation graph, command-to-motion, sensor visualisation and safety.</p></div>
+   <div class="stage reveal"><div class="num">PHASE 02 · EXPT 3–6</div><h3>⌨️ Build</h3><p>Write nodes, interface sensors, implement kinematics and odometry, create reactive control and depth-triggered behaviour.</p></div>
+   <div class="stage reveal"><div class="num">PHASE 03 · EXPT 7–10</div><h3>🧪 Investigate</h3><p>The problem is given. The method is not. You design experiments, collect evidence, analyse errors and engineer solutions.</p></div>
+   <div class="stage reveal"><div class="num">PHASE 04 · EXPT 11</div><h3>🚀 Create</h3><p>Build an application using SLAM + Nav2, validate it experimentally and defend your engineering decisions.</p></div>
+  </div>
+  <div class="highlight reveal">
+    <h3>The rule changes halfway through.</h3>
+    <p><b>Early:</b> “Here is the method. Make it work.” &nbsp; → &nbsp; <b>Later:</b> “Here is the problem. Figure out how to prove your solution works.”</p>
+  </div>
+ </div>
+</section>
+
+<section id="experiments">
+ <div class="container">
+  <div class="eyebrow">03 · YOUR EXPERIMENT MAP</div>
+  <h2>11 missions.<br>One autonomous robot.</h2>
+  <p class="lead">Each experiment adds a new capability. By the end, the pieces connect into a complete autonomy stack.</p>
+  <div class="exp-grid">
+
+   <div class="exp reveal"><div class="exp-top"><span class="tag">EXPT 01 · DEMO · 4 H</span><span>01</span></div><h3>Meet the Robot + Linux</h3><p>Identify the mechanical, electrical, sensing and computing subsystems. Trace software → controller → motors → motion → measurement. Get independent with Linux and SSH.</p><div class="learn"><b>YOU LEARN:</b> robot architecture · Linux · SSH · safety · signal paths</div></div>
+
+   <div class="exp reveal"><div class="exp-top"><span class="tag">EXPT 02 · DEMO · 4 H</span><span>02</span></div><h3>ROS 2: From Command to Motion</h3><p>Create a workspace, package and node. Understand nodes, topics and messages. Teleoperate the robot, inspect /cmd_vel and /odom, visualise sensors in RViz2 and record a reference bag.</p><div class="learn"><b>YOU LEARN:</b> ROS 2 graph · colcon · launch · RViz2 · TF2 · rosbag</div></div>
+
+   <div class="exp reveal"><div class="exp-top"><span class="tag">EXPT 03 · EXERCISE · 4 H</span><span>03</span></div><h3>Multi-Sensor ROS 2 Interfacing</h3><p>Build Python nodes subscribing to LiDAR, IMU and odometry. Extract meaningful quantities, handle invalid data and diagnose silent communication failures caused by QoS, remapping, domain or driver issues.</p><div class="learn"><b>YOU LEARN:</b> Python nodes · callbacks · QoS · diagnostics · launch files</div></div>
+
+   <div class="exp reveal"><div class="exp-top"><span class="tag">EXPT 04 · EXERCISE · 4 H</span><span>04</span></div><h3>Differential-Drive Kinematics + Odometry</h3><p>Derive wheel-to-body motion, implement discrete odometry, publish pose/transform and compare commanded, reported and physically measured trajectories.</p><div class="learn"><b>YOU LEARN:</b> kinematics · dead reckoning · odometry · error · wheel slip</div></div>
+
+   <div class="exp reveal"><div class="exp-top"><span class="tag">EXPT 05 · EXERCISE · 4 H</span><span>05</span></div><h3>LiDAR Obstacle Detection + Reactive Navigation</h3><p>Turn LaserScan data into sector-wise free-space information. Build emergency stop, turn-to-free-space and proportional wall-aware behaviours, then test them against challenging obstacles.</p><div class="learn"><b>YOU LEARN:</b> LaserScan · control loops · parameters · stopping distance · failure modes</div></div>
+
+   <div class="exp reveal"><div class="exp-top"><span class="tag">EXPT 06 · EXERCISE · 4 H</span><span>06</span></div><h3>RGB-D Depth Perception</h3><p>Process depth images, reject invalid pixels, extract robust obstacle distance and trigger a controlled stop for obstacles outside the LiDAR scan plane. Characterise depth accuracy and surface failures.</p><div class="learn"><b>YOU LEARN:</b> depth images · ROI · calibration · 3D perception · camera limits</div></div>
+
+   <div class="exp reveal"><div class="exp-top"><span class="tag">EXPT 07 · ENQUIRY · 4 H</span><span>07</span></div><h3>How Wrong Is Odometry?</h3><p>The robot says it travelled two metres. Did it? Design straight, square and circular campaigns across distances, surfaces and rotation directions. Fit a quantitative error model.</p><div class="learn"><b>YOU LEARN:</b> hypothesis · replication · drift · systematic/random error · model fitting</div></div>
+
+   <div class="exp reveal"><div class="exp-top"><span class="tag">EXPT 08 · ENQUIRY · 4 H</span><span>08</span></div><h3>LiDAR vs RGB-D: Who Should You Trust?</h3><p>Compare ranging performance across distance, object size, surface, incidence angle, illumination and height. Report bias, dispersion, RMSE, relative error and availability.</p><div class="learn"><b>YOU LEARN:</b> sensor physics · test matrices · statistics · sensor selection</div></div>
+
+   <div class="exp reveal"><div class="exp-top"><span class="tag">EXPT 09 · ENQUIRY · 4 H</span><span>09</span></div><h3>Sensor Fusion + Localisation</h3><p>Compare encoder-only, IMU-only and fused pose estimates. Sweep fusion parameters, configure the transform tree and evaluate an extended Kalman filter against an independent reference.</p><div class="learn"><b>YOU LEARN:</b> fusion · EKF · frames · bias/noise · localisation</div></div>
+
+   <div class="exp reveal"><div class="exp-top"><span class="tag">EXPT 10 · ENQUIRY · 6 H</span><span>10</span></div><h3>Design Your Own Local Navigator</h3><p>Move six metres through an obstacle field without contact. You choose the architecture, sensor arbitration, thresholds, control law, state machine, recovery and independent safety limiter.</p><div class="learn"><b>YOU LEARN:</b> navigation design · safety · recovery · parameter justification · robustness</div></div>
+
+   <div class="exp reveal" style="grid-column:1/-1;border-color:#3c3c48;background:linear-gradient(110deg,#15151d,#101017)">
+    <div class="exp-top"><span class="tag" style="color:var(--lime)">EXPT 11 · OPEN-ENDED · ESA · 6 H</span><span style="color:var(--lime)">FINAL</span></div>
+    <h3 style="font-size:1.6rem">Build an Autonomous Mobile Robot Application</h3>
+    <p>Teams of three select an application-oriented problem. Build an occupancy-grid map using SLAM, evaluate it, deploy and tune Nav2, integrate perception + estimation + planning + control, benchmark against a baseline and defend the result.</p>
+    <div class="learn"><b>YOU LEARN:</b> SLAM · mapping · localisation · costmaps · planners · controllers · recovery · experimental validation</div>
+   </div>
+  </div>
+ </div>
+</section>
+
+<section id="skills">
+ <div class="container">
+  <div class="eyebrow">04 · WHAT YOU WILL ACTUALLY BE ABLE TO DO</div>
+  <h2>From “I ran the code”<br>to <span class="grad">“I can explain why it works.”</span></h2>
+  <p class="lead">The course outcomes are practical: operate, implement, measure, diagnose, design, integrate and defend.</p>
+  <div class="skills">
+   <div class="skill reveal"><b>🐧 Linux Robotics</b><span>Terminal, filesystem, packages, processes, permissions, remote access and operational safety.</span></div>
+   <div class="skill reveal"><b>🕸️ ROS 2 Development</b><span>Workspaces, packages, nodes, topics, messages, QoS, launch files, parameters and diagnostics.</span></div>
+   <div class="skill reveal"><b>📊 Data + Visualisation</b><span>RViz2, sensor streams, rosbag recording, trajectory overlays and evidence-based analysis.</span></div>
+   <div class="skill reveal"><b>⚙️ Robot Motion</b><span>Differential-drive kinematics, wheel odometry, transforms, commanded vs measured motion.</span></div>
+   <div class="skill reveal"><b>👁️ Perception</b><span>LiDAR and RGB-D ranging, invalid returns, accuracy, bias, dispersion and sensing limitations.</span></div>
+   <div class="skill reveal"><b>🧭 Estimation</b><span>Sensor fusion, localisation, EKF configuration, coordinate frames and drift behaviour.</span></div>
+   <div class="skill reveal"><b>🚧 Navigation</b><span>Reactive control, obstacle avoidance, sensor arbitration, safety limits and recovery behaviour.</span></div>
+   <div class="skill reveal"><b>🗺️ SLAM + Nav2</b><span>Occupancy grids, mapping, costmaps, planners, controllers and autonomous navigation.</span></div>
+   <div class="skill reveal"><b>🧪 Research Mindset</b><span>Hypothesis, measurands, replication, baselines, metrics, fault diagnosis, limitations and defence.</span></div>
+  </div>
+ </div>
+</section>
+
+<section>
+ <div class="container">
+  <div class="eyebrow">05 · THIS IS HOW YOU'LL BE ASSESSED</div>
+  <h2>Your marks reward <span class="grad">engineering.</span></h2>
+  <p class="lead">The assessment structure follows the same progression as the learning journey.</p>
+  <div class="marks">
+   <div class="mark reveal"><strong>10</strong><span>Demonstrations · Expt 1–2</span></div>
+   <div class="mark reveal"><strong>20</strong><span>Exercises · Expt 3–6</span></div>
+   <div class="mark reveal"><strong>40</strong><span>Structured enquiry · Expt 7–10</span></div>
+   <div class="mark reveal"><strong>20</strong><span>Open-ended project · Expt 11 / ESA</span></div>
+  </div>
+  <div class="challenge">
+   <div class="panel reveal">
+    <h3>What gets noticed?</h3>
+    <ul>
+      <li>Can you plan and execute independently?</li>
+      <li>Does your implementation work beyond the exact demo?</li>
+      <li>Did you measure and repeat rather than guess?</li>
+      <li>Can you diagnose a fault systematically?</li>
+      <li>Can your conclusion be defended from your own data?</li>
+    </ul>
+   </div>
+   <div class="panel reveal">
+    <h3>The “very good” mindset</h3>
+    <ul>
+      <li>Define success before collecting data.</li>
+      <li>Use adequate replication and report dispersion.</li>
+      <li>Trace parameters back to measurements.</li>
+      <li>Handle variations, boundary conditions and induced faults.</li>
+      <li>State limitations honestly — strong engineering includes knowing what your experiment does not prove.</li>
+    </ul>
+   </div>
+  </div>
+ </div>
+</section>
+
+<section id="project">
+ <div class="container">
+  <div class="project reveal">
+   <div class="project-grid">
+    <div>
+      <div class="eyebrow">06 · THE FINAL BOSS</div>
+      <h3>What if your robot had a real job to do?</h3>
+      <p>
+        In the open-ended project, your team chooses an application-oriented mobile robotics problem.
+        You build the map, tune the autonomy stack, define the baseline, choose metrics, test failure conditions
+        and defend the result.
+      </p>
+      <div class="examples">
+        <span class="pill">Indoor waypoint delivery</span><span class="pill">Human-aware navigation</span>
+        <span class="pill">Dynamic-obstacle navigation</span><span class="pill">Precision docking</span>
+        <span class="pill">Mini factory transport</span><span class="pill">Warehouse task</span>
+      </div>
+    </div>
+    <div class="checklist">
+      <div class="check">Define a falsifiable claim</div>
+      <div class="check">Reproduce + measure a baseline</div>
+      <div class="check">Build + validate the autonomy stack</div>
+      <div class="check">Defend every major design decision</div>
+    </div>
+   </div>
+  </div>
+ </div>
+</section>
+
+<section id="start">
+ <div class="container" style="text-align:center">
+   <div class="eyebrow">07 · YOUR TURN</div>
+   <h2>Don't wait for the robot<br>to teach you.</h2>
+   <p class="lead" style="margin:0 auto 28px">
+     Come prepared. Ask better questions. Measure everything. Break things safely. Fix them.
+     And when your robot finally navigates by itself — know exactly <b>why</b>.
+   </p>
+   <div class="actions" style="justify-content:center">
+     <a class="btn primary" href="#experiments">EXPLORE THE MISSIONS</a>
+     <a class="btn" href="#skills">CHECK YOUR SKILL MAP</a>
+   </div>
+   <p style="margin-top:30px;color:#666;font-size:.82rem">
+     ROS 2 Mobile Robotics Laboratory · 26EARP302 · B.E. Automation & Robotics · 5th Semester · 2026–27
+   </p>
+ </div>
+</section>
+
+<footer>
+ <div class="container">
+   <strong>Department of Automation & Robotics</strong><br>
+   ROS 2 Mobile Robotics Laboratory · 26EARP302 · 48 hours · 24 sessions<br><br>
+   <span>Designed as a student-first introduction to the laboratory plan.</span>
+ </div>
+</footer>
+
+<script>
+const observer = new IntersectionObserver((entries)=>{
+  entries.forEach(e=>{if(e.isIntersecting)e.target.classList.add('show')})
+},{threshold:.12});
+document.querySelectorAll('.reveal').forEach(el=>observer.observe(el));
+
+document.querySelectorAll('.exp').forEach(card=>{
+  card.addEventListener('click',()=>{
+    card.animate([{transform:'scale(1)'},{transform:'scale(.985)'},{transform:'scale(1)'}],
+      {duration:220,easing:'ease-out'});
+  });
+});
+</script>
+</body>
+</html>
