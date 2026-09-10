@@ -1,0 +1,620 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>EXP 01 — Meet Your Robot | ROS 2 Mobile Robotics Lab</title>
+<meta name="description" content="Interactive student tutorial for Experiment 1: Introduction to Mobile Robot Platforms and the Linux Robotics Environment.">
+<style>
+:root{
+  --bg:#07080c;--bg2:#0d0f15;--card:#12151d;--card2:#171b25;--line:#2a3040;
+  --text:#f4f6fb;--muted:#aeb6c7;--lime:#c9ff38;--cyan:#55e7ff;--pink:#ff5bd6;
+  --orange:#ffad55;--red:#ff647c;--blue:#78a7ff;--max:1220px;--r:24px;
+}
+*{box-sizing:border-box;margin:0;padding:0}
+html{scroll-behavior:smooth}
+body{font-family:Inter,system-ui,-apple-system,"Segoe UI",sans-serif;background:
+radial-gradient(circle at 85% 5%,rgba(201,255,56,.08),transparent 24%),
+radial-gradient(circle at 8% 30%,rgba(85,231,255,.07),transparent 25%),var(--bg);
+color:var(--text);line-height:1.58}
+a{text-decoration:none;color:inherit} button,input{font:inherit}
+.container{width:min(var(--max),92%);margin:auto}
+nav{position:sticky;top:0;z-index:100;background:rgba(7,8,12,.84);backdrop-filter:blur(18px);border-bottom:1px solid #202531}
+.nav{height:66px;display:flex;align-items:center;justify-content:space-between;gap:15px}
+.logo{font-weight:950;letter-spacing:-.04em}.logo i{font-style:normal;color:var(--lime)}
+.navlinks{display:flex;gap:18px;font-size:.82rem;color:#c4cad6}.navlinks a:hover{color:var(--lime)}
+.progress{position:absolute;bottom:-1px;left:0;height:2px;background:linear-gradient(90deg,var(--lime),var(--cyan),var(--pink));width:0}
+.btn{border:1px solid #353c4c;background:#151923;color:#eef1f7;border-radius:999px;padding:11px 16px;font-weight:850;cursor:pointer;transition:.2s}
+.btn:hover{transform:translateY(-2px);border-color:var(--lime)}.btn.primary{background:var(--lime);color:#090b05;border-color:var(--lime)}
+.hero{padding:80px 0 95px;min-height:calc(100vh - 66px);display:flex;align-items:center}
+.hero-grid{display:grid;grid-template-columns:1.1fr .9fr;gap:55px;align-items:center}
+.kicker{display:inline-flex;align-items:center;gap:8px;padding:7px 11px;border:1px solid #303746;border-radius:999px;background:#11141b;color:#d6dbe5;font-size:.75rem;font-weight:900;margin-bottom:20px}
+.dot{width:8px;height:8px;background:var(--lime);border-radius:50%;box-shadow:0 0 16px var(--lime)}
+h1{font-size:clamp(3.2rem,7vw,6.9rem);line-height:.88;letter-spacing:-.075em}
+.grad{background:linear-gradient(105deg,var(--lime),var(--cyan),var(--pink));-webkit-background-clip:text;background-clip:text;color:transparent}
+.hero p{max-width:730px;color:#bec5d2;font-size:1.08rem;margin:25px 0}
+.actions{display:flex;gap:10px;flex-wrap:wrap}
+.hero-meta{display:flex;gap:10px;flex-wrap:wrap;margin-top:28px}.chip{padding:8px 11px;border:1px solid #2b3140;border-radius:12px;background:#10131a;color:#c8ced9;font-size:.78rem}
+.robot-card{min-height:520px;border:1px solid #2d3442;border-radius:34px;background:
+linear-gradient(rgba(255,255,255,.035) 1px,transparent 1px),linear-gradient(90deg,rgba(255,255,255,.035) 1px,transparent 1px),#0b0e14;
+background-size:34px 34px;position:relative;overflow:hidden;box-shadow:0 30px 100px #0008}
+.floor{position:absolute;left:8%;right:8%;bottom:12%;height:2px;background:#29303d}
+.robot{position:absolute;left:50%;top:51%;transform:translate(-50%,-50%);width:190px;height:125px;background:#222733;border:2px solid #596172;border-radius:30px;box-shadow:0 0 45px rgba(201,255,56,.1)}
+.robot .label{position:absolute;inset:0;display:grid;place-items:center;font-weight:950;font-size:1.4rem;color:var(--lime)}
+.wheel{position:absolute;top:29px;width:31px;height:68px;border-radius:12px;background:#07090d;border:2px solid #4a5262}.wl{left:-20px}.wr{right:-20px}
+.lidar{position:absolute;left:50%;top:-24px;transform:translateX(-50%);width:40px;height:40px;border-radius:50%;background:#10151e;border:2px solid var(--cyan);box-shadow:0 0 28px var(--cyan)}
+.lidar:after{content:"";position:absolute;left:50%;top:50%;height:2px;width:180px;transform-origin:left;background:linear-gradient(90deg,var(--cyan),transparent);animation:sweep 2.4s linear infinite}
+@keyframes sweep{to{transform:rotate(360deg)}} 
+.scan{position:absolute;inset:14%;border:1px dashed rgba(85,231,255,.22);border-radius:50%}
+.callout{position:absolute;padding:9px 12px;border-radius:13px;background:#141924;border:1px solid #343c4c;font-size:.72rem;font-weight:900;box-shadow:0 8px 30px #0008}
+.c1{left:8%;top:13%;color:var(--cyan)}.c2{right:7%;top:22%;color:var(--lime)}.c3{left:9%;bottom:24%;color:var(--pink)}.c4{right:7%;bottom:13%;color:var(--orange)}
+.robot-note{position:absolute;left:50%;bottom:4%;transform:translateX(-50%);font-size:.72rem;color:#70798a;white-space:nowrap}
+section{padding:100px 0}.eyebrow{font-size:.75rem;letter-spacing:.16em;color:var(--lime);font-weight:950;text-transform:uppercase;margin-bottom:10px}
+h2{font-size:clamp(2.4rem,5vw,4.6rem);line-height:.94;letter-spacing:-.06em;margin-bottom:18px}.lead{color:#b8c0ce;max-width:800px}
+.grid2{display:grid;grid-template-columns:1fr 1fr;gap:16px;margin-top:35px}.card{padding:28px;border:1px solid var(--line);background:rgba(255,255,255,.025);border-radius:var(--r)}
+.card h3{font-size:1.25rem;margin-bottom:8px}.card p{color:var(--muted)}.icon{font-size:2rem;margin-bottom:10px}
+.quote{margin-top:35px;padding:26px 30px;border-left:4px solid var(--lime);background:#11151d;border-radius:0 18px 18px 0;color:#dce1ea}
+.section-head{display:flex;justify-content:space-between;align-items:end;gap:25px}.tiny{font-size:.78rem;color:#7f8899}
+.hardware{display:grid;grid-template-columns:1fr 1fr;gap:15px;margin-top:38px}.part{padding:22px;border:1px solid var(--line);border-radius:20px;background:#10131a;display:grid;grid-template-columns:auto 1fr;gap:15px;align-items:start;transition:.2s}
+.part:hover{transform:translateY(-3px);border-color:#495265}.part .emoji{font-size:1.8rem}.part b{display:block}.part span{display:block;color:var(--muted);font-size:.88rem;margin-top:3px}
+.badge{display:inline-block;margin-top:8px;font-size:.67rem;font-weight:900;padding:4px 7px;border-radius:8px;background:#1b202b;color:#aeb7c7}
+.world{border-color:#24505a}.self{border-color:#4a3c5a}
+.signal{margin-top:42px;padding:30px;border:1px solid var(--line);border-radius:26px;background:#0e1118}
+.signal-flow{display:grid;grid-template-columns:repeat(7,1fr);gap:8px;margin-top:25px;align-items:center}.node{padding:16px 10px;text-align:center;border:1px solid #303746;border-radius:15px;background:#151923;font-size:.78rem;font-weight:850}.arrow{color:#626b7c;text-align:center;font-size:1.3rem}
+.command-section{background:linear-gradient(180deg,transparent,#0b0f16 18%,#0b0f16 82%,transparent)}
+.terminal-layout{display:grid;grid-template-columns:.8fr 1.2fr;gap:18px;margin-top:38px}.terminal,.explain{border:1px solid var(--line);border-radius:22px;background:#0b0e13;overflow:hidden}
+.termbar{height:42px;display:flex;align-items:center;gap:7px;padding:0 14px;background:#151923;border-bottom:1px solid #252b37}.ball{width:9px;height:9px;border-radius:50%;background:#444b58}.term-title{margin-left:7px;color:#7f8999;font-size:.72rem}
+pre{padding:22px;min-height:330px;white-space:pre-wrap;color:#d8e2d0;font-family:"SFMono-Regular",Consolas,monospace;font-size:.84rem;line-height:1.75}
+.prompt{color:var(--lime)}.output{color:#9aa5b5}.command{color:#f5f6f8}
+.explain{padding:25px;background:#11151d}.explain h3{font-size:1.35rem;margin-bottom:9px}.explain p{color:var(--muted)}.code{display:inline-block;margin:12px 0;padding:7px 10px;border-radius:9px;background:#090b10;border:1px solid #2c3340;color:var(--lime);font-family:monospace}
+.command-tabs{display:flex;gap:8px;flex-wrap:wrap;margin-top:18px}.cmdtab{padding:8px 11px;border:1px solid #303746;background:#151923;color:#bfc6d3;border-radius:10px;cursor:pointer;font-weight:800;font-size:.78rem}.cmdtab.active{border-color:var(--lime);color:var(--lime)}
+.legend{display:flex;gap:10px;flex-wrap:wrap;margin-top:18px}.legend span{padding:6px 9px;border-radius:8px;font-size:.7rem;font-weight:850;background:#171c26;color:#aeb7c5}
+.cmd-table{margin-top:35px;display:grid;gap:10px}.cmd-row{display:grid;grid-template-columns:160px 1fr 1.1fr;gap:15px;padding:17px;border:1px solid var(--line);border-radius:15px;background:#10131a;align-items:start}.cmd-row code{color:var(--lime);font-weight:900}.cmd-row p{color:var(--muted);font-size:.87rem}
+.note{padding:15px 17px;border-radius:14px;background:#171a22;border:1px solid #2d3440;color:#b9c1cf;margin-top:15px;font-size:.86rem}
+.quiz{margin-top:45px;padding:30px;border:1px solid #3a4353;border-radius:25px;background:linear-gradient(135deg,#141923,#0e1118)}
+.q{padding:20px 0;border-bottom:1px solid #2a303c}.q:last-child{border-bottom:0}.q p{font-weight:850;margin-bottom:12px}.options{display:flex;gap:8px;flex-wrap:wrap}.opt{border:1px solid #303746;background:#161a23;color:#c8ced9;padding:9px 12px;border-radius:11px;cursor:pointer}.opt:hover{border-color:#596375}.opt.correct{border-color:var(--lime);background:#19220f;color:#dfff9a}.opt.wrong{border-color:var(--red);background:#24141a;color:#ff9bab}
+.feedback{font-size:.8rem;color:#9da7b8;margin-top:8px;min-height:20px}
+.safety{margin-top:35px;display:grid;grid-template-columns:1fr 1fr;gap:15px}.danger,.safe{padding:25px;border-radius:20px;border:1px solid var(--line)}.danger{background:#1b1014;border-color:#4d2832}.safe{background:#101a11;border-color:#29452a}
+.danger h3{color:#ff7b8f}.safe h3{color:var(--lime)}.safety li{margin:8px 0 0 18px;color:#c3cad5}
+.practice{display:grid;grid-template-columns:1fr 1fr;gap:18px;margin-top:38px}.mission{padding:28px;border:1px solid var(--line);border-radius:22px;background:#11151d}.mission h3{margin-bottom:7px}.mission p{color:var(--muted);font-size:.9rem}.mission code{color:var(--cyan)}
+.checklist{margin-top:30px;display:grid;gap:9px}.checkitem{padding:14px 15px;border:1px solid #29303d;border-radius:13px;background:#11151c;cursor:pointer;color:#c4cbd7}.checkitem.done{border-color:#465d1e;color:#dcf6a0;text-decoration:line-through}.checkitem:before{content:"□";margin-right:10px;color:#727c8d}.checkitem.done:before{content:"☑";color:var(--lime)}
+.progressbox{margin-top:25px}.bar{height:9px;background:#1d222c;border-radius:999px;overflow:hidden}.bar i{display:block;height:100%;width:0;background:linear-gradient(90deg,var(--lime),var(--cyan));transition:.3s}
+.project{padding:40px;border-radius:30px;border:1px solid #363d4b;background:radial-gradient(circle at 85% 15%,rgba(255,91,214,.09),transparent 28%),radial-gradient(circle at 15% 85%,rgba(201,255,56,.08),transparent 28%),#11151d}
+.project-grid{display:grid;grid-template-columns:1.15fr .85fr;gap:30px;align-items:center}.project h3{font-size:2rem;line-height:1.05;margin-bottom:12px}.project p{color:#b9c1ce}.final-list{display:grid;gap:9px}.final-list div{padding:12px 14px;border:1px solid #2c3340;border-radius:12px;background:#151923;color:#d0d6e0}.final-list div:before{content:"✓";color:var(--lime);font-weight:900;margin-right:9px}
+footer{padding:55px 0 80px;border-top:1px solid #202531;color:#7d8798}footer strong{color:#d8dde7}
+.reveal{opacity:0;transform:translateY(18px);transition:.6s ease}.reveal.show{opacity:1;transform:none}
+.toast{position:fixed;right:20px;bottom:20px;z-index:200;padding:13px 16px;border:1px solid #384151;border-radius:13px;background:#171b24;box-shadow:0 12px 45px #0008;color:#e1e5ec;transform:translateY(20px);opacity:0;pointer-events:none;transition:.25s}.toast.show{transform:none;opacity:1}
+
+/* THEME SYSTEM */
+body.light{
+  --bg:#f5f7fb;--bg2:#ffffff;--card:#ffffff;--card2:#f0f3f8;--line:#d9dee8;
+  --text:#111522;--muted:#5f6878;
+}
+body.light{
+  background:
+    radial-gradient(circle at 85% 5%,rgba(123,170,0,.10),transparent 24%),
+    radial-gradient(circle at 8% 30%,rgba(0,155,190,.08),transparent 25%),var(--bg);
+}
+body.light nav{background:rgba(245,247,251,.86);border-bottom-color:#dfe4ec}
+body.light .navlinks{color:#596274}
+body.light .btn{background:#fff;color:#171b25;border-color:#cfd5e0}
+body.light .btn.primary{background:var(--lime);color:#101500;border-color:#a8d52a}
+body.light .kicker,
+body.light .chip,
+body.light .card,
+body.light .part,
+body.light .signal,
+body.light .terminal,
+body.light .explain,
+body.light .cmd-row,
+body.light .quiz,
+body.light .mission,
+body.light .project,
+body.light .danger,
+body.light .safe,
+body.light .checkitem{
+  background:#fff;border-color:#d8dee8;
+}
+body.light .robot-card{
+  background:
+    linear-gradient(rgba(20,28,42,.06) 1px,transparent 1px),
+    linear-gradient(90deg,rgba(20,28,42,.06) 1px,transparent 1px),#eef2f7;
+  background-size:34px 34px;border-color:#d4dae5;box-shadow:0 25px 70px rgba(25,35,50,.12);
+}
+body.light .robot{background:#dce2eb;border-color:#8993a4;box-shadow:0 0 35px rgba(123,160,20,.13)}
+body.light .wheel{background:#252b35;border-color:#626c7b}
+body.light .lidar{background:#eef7fa}
+body.light .callout{background:#fff;border-color:#d3dae5;box-shadow:0 8px 25px rgba(20,30,45,.12)}
+body.light .node,
+body.light .cmdtab,
+body.light .final-list div,
+body.light .legend span,
+body.light .note,
+body.light .badge{
+  background:#f3f5f8;border-color:#d5dbe5;color:#4f5868;
+}
+body.light pre{background:#0b0e13;color:#d8e2d0}
+body.light .termbar{background:#151923;border-bottom-color:#252b37}
+body.light .safety .danger{background:#fff4f5}
+body.light .safety .safe{background:#f4fbf1}
+body.light footer{border-top-color:#dce1e9}
+body.light .quote{background:#eef3e8;color:#303827}
+body.light .project .quote{background:#eef3e8}
+body.light .opt{background:#f4f6f9;color:#454d5b;border-color:#d4dae4}
+body.light .bar{background:#dfe4eb}
+
+/* Theme toggle */
+.theme-toggle{
+  display:inline-flex;align-items:center;gap:8px;padding:6px 9px 6px 7px;
+  border:1px solid #353c4c;background:#151923;border-radius:999px;color:#dbe1eb;
+  cursor:pointer;font-size:.75rem;font-weight:900;transition:.2s;
+}
+.theme-toggle:hover{transform:translateY(-2px);border-color:var(--lime)}
+.theme-icon{
+  width:27px;height:27px;display:grid;place-items:center;border-radius:50%;
+  background:#252b36;font-size:.9rem;
+}
+body.light .theme-toggle{background:#fff;color:#242a35;border-color:#cfd6e2}
+body.light .theme-icon{background:#eef1f5}
+@media(max-width:900px){.theme-toggle .theme-label{display:none}}
+
+@media(max-width:900px){
+ .hero-grid,.terminal-layout,.project-grid,.practice,.safety{grid-template-columns:1fr}.hardware,.grid2{grid-template-columns:1fr}
+ .signal-flow{grid-template-columns:1fr 1fr 1fr}.signal-flow .arrow{display:none}.cmd-row{grid-template-columns:1fr}
+ .navlinks{display:none}
+}
+@media(max-width:600px){
+ section{padding:75px 0}.hero{padding:55px 0 70px}.robot-card{min-height:390px}h1{font-size:3.8rem}.robot{width:150px;height:100px}.scan{inset:12%}.c1{left:5%}.c2{right:5%}.c3{left:5%}.c4{right:5%}
+}
+</style>
+
+<style id="lab-site-nav">
+.lab-site-nav{position:fixed;left:50%;bottom:18px;transform:translateX(-50%);z-index:9999;display:flex;gap:7px;align-items:center;padding:7px;border:1px solid var(--line,#2c3543);border-radius:999px;background:rgba(10,12,17,.9);backdrop-filter:blur(16px);box-shadow:0 12px 40px #0007;font-size:.7rem}
+.lab-site-nav a{padding:8px 11px;border:1px solid var(--line,#2c3543);border-radius:999px;color:var(--text,#f5f7fb);font-weight:900;text-decoration:none}
+.lab-site-nav a:hover{border-color:var(--lime,#caff38);color:var(--lime,#caff38)}
+.lab-site-nav .home{background:var(--lime,#caff38);color:#090b05;border-color:var(--lime,#caff38)}
+@media(max-width:650px){.lab-site-nav{left:10px;right:10px;transform:none;justify-content:space-between}.lab-site-nav .label{display:none}}
+</style>
+</head>
+<body>
+
+<nav>
+ <div class="container nav">
+  <div class="logo">EXP <i>01</i> · ROBOT BOOTCAMP</div>
+  <div class="navlinks">
+   <a href="#mission">Mission</a><a href="#robot">Robot</a><a href="#linux">Linux</a><a href="#commands">Commands</a><a href="#safety">Safety</a><a href="#check">Check</a>
+  </div>
+  <div style="display:flex;align-items:center;gap:8px">
+   <button class="theme-toggle" id="themeToggle" aria-label="Toggle light and dark theme">
+    <span class="theme-icon" id="themeIcon">☀️</span><span class="theme-label" id="themeLabel">LIGHT</span>
+   </button>
+   <a class="btn primary" href="#check">TEST YOURSELF →</a>
+  </div>
+ </div>
+ <div class="progress" id="progress"></div>
+</nav>
+
+<header class="hero" id="mission">
+ <div class="container hero-grid">
+  <div class="reveal">
+   <div class="kicker"><span class="dot"></span> 26EARP302 · ROS 2 MOBILE ROBOTICS LAB · EXPERIMENT 01</div>
+   <h1>Meet the machine.<br><span class="grad">Own the system.</span></h1>
+   <p>
+    Before you write ROS 2 code, you need to understand the thing your code is controlling.
+    This mission takes you inside a differential-drive mobile robot, then gives you the Linux skills
+    to operate its computing environment independently.
+   </p>
+   <div class="actions">
+    <a class="btn primary" href="#robot">START THE MISSION ↓</a>
+    <a class="btn" href="#commands">OPEN COMMAND DECK ⌘</a>
+   </div>
+   <div class="hero-meta">
+    <span class="chip">⏱ 2 sessions · 4 hours</span><span class="chip">🎯 CO1 + CO2</span>
+    <span class="chip">🐧 Linux + SSH</span><span class="chip">🤖 Robot hardware</span>
+   </div>
+  </div>
+  <div class="robot-card reveal">
+   <div class="scan"></div><div class="robot"><div class="lidar"></div><div class="label">ROBOT</div><span class="wheel wl"></span><span class="wheel wr"></span></div>
+   <div class="callout c1">RPLIDAR · “What is around me?”</div>
+   <div class="callout c2">ENCODERS · “How did I move?”</div>
+   <div class="callout c3">IMU · “How am I rotating?”</div>
+   <div class="callout c4">COMPUTER · “Run the brain.”</div>
+   <div class="floor"></div><div class="robot-note">The robot is not magic. It is a system of measurable subsystems.</div>
+  </div>
+ </div>
+</header>
+
+<section>
+ <div class="container">
+  <div class="eyebrow">00 · THE OFFICIAL MISSION</div>
+  <h2>What Experiment 01<br>is actually about.</h2>
+  <p class="lead">
+   The laboratory plan defines this as an introductory experiment: identify the robot's mechanical,
+   electrical, sensing and computing subsystems; trace a command from software to physical wheel motion
+   and back to measurement; become operationally independent on Linux; and follow the safety protocol.
+  </p>
+  <div class="grid2">
+   <div class="card reveal"><div class="icon">🔍</div><h3>Mission A — Decode the robot</h3><p>Identify the drive train, wheel encoders, IMU, RPLIDAR, RealSense depth camera, robot controller, computing unit, battery and emergency stop.</p></div>
+   <div class="card reveal"><div class="icon">💻</div><h3>Mission B — Become Linux-ready</h3><p>Use the terminal, filesystem, packages, processes, permissions and remote access over SSH without needing someone beside you.</p></div>
+   <div class="card reveal"><div class="icon">🔁</div><h3>Mission C — Trace the signal</h3><p>Understand the loop: software command → controller → motors → wheels → physical motion → sensors → computer.</p></div>
+   <div class="card reveal"><div class="icon">🛑</div><h3>Mission D — Operate safely</h3><p>Know the powered-robot operating protocol and the role of the emergency stop before you start moving hardware.</p></div>
+  </div>
+  <div class="quote reveal"><b>Golden rule:</b> You are not learning commands to memorize commands. You are learning commands because a robotics engineer must be able to inspect, operate, diagnose and control a computing system that is attached to a physical machine.</div>
+ </div>
+</section>
+
+<section id="robot">
+ <div class="container">
+  <div class="eyebrow">01 · KNOW YOUR ROBOT</div>
+  <div class="section-head"><div><h2>Your robot is a team.</h2><p class="lead">Every subsystem has a job. Your first task is to know who does what.</p></div><span class="tiny">CLICK / HOVER THE CARDS</span></div>
+  <div class="hardware">
+   <div class="part reveal"><div class="emoji">🛞</div><div><b>Drive train</b><span>Mechanical system that converts motor torque into wheel motion. In this lab the platform uses differential-drive locomotion.</span><em class="badge">ACTUATION / MOTION</em></div></div>
+   <div class="part reveal"><div class="emoji">🔢</div><div><b>Wheel encoders</b><span>Measure wheel rotation/increments. They provide information about the robot's own motion and are central to odometry.</span><em class="badge self">PROPRIOCEPTIVE · ROBOT ITSELF</em></div></div>
+   <div class="part reveal"><div class="emoji">🧭</div><div><b>IMU</b><span>Measures inertial quantities such as angular velocity and acceleration. It helps estimate how the robot is moving/rotating.</span><em class="badge self">PROPRIOCEPTIVE · ROBOT ITSELF</em></div></div>
+   <div class="part reveal"><div class="emoji">📡</div><div><b>RPLIDAR</b><span>Laser ranging sensor used to observe the surrounding environment in a planar scan.</span><em class="badge world">EXTEROCEPTIVE · WORLD</em></div></div>
+   <div class="part reveal"><div class="emoji">👁️</div><div><b>RealSense depth camera</b><span>Provides RGB-D/depth information, allowing the robot to perceive distance in three dimensions.</span><em class="badge world">EXTEROCEPTIVE · WORLD</em></div></div>
+   <div class="part reveal"><div class="emoji">🧠</div><div><b>Computing unit</b><span>Runs the robotics software environment. It is where Linux and, later, ROS 2 execute.</span><em class="badge">COMPUTE</em></div></div>
+   <div class="part reveal"><div class="emoji">🎛️</div><div><b>Robot controller</b><span>Interfaces software commands with the motor/drive system and connects the computing layer to physical actuation.</span><em class="badge">CONTROL INTERFACE</em></div></div>
+   <div class="part reveal"><div class="emoji">🔋</div><div><b>Battery + emergency stop</b><span>Power source and a critical safety mechanism. Know their location and operating protocol before powering/moving the robot.</span><em class="badge">POWER + SAFETY</em></div></div>
+  </div>
+
+  <div class="signal reveal">
+   <div class="eyebrow">THE BIG PICTURE</div><h3 style="font-size:1.6rem">One command. One physical consequence. Many measurements.</h3>
+   <div class="signal-flow">
+    <div class="node">YOU / SOFTWARE<br>command</div><div class="arrow">→</div><div class="node">ROBOT<br>controller</div><div class="arrow">→</div><div class="node">MOTORS<br>+ wheels</div><div class="arrow">→</div><div class="node">PHYSICAL<br>motion</div>
+   </div>
+   <div class="signal-flow" style="margin-top:10px">
+    <div class="node">PHYSICAL<br>world</div><div class="arrow">→</div><div class="node">LiDAR / IMU /<br>camera / encoders</div><div class="arrow">→</div><div class="node">COMPUTING<br>unit</div><div class="arrow">→</div><div class="node">MEASURED<br>data</div>
+   </div>
+  </div>
+ </div>
+</section>
+
+<section id="linux" class="command-section">
+ <div class="container">
+  <div class="eyebrow">02 · ENTER THE ROBOT'S COMPUTER</div>
+  <h2>Linux is your<br><span class="grad">robotics cockpit.</span></h2>
+  <p class="lead">
+   The lab deliberately introduces the computing platform before ROS commands. If you cannot confidently
+   navigate the machine, inspect files, understand running processes or connect remotely, debugging ROS later becomes painful.
+  </p>
+
+  <div class="grid2">
+   <div class="card reveal"><div class="icon">📁</div><h3>Filesystem</h3><p>Linux organizes everything through a hierarchical filesystem. Your terminal lets you move through directories, inspect files and create your own workspace.</p></div>
+   <div class="card reveal"><div class="icon">📦</div><h3>Packages</h3><p>Software is installed and managed through package-management tools. You should understand what a package is and how to inspect/install/remove software safely.</p></div>
+   <div class="card reveal"><div class="icon">⚙️</div><h3>Processes</h3><p>Programs become processes. Robotics involves many processes running together, so you need to inspect what is running and understand how processes start/stop.</p></div>
+   <div class="card reveal"><div class="icon">🔐</div><h3>Permissions</h3><p>Linux controls who can read, write or execute resources. Permissions matter when scripts, devices or files refuse to behave.</p></div>
+   <div class="card reveal"><div class="icon">🌐</div><h3>SSH</h3><p>Secure Shell lets you operate the robot computer remotely from another machine on the network.</p></div>
+   <div class="card reveal"><div class="icon">📤</div><h3>File transfer</h3><p>Once connected remotely, you may need to move scripts and data between your workstation and the robotics computer.</p></div>
+  </div>
+ </div>
+</section>
+
+<section id="commands">
+ <div class="container">
+  <div class="eyebrow">03 · COMMAND DECK</div>
+  <h2>Don't memorize.<br><span class="grad">Understand.</span></h2>
+  <p class="lead">
+   Use the cards below as a living command reference. Commands marked <b>CORE</b> are the ones you should
+   become comfortable with during this experiment. The remaining commands are useful extensions for independent robotics work.
+  </p>
+
+  <div class="terminal-layout">
+   <div class="terminal">
+    <div class="termbar"><span class="ball"></span><span class="ball"></span><span class="ball"></span><span class="term-title">student@robot:~</span></div>
+    <pre id="terminalText"><span class="prompt">student@robot:~$</span> <span class="command">pwd</span>
+<span class="output">/home/student</span>
+
+<span class="prompt">student@robot:~$</span> <span class="command">ls</span>
+<span class="output">Desktop  Documents  Downloads  robotics</span>
+
+<span class="prompt">student@robot:~$</span> <span class="command">cd robotics</span>
+
+<span class="prompt">student@robot:~/robotics$</span> <span class="command">ls -la</span>
+<span class="output">total 16
+drwxr-xr-x  3 student student 4096 robotics
+drwxr-xr-x 18 student student 4096 .
+drwxr-xr-x  5 student student 4096 ..
+-rw-r--r--  1 student student  120 README.txt</span>
+
+<span class="prompt">student@robot:~/robotics$</span> <span class="command">whoami</span>
+<span class="output">student</span></pre>
+   </div>
+
+   <div class="explain">
+    <div class="eyebrow">COMMAND EXPLAINER</div>
+    <h3 id="cmdTitle">pwd — Where am I?</h3>
+    <span class="code" id="cmdCode">pwd</span>
+    <p id="cmdDesc">Print Working Directory. It tells you the absolute path of the directory your shell is currently operating in. This is your first “orientation check” whenever you are unsure where you are.</p>
+    <div class="note" id="cmdTip"><b>Robotics habit:</b> Before running a command that changes or deletes files, confirm your location with <code>pwd</code>.</div>
+    <div class="command-tabs" id="commandTabs"></div>
+   </div>
+  </div>
+
+  <div class="cmd-table">
+   <div class="cmd-row"><code>pwd</code><div><b>Print working directory</b><span class="badge">CORE</span></div><p>Shows the full path of your current directory. Use it to orient yourself.</p></div>
+   <div class="cmd-row"><code>ls</code><div><b>List directory contents</b><span class="badge">CORE</span></div><p>Shows files and folders. Try <code>ls -l</code> for details and <code>ls -la</code> to include hidden entries.</p></div>
+   <div class="cmd-row"><code>cd</code><div><b>Change directory</b><span class="badge">CORE</span></div><p>Moves the shell to another directory. <code>cd ..</code> moves one level up; <code>cd ~</code> returns to your home directory.</p></div>
+   <div class="cmd-row"><code>mkdir</code><div><b>Make directory</b><span class="badge">CORE</span></div><p>Creates a folder. Example: <code>mkdir robot_test</code>.</p></div>
+   <div class="cmd-row"><code>touch</code><div><b>Create an empty file / update timestamp</b><span class="badge">CORE</span></div><p>Useful for creating a placeholder file such as <code>touch notes.txt</code>.</p></div>
+   <div class="cmd-row"><code>cp</code><div><b>Copy</b><span class="badge">CORE</span></div><p>Copies files or directories. Example: <code>cp config.yaml backup.yaml</code>.</p></div>
+   <div class="cmd-row"><code>mv</code><div><b>Move / rename</b><span class="badge">CORE</span></div><p>Moves a file or changes its name. Example: <code>mv old.txt new.txt</code>.</p></div>
+   <div class="cmd-row"><code>rm</code><div><b>Remove</b><span class="badge">CAUTION</span></div><p>Deletes files. There is usually no recycle bin in the shell. Treat <code>rm</code> as a deliberate action.</p></div>
+   <div class="cmd-row"><code>cat</code><div><b>Print file contents</b><span class="badge">CORE</span></div><p>Quickly displays a small text file. For large files use <code>less</code>.</p></div>
+   <div class="cmd-row"><code>less</code><div><b>Read a file interactively</b><span class="badge">CORE</span></div><p>Scroll through a file without loading the entire thing into your mental RAM. Press <code>q</code> to quit.</p></div>
+   <div class="cmd-row"><code>head / tail</code><div><b>View beginning / end</b></div><p>Useful for checking logs. Example: <code>tail -f robot.log</code> follows a growing log file.</p></div>
+   <div class="cmd-row"><code>grep</code><div><b>Search text</b></div><p>Find matching text inside output/files. Example: <code>grep ERROR robot.log</code>.</p></div>
+   <div class="cmd-row"><code>find</code><div><b>Find files/directories</b></div><p>Search by name or other properties. Example: <code>find . -name "*.py"</code>.</p></div>
+   <div class="cmd-row"><code>file</code><div><b>Identify file type</b></div><p>Reports what a file actually is based on its contents.</p></div>
+   <div class="cmd-row"><code>df -h</code><div><b>Disk space</b></div><p>Shows filesystem disk usage in human-readable units. Useful when logs/data fill the robot computer.</p></div>
+   <div class="cmd-row"><code>du -sh</code><div><b>Directory size</b></div><p>Shows how much space a directory consumes.</p></div>
+   <div class="cmd-row"><code>whoami</code><div><b>Current user</b><span class="badge">CORE</span></div><p>Tells you which user account the shell is using. Important when permissions behave unexpectedly.</p></div>
+   <div class="cmd-row"><code>hostname</code><div><b>Machine name</b></div><p>Shows the system's host name, useful when working with multiple computers.</p></div>
+   <div class="cmd-row"><code>uname -a</code><div><b>System/kernel information</b></div><p>Displays Linux kernel and system information.</p></div>
+   <div class="cmd-row"><code>ps</code><div><b>Process snapshot</b><span class="badge">CORE</span></div><p>Shows running processes. <code>ps aux</code> is a common broader view.</p></div>
+   <div class="cmd-row"><code>top</code><div><b>Live process monitor</b><span class="badge">CORE</span></div><p>Displays active processes and resource usage. Press <code>q</code> to exit.</p></div>
+   <div class="cmd-row"><code>kill</code><div><b>Send signal to process</b><span class="badge">CAUTION</span></div><p>Stops/controls a process by PID depending on the signal. Never kill an unknown robotics process blindly.</p></div>
+   <div class="cmd-row"><code>chmod</code><div><b>Change permissions</b><span class="badge">CORE</span></div><p>Changes read/write/execute permissions. Example: <code>chmod +x script.sh</code> makes a script executable.</p></div>
+   <div class="cmd-row"><code>sudo</code><div><b>Run with elevated privileges</b><span class="badge">CAUTION</span></div><p>Executes a command with administrative privileges when permitted. Use only when required and when you understand the command.</p></div>
+   <div class="cmd-row"><code>apt</code><div><b>Package management</b><span class="badge">CORE</span></div><p>On Debian/Ubuntu systems, <code>apt</code> can search, install, update and remove software packages. Follow your lab's approved package procedure.</p></div>
+   <div class="cmd-row"><code>ssh</code><div><b>Remote login</b><span class="badge">CORE</span></div><p>Securely opens a remote shell. Typical form: <code>ssh username@robot-host</code>.</p></div>
+   <div class="cmd-row"><code>scp</code><div><b>Secure file copy</b><span class="badge">CORE</span></div><p>Copies files over SSH. Example: <code>scp notes.txt username@robot-host:~/</code>.</p></div>
+   <div class="cmd-row"><code>exit</code><div><b>Leave shell / SSH session</b><span class="badge">CORE</span></div><p>Ends the current shell session. In SSH, it returns you to your local computer.</p></div>
+  </div>
+
+  <div class="note"><b>Important:</b> Exact package names, usernames, hostnames, IP addresses, robot paths and administrative commands are platform-specific. Your instructor/lab machine configuration is authoritative. Do not invent or guess them.</div>
+ </div>
+</section>
+
+<section>
+ <div class="container">
+  <div class="eyebrow">04 · SSH — REMOTE PILOT MODE</div>
+  <h2>Your laptop.<br>The robot's computer.<br><span class="grad">One terminal.</span></h2>
+  <div class="grid2">
+   <div class="card reveal"><div class="icon">🔐</div><h3>What SSH does</h3><p>SSH creates an encrypted remote shell session. You type commands on your machine; they execute on the remote robotics computer.</p><div class="code">ssh username@robot-host</div></div>
+   <div class="card reveal"><div class="icon">📦</div><h3>What SCP does</h3><p>SCP transfers files through the SSH mechanism. It is useful for moving scripts, configuration files or collected data.</p><div class="code">scp file.txt username@robot-host:~/</div></div>
+  </div>
+  <div class="practice">
+   <div class="mission reveal"><h3>🧩 Mission: prove where you are</h3><p>Connect using the lab-provided SSH details. Then run:</p><p class="code">hostname</p><p class="code">whoami</p><p class="code">pwd</p><p>Your evidence should show the remote machine, user and working directory.</p></div>
+   <div class="mission reveal"><h3>🧩 Mission: move one file</h3><p>Create a tiny text file locally and transfer it to the robot computer using the approved path. Then SSH in and confirm with:</p><p class="code">ls -l</p><p class="code">cat filename.txt</p><p>Finally remove only the test file you created.</p></div>
+  </div>
+ </div>
+</section>
+
+<section id="safety">
+ <div class="container">
+  <div class="eyebrow">05 · SAFETY IS A TECHNICAL SKILL</div>
+  <h2>Before “RUN”.<br>Think “SAFE”.</h2>
+  <p class="lead">The experiment explicitly requires students to apply the laboratory safety and operating protocol when working with a powered mobile robot.</p>
+  <div class="safety">
+   <div class="danger reveal"><h3>🛑 Never improvise</h3><ul>
+    <li>Do not power or move the robot without following the laboratory procedure.</li>
+    <li>Know where the emergency stop is before enabling motion.</li>
+    <li>Keep people, cables and objects clear of the robot's path.</li>
+    <li>Do not run an unfamiliar command just because it appears online.</li>
+    <li>Do not use <code>sudo</code>, <code>rm</code> or process-killing commands casually.</li>
+   </ul></div>
+   <div class="safe reveal"><h3>✅ Engineer the session</h3><ul>
+    <li>Inspect the robot and its surroundings before operation.</li>
+    <li>Confirm your terminal is connected to the intended machine.</li>
+    <li>Understand what a command will change before executing it.</li>
+    <li>Start with controlled, low-risk checks before physical motion.</li>
+    <li>If something behaves unexpectedly: stop, make the system safe, then diagnose.</li>
+   </ul></div>
+  </div>
+ </div>
+</section>
+
+<section>
+ <div class="container">
+  <div class="eyebrow">06 · WORLD VS ROBOT</div>
+  <h2>Not every sensor<br>answers the same question.</h2>
+  <p class="lead">One of the key learning outcomes is being able to distinguish measurements of the world from measurements of the robot itself — and explain why that distinction matters.</p>
+  <div class="grid2">
+   <div class="card reveal"><div class="icon">🌍</div><h3>“What is happening outside me?”</h3><p><b>RPLIDAR</b> observes surrounding geometry. <b>RealSense</b> provides depth information about the environment. These are exteroceptive/environment-facing measurements.</p></div>
+   <div class="card reveal"><div class="icon">🧍</div><h3>“What is happening to me?”</h3><p><b>Wheel encoders</b> measure wheel rotation. <b>IMU</b> measures inertial quantities. These are proprioceptive measurements about the robot's own motion/state.</p></div>
+  </div>
+  <div class="quote reveal"><b>Why it matters:</b> Later in the course you will combine imperfect measurements. You need to understand what each sensor actually observes before you can decide how it should influence estimation or navigation.</div>
+ </div>
+</section>
+
+<section>
+ <div class="container">
+  <div class="eyebrow">07 · HANDS-ON WORKFLOW</div>
+  <h2>Your 4-hour<br><span class="grad">mission plan.</span></h2>
+  <div class="path" style="display:grid;grid-template-columns:repeat(4,1fr);gap:13px;margin-top:35px">
+   <div class="card reveal"><div class="eyebrow">01 · SESSION 1</div><h3>🔧 Inspect</h3><p>Guided hardware inspection, subsystem identification and signal-path tracing on the bench.</p></div>
+   <div class="card reveal"><div class="eyebrow">02 · SESSION 1</div><h3>🧠 Explain</h3><p>For every subsystem, state what it produces/measures and whether it observes the robot or world.</p></div>
+   <div class="card reveal"><div class="eyebrow">03 · SESSION 2</div><h3>🐧 Operate</h3><p>Linux operation, remote login and file transfer on the robotics computer.</p></div>
+   <div class="card reveal"><div class="eyebrow">04 · SESSION 2</div><h3>🛡️ Prove</h3><p>Individual Linux competency check followed by the safety briefing and operating protocol.</p></div>
+  </div>
+  <div class="note"><b>What is intentionally NOT the focus yet?</b> ROS commands. The experiment plan explicitly establishes hardware and the computing platform before middleware is discussed. ROS 2 comes next.</div>
+ </div>
+</section>
+
+<section id="check">
+ <div class="container">
+  <div class="eyebrow">08 · BOSS BATTLE</div>
+  <h2>Can you actually<br><span class="grad">operate the robot computer?</span></h2>
+  <p class="lead">Complete the checklist. Then take the mini-viva below.</p>
+  <div class="checklist" id="checklist">
+   <div class="checkitem">I can identify the drive train, wheel encoders, IMU, RPLIDAR, RealSense, controller, computing unit, battery and emergency stop.</div>
+   <div class="checkitem">I can explain the signal path from a software command to wheel motion and back to sensor measurement.</div>
+   <div class="checkitem">I can use <code>pwd</code>, <code>ls</code>, <code>cd</code>, <code>mkdir</code>, <code>cp</code>, <code>mv</code> and <code>rm</code> safely.</div>
+   <div class="checkitem">I can inspect files using <code>cat</code>/<code>less</code> and search using <code>grep</code> or <code>find</code>.</div>
+   <div class="checkitem">I understand processes and can inspect them using <code>ps</code> and <code>top</code>.</div>
+   <div class="checkitem">I understand Linux permissions and why <code>chmod</code> or administrative privileges may matter.</div>
+   <div class="checkitem">I can connect to the robotics computer using the lab's approved SSH details.</div>
+   <div class="checkitem">I can transfer a file with SCP and verify the transferred file remotely.</div>
+   <div class="checkitem">I know the emergency stop and can state the lab safety protocol before motion.</div>
+   <div class="checkitem">I can explain which sensors measure the world and which measure the robot itself.</div>
+  </div>
+  <div class="progressbox"><div style="display:flex;justify-content:space-between;font-size:.78rem;color:#8f98a8;margin-bottom:7px"><span>Mission readiness</span><span id="pct">0%</span></div><div class="bar"><i id="bar"></i></div></div>
+
+  <div class="quiz">
+   <div class="eyebrow">MINI VIVA · NO CHEATING 😈</div>
+   <h3 style="font-size:1.7rem">Let's see if you understand it.</h3>
+   <div class="q">
+    <p>1. You forgot which directory you're in. What should you run first?</p>
+    <div class="options">
+     <button class="opt" data-correct="true">pwd</button><button class="opt">ls</button><button class="opt">top</button><button class="opt">chmod</button>
+    </div><div class="feedback"></div>
+   </div>
+   <div class="q">
+    <p>2. Which pair is primarily about the robot's own motion rather than directly observing the external environment?</p>
+    <div class="options">
+     <button class="opt" data-correct="true">Encoders + IMU</button><button class="opt">LiDAR + depth camera</button><button class="opt">Battery + E-stop</button><button class="opt">Controller + LiDAR</button>
+    </div><div class="feedback"></div>
+   </div>
+   <div class="q">
+    <p>3. What is the safest attitude toward an unfamiliar command containing <code>sudo</code> or <code>rm</code>?</p>
+    <div class="options">
+     <button class="opt" data-correct="true">Understand it first; use only when appropriate</button><button class="opt">Run it quickly</button><button class="opt">Add more flags</button><button class="opt">Copy it from any forum</button>
+    </div><div class="feedback"></div>
+   </div>
+   <div class="q">
+    <p>4. What does SSH primarily give you?</p>
+    <div class="options">
+     <button class="opt">A remote shell on another computer</button><button class="opt" data-correct="true">A secure remote shell on another computer</button><button class="opt">A LiDAR scan</button><button class="opt">A motor controller</button>
+    </div><div class="feedback"></div>
+   </div>
+  </div>
+ </div>
+</section>
+
+<section>
+ <div class="container">
+  <div class="project reveal">
+   <div class="project-grid">
+    <div>
+     <div class="eyebrow">09 · POST-LAB</div>
+     <h3>Leave Experiment 01 with evidence — not vibes.</h3>
+     <p>The laboratory plan asks you to complete a subsystem identification sheet, complete/sign off the Linux competency check, and explain in your record which subsystems measure the world and which measure the robot itself.</p>
+     <div class="quote" style="margin-top:22px">If you cannot explain what a component measures, where the data goes, and why that measurement exists, you do not yet “know” the robot.</div>
+    </div>
+    <div class="final-list">
+     <div>Subsystem identification sheet complete</div>
+     <div>Part number / physical quantity / electrical interface recorded</div>
+     <div>Linux competency check completed</div>
+     <div>World-vs-self sensing explained</div>
+     <div>Safety procedure understood and followed</div>
+    </div>
+   </div>
+  </div>
+ </div>
+</section>
+
+<section>
+ <div class="container" style="text-align:center">
+  <div class="eyebrow">10 · NEXT MISSION</div>
+  <h2>Hardware unlocked.<br><span class="grad">Now meet ROS 2.</span></h2>
+  <p class="lead" style="margin:0 auto 28px">Once you understand the machine and can operate its Linux computer, the next step is to understand how ROS 2 connects programs, sensors and robot motion.</p>
+  <a class="btn primary" href="#mission">↺ REPLAY EXPERIMENT 01</a>
+ </div>
+</section>
+
+<footer>
+ <div class="container">
+  <strong>Department of Automation & Robotics</strong><br>
+  ROS 2 Mobile Robotics Laboratory · 26EARP302 · Experiment 01<br><br>
+  Student-first tutorial interface · Use the official laboratory plan and instructor instructions as the authority for platform-specific details.
+ </div>
+</footer>
+
+<div class="toast" id="toast">Mission updated ✓</div>
+
+<script>
+
+// Theme switcher: remembers the student's choice.
+const themeToggle = document.getElementById("themeToggle");
+const themeIcon = document.getElementById("themeIcon");
+const themeLabel = document.getElementById("themeLabel");
+
+function applyTheme(theme){
+  document.body.classList.toggle("light", theme === "light");
+  if(theme === "light"){
+    themeIcon.textContent = "🌙";
+    themeLabel.textContent = "DARK";
+    themeToggle.setAttribute("aria-label","Switch to dark theme");
+  }else{
+    themeIcon.textContent = "☀️";
+    themeLabel.textContent = "LIGHT";
+    themeToggle.setAttribute("aria-label","Switch to light theme");
+  }
+  localStorage.setItem("exp01-theme",theme);
+}
+const savedTheme = localStorage.getItem("exp01-theme");
+applyTheme(savedTheme || "dark");
+
+themeToggle.addEventListener("click",()=>{
+  const next = document.body.classList.contains("light") ? "dark" : "light";
+  applyTheme(next);
+  showToast(next === "light" ? "Light mode activated ☀️" : "Dark mode activated 🌙");
+});
+
+const commands = {
+ pwd:["pwd","pwd","Print Working Directory. It tells you the absolute path of the directory your shell is currently operating in.","Robotics habit: before changing/deleting files, confirm your location with pwd."],
+ ls:["ls","ls","Lists files and directories. Add -l for a detailed listing and -a to include hidden entries.","Try ls -la when diagnosing what is actually inside a robotics directory."],
+ cd:["cd","cd folder","Changes your current directory. cd .. goes up one level; cd ~ goes home.","A shell is always operating somewhere. cd changes that context."],
+ mkdir:["mkdir","mkdir robot_test","Creates a directory.","Use it to create clean folders for experiments instead of dumping files into random locations."],
+ cp:["cp","cp a.txt b.txt","Copies a file or directory.","Great for making a backup before editing a configuration file."],
+ mv:["mv","mv old.txt new.txt","Moves or renames a file.","Unlike cp, the original is moved/renamed."],
+ rm:["rm","rm test.txt","Removes a file. Use with caution.","There is normally no recycle bin. Never delete something you have not identified."],
+ cat:["cat","cat notes.txt","Prints the contents of a text file.","Best for short files. Use less for large files."],
+ grep:["grep","grep ERROR robot.log","Searches text for a pattern.","Very useful when hunting errors in logs."],
+ ps:["ps","ps aux","Shows running processes.","Processes are programs currently executing. In robotics, many components may run at once."],
+ top:["top","top","Shows a live view of processes and resource use.","Useful when the robot computer feels slow or a process is consuming resources."],
+ chmod:["chmod","chmod +x script.sh","Changes file permissions. +x adds execute permission.","A script may exist but still fail to run if it is not executable."],
+ ssh:["ssh","ssh username@robot-host","Opens a secure remote shell session.","The exact username and host are supplied by your lab environment."],
+ scp:["scp","scp file.txt username@robot-host:~/","Copies files securely over SSH.","Verify the destination before transferring files."],
+ apt:["apt","sudo apt ...","Package-management tool on Debian/Ubuntu systems.","Exact install/update commands depend on the lab platform. Follow instructor-approved procedure."]
+};
+const tabs=document.getElementById("commandTabs");
+Object.keys(commands).forEach((key,i)=>{
+ const b=document.createElement("button");b.className="cmdtab"+(i===0?" active":"");b.textContent=key;b.onclick=()=>{
+  document.querySelectorAll(".cmdtab").forEach(x=>x.classList.remove("active"));b.classList.add("active");
+  const [title,code,desc,tip]=commands[key];
+  document.getElementById("cmdTitle").textContent=title+" — command explainer";
+  document.getElementById("cmdCode").textContent=code;
+  document.getElementById("cmdDesc").textContent=desc;
+  document.getElementById("cmdTip").innerHTML="<b>Robotics habit:</b> "+tip.replace("Robotics habit: ","");
+ };tabs.appendChild(b);
+});
+
+document.querySelectorAll(".checkitem").forEach(item=>{
+ item.addEventListener("click",()=>{
+  item.classList.toggle("done");
+  const done=document.querySelectorAll(".checkitem.done").length;
+  const total=document.querySelectorAll(".checkitem").length;
+  const pct=Math.round(done/total*100);
+  document.getElementById("bar").style.width=pct+"%";
+  document.getElementById("pct").textContent=pct+"%";
+  if(pct===100) showToast("100% — Experiment 01 unlocked 🟢");
+ });
+});
+
+document.querySelectorAll(".opt").forEach(btn=>{
+ btn.addEventListener("click",()=>{
+  const q=btn.closest(".q"), feedback=q.querySelector(".feedback");
+  q.querySelectorAll(".opt").forEach(x=>x.classList.remove("correct","wrong"));
+  if(btn.dataset.correct==="true"){
+   btn.classList.add("correct");feedback.textContent="Correct. Nice. You understand the idea, not just the word.";
+  }else{
+   btn.classList.add("wrong");feedback.textContent="Not quite. Think about the purpose of the command/concept and try again.";
+  }
+ });
+});
+
+function showToast(msg){const t=document.getElementById("toast");t.textContent=msg;t.classList.add("show");setTimeout(()=>t.classList.remove("show"),2200)}
+const obs=new IntersectionObserver(es=>es.forEach(e=>{if(e.isIntersecting)e.target.classList.add("show")}),{threshold:.1});
+document.querySelectorAll(".reveal").forEach(x=>obs.observe(x));
+
+window.addEventListener("scroll",()=>{
+ const h=document.documentElement.scrollHeight-innerHeight;
+ document.getElementById("progress").style.width=(scrollY/h*100)+"%";
+});
+</script>
+
+<div class="lab-site-nav"><a class="home" href="index.html">⌂ <span class="label">LAB HOME</span></a><a href="exp02.html"><span class="label">EXP 02</span> →</a></div>
+</body>
+</html>

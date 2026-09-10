@@ -1,0 +1,269 @@
+<!doctype html>
+<html lang="en">
+<head>
+<meta charset="utf-8"><meta name="viewport" content="width=device-width,initial-scale=1">
+<title>EXP 06 — RGB-D Depth Perception & Vision-Triggered Robot Control</title>
+<style>
+:root{--bg:#07080c;--panel:#11151d;--panel2:#171c26;--line:#2b3240;--text:#f5f7fb;--muted:#aeb7c6;--lime:#caff38;--cyan:#55e8ff;--pink:#ff5bd7;--orange:#ffad58;--red:#ff657e;--max:1220px}
+body.light{--bg:#f5f7fb;--panel:#fff;--panel2:#f0f3f7;--line:#d7dde7;--text:#111620;--muted:#5f6878}
+*{box-sizing:border-box;margin:0;padding:0}html{scroll-behavior:smooth}
+body{font-family:Inter,system-ui,-apple-system,"Segoe UI",sans-serif;color:var(--text);line-height:1.58;background:radial-gradient(circle at 85% 4%,#caff3814,transparent 25%),radial-gradient(circle at 10% 25%,#55e8ff12,transparent 24%),var(--bg);overflow-x:hidden}
+body.light{background:radial-gradient(circle at 85% 4%,#7ca01416,transparent 25%),radial-gradient(circle at 10% 25%,#0091b412,transparent 24%),var(--bg)}
+a{text-decoration:none;color:inherit}button{font:inherit}.container{width:min(var(--max),92%);margin:auto}
+nav{position:sticky;top:0;z-index:100;background:#07080cd9;backdrop-filter:blur(18px);border-bottom:1px solid var(--line)}body.light nav{background:#f5f7fbd9}
+.nav{height:66px;display:flex;align-items:center;justify-content:space-between;gap:14px}.logo{font-weight:950;letter-spacing:-.04em}.logo i{font-style:normal;color:var(--lime)}
+.navlinks{display:flex;gap:14px;font-size:.72rem;color:var(--muted)}.navlinks a:hover{color:var(--lime)}
+.btn,.theme{border:1px solid var(--line);background:var(--panel);color:var(--text);padding:10px 15px;border-radius:999px;font-weight:900;cursor:pointer;transition:.2s}.btn:hover,.theme:hover{transform:translateY(-2px);border-color:var(--lime)}.btn.primary{background:var(--lime);color:#090b05;border-color:var(--lime)}
+.theme{padding:7px 10px;font-size:.72rem}.theme span{display:inline-grid;place-items:center;width:25px;height:25px;border-radius:50%;background:var(--panel2);margin-right:6px}.progress{height:2px;background:linear-gradient(90deg,var(--lime),var(--cyan),var(--pink));width:0}
+.hero{min-height:calc(100vh - 68px);padding:75px 0 90px;display:flex;align-items:center}.hero-grid{display:grid;grid-template-columns:1.03fr .97fr;gap:52px;align-items:center}
+.kicker{display:inline-flex;gap:8px;align-items:center;padding:7px 11px;border:1px solid var(--line);border-radius:999px;background:var(--panel);font-size:.72rem;font-weight:900;color:var(--muted);margin-bottom:20px}.dot{width:8px;height:8px;border-radius:50%;background:var(--lime);box-shadow:0 0 18px var(--lime)}
+h1{font-size:clamp(3rem,6.2vw,6.3rem);line-height:.87;letter-spacing:-.075em}.grad{background:linear-gradient(105deg,var(--lime),var(--cyan),var(--pink));-webkit-background-clip:text;background-clip:text;color:transparent}
+.hero p{max-width:770px;color:var(--muted);font-size:1.05rem;margin:25px 0}.actions{display:flex;gap:9px;flex-wrap:wrap}.meta{display:flex;gap:9px;flex-wrap:wrap;margin-top:25px}.chip{padding:8px 10px;border:1px solid var(--line);background:var(--panel);border-radius:11px;font-size:.73rem;color:var(--muted)}
+.camera{min-height:520px;border:1px solid var(--line);border-radius:34px;background:radial-gradient(circle at 50% 50%,#55e8ff0d,transparent 24%),linear-gradient(#ffffff09 1px,transparent 1px),linear-gradient(90deg,#ffffff09 1px,transparent 1px);background-size:auto,35px 35px,35px 35px;position:relative;overflow:hidden}
+body.light .camera{background:radial-gradient(circle at 50% 50%,#00a4bf0e,transparent 24%),linear-gradient(#14202d0d 1px,transparent 1px),linear-gradient(90deg,#14202d0d 1px,transparent 1px);background-size:auto,35px 35px,35px 35px}
+.camera svg{position:absolute;inset:0;width:100%;height:100%}.ray{stroke:var(--cyan);stroke-width:2;opacity:.55;stroke-dasharray:7 8;animation:dash 2s linear infinite}.box{fill:none;stroke:var(--lime);stroke-width:3}.pixel{fill:var(--pink);animation:pulse 1.6s ease-in-out infinite}.depth{fill:none;stroke:var(--orange);stroke-width:2;stroke-dasharray:5 7}
+@keyframes dash{to{stroke-dashoffset:-100}}@keyframes pulse{50%{opacity:.35;transform:scale(.8)}}
+.cnode{position:absolute;padding:12px 14px;border:1px solid var(--line);background:var(--panel);border-radius:15px;font-size:.72rem;font-weight:900;box-shadow:0 12px 35px #0006;text-align:center}.c1{left:7%;top:10%;color:var(--cyan)}.c2{right:7%;top:15%;color:var(--pink)}.c3{left:7%;bottom:13%;color:var(--orange)}.c4{right:7%;bottom:11%;color:var(--lime)}
+.camera-title{position:absolute;left:50%;top:55%;transform:translate(-50%,-50%);text-align:center}.camera-title strong{display:block;font-size:2.65rem;letter-spacing:-.07em}.camera-title span{color:var(--muted);font-size:.68rem;white-space:nowrap}
+section{padding:100px 0}.eyebrow{font-size:.72rem;letter-spacing:.16em;color:var(--lime);font-weight:950;text-transform:uppercase;margin-bottom:10px}h2{font-size:clamp(2.45rem,5vw,4.6rem);line-height:.93;letter-spacing:-.065em;margin-bottom:17px}.lead{max-width:900px;color:var(--muted)}
+.grid2{display:grid;grid-template-columns:1fr 1fr;gap:15px;margin-top:36px}.card{padding:27px;border:1px solid var(--line);border-radius:22px;background:#ffffff04}body.light .card{background:#fff}.icon{font-size:2rem;margin-bottom:10px}.card h3{font-size:1.3rem;margin-bottom:8px}.card p{color:var(--muted)}
+.callout{margin-top:32px;padding:23px 26px;border-left:4px solid var(--lime);border-radius:0 18px 18px 0;background:var(--panel2);color:#cdd4df}.callout b{color:var(--lime)}
+.timeline{display:grid;grid-template-columns:repeat(6,1fr);gap:8px;margin-top:40px}.step{padding:18px 13px;border:1px solid var(--line);border-radius:17px;background:var(--panel);position:relative}.step:not(:last-child):after{content:"→";position:absolute;right:-14px;top:40%;color:#596274;z-index:2}.step b{display:block;margin-bottom:5px;font-size:.78rem}.step span{color:var(--muted);font-size:.76rem}
+.arch{margin-top:40px;padding:30px;border:1px solid var(--line);border-radius:26px;background:var(--panel)}.archflow{display:grid;grid-template-columns:1fr auto 1fr auto 1fr;gap:10px;align-items:center;margin-top:24px}.archnode{text-align:center;padding:18px 10px;border:1px solid var(--line);border-radius:15px;background:var(--panel2);font-size:.78rem;font-weight:900}.arrow{text-align:center;color:#667082;font-size:1.3rem}
+.formula{display:grid;grid-template-columns:repeat(2,1fr);gap:14px;margin-top:35px}.formula-card{padding:25px;border:1px solid var(--line);border-radius:20px;background:var(--panel);text-align:center}.formula-card .eq{font-family:Georgia,serif;font-size:1.22rem;margin:13px 0;color:var(--text)}.formula-card p{color:var(--muted);font-size:.84rem}
+.code-layout{display:grid;grid-template-columns:1fr 1fr;gap:17px;margin-top:38px}.terminal{border:1px solid var(--line);border-radius:22px;overflow:hidden;background:#0b0e13}.termbar{height:42px;display:flex;align-items:center;gap:7px;padding:0 14px;background:#151923;border-bottom:1px solid #252b37}.ball{width:9px;height:9px;border-radius:50%;background:#4a5362}.term-title{margin-left:6px;color:#7f8999;font-size:.72rem}pre{padding:22px;min-height:330px;color:#dce5d7;font-family:Consolas,monospace;font-size:.79rem;line-height:1.75;white-space:pre-wrap}.cmd{color:#f6f7fa}.prompt{color:var(--lime)}.out{color:#93a0b2}
+.explain{border:1px solid var(--line);border-radius:22px;background:var(--panel);padding:26px}.explain h3{font-size:1.5rem;margin-bottom:7px}.explain p{color:var(--muted)}.code{display:inline-block;margin:10px 0;padding:7px 10px;background:#090c11;border:1px solid #2e3542;border-radius:9px;color:var(--lime);font-family:Consolas,monospace}
+.command-list{display:grid;gap:10px;margin-top:34px}.cmdrow{display:grid;grid-template-columns:260px 1fr 1.1fr;gap:15px;padding:17px;border:1px solid var(--line);border-radius:15px;background:var(--panel);align-items:start}.cmdrow code{color:var(--lime);font-weight:900}.cmdrow p{color:var(--muted);font-size:.85rem}.tag{display:inline-block;margin-left:7px;padding:3px 6px;border-radius:6px;background:var(--panel2);font-size:.6rem;color:var(--muted);font-weight:900}
+.roi{display:grid;grid-template-columns:1fr 1fr;gap:18px;margin-top:38px}.depthview{height:350px;border:1px solid var(--line);border-radius:23px;background:linear-gradient(135deg,#161d28,#0b0e14);position:relative;overflow:hidden}.depthview:before{content:"";position:absolute;inset:25px;background:radial-gradient(ellipse at 55% 48%,#ffad5844 0 8%,#55e8ff22 9% 22%,transparent 23%),linear-gradient(90deg,transparent 0 20%,#55e8ff10 21% 22%,transparent 23% 40%,#55e8ff0c 41% 42%,transparent 43%);filter:blur(2px)}.person{position:absolute;left:58%;top:65px;width:75px;height:190px;border:2px solid var(--pink);border-radius:40px 40px 15px 15px;box-shadow:0 0 40px #ff5bd722}.roi-box{position:absolute;left:49%;top:105px;width:160px;height:125px;border:3px dashed var(--lime);border-radius:10px}.depth-label{position:absolute;left:15px;top:15px;padding:7px 10px;border-radius:8px;background:#0009;color:#fff;font:700 .68rem Consolas}.distance-tag{position:absolute;right:15px;bottom:15px;padding:8px 11px;border:1px solid var(--line);border-radius:9px;background:#000b;color:var(--lime);font:900 .75rem Consolas}
+.enc-grid{display:grid;grid-template-columns:repeat(3,1fr);gap:14px;margin-top:35px}.enc{padding:23px;border:1px solid var(--line);border-radius:20px;background:var(--panel)}.enc .big{font-size:1.7rem;font-weight:950;color:var(--cyan)}.enc h3{margin:7px 0}.enc p{color:var(--muted);font-size:.85rem}
+.frame{display:grid;grid-template-columns:1fr 1fr;gap:15px;margin-top:35px}.frame-card{padding:25px;border:1px solid var(--line);border-radius:20px;background:var(--panel)}.axes{height:190px;position:relative;margin-top:12px;border:1px dashed var(--line);border-radius:15px}.axisx,.axisy,.axisz{position:absolute;height:3px;transform-origin:left}.axisx{left:50%;top:55%;width:105px;background:var(--lime);transform:rotate(0)}.axisy{left:50%;top:55%;width:85px;background:var(--cyan);transform:rotate(-90deg)}.axisz{left:50%;top:55%;width:70px;background:var(--pink);transform:rotate(-35deg)}.axis-label{position:absolute;font-weight:900;font-size:.75rem}.ax{right:25px;top:49%;color:var(--lime)}.ay{left:52%;top:15px;color:var(--cyan)}.az{left:65%;top:31%;color:var(--pink)}
+.params{display:grid;grid-template-columns:repeat(2,1fr);gap:12px;margin-top:35px}.param{padding:19px;border:1px solid var(--line);border-radius:16px;background:var(--panel)}.param code{color:var(--cyan);font-weight:900}.param p{color:var(--muted);font-size:.83rem;margin-top:5px}
+.calib{display:grid;grid-template-columns:1.1fr .9fr;gap:18px;margin-top:38px}.tablebox{overflow:auto;border:1px solid var(--line);border-radius:20px;background:var(--panel)}table{width:100%;border-collapse:collapse}th,td{padding:13px 15px;text-align:left;border-bottom:1px solid var(--line);font-size:.82rem}th{color:var(--lime);background:var(--panel2)}td{color:var(--muted)}.calibcard{padding:26px;border:1px solid var(--line);border-radius:20px;background:var(--panel)}.calibcard h3{margin-bottom:8px}.calibcard p{color:var(--muted)}
+.materials{display:grid;grid-template-columns:repeat(5,1fr);gap:10px;margin-top:35px}.mat{padding:18px 12px;border:1px solid var(--line);border-radius:16px;background:var(--panel);text-align:center}.mat b{display:block;font-size:1.05rem}.mat span{font-size:.76rem;color:var(--muted)}
+.tuning{margin-top:36px;padding:28px;border:1px solid var(--line);border-radius:25px;background:var(--panel)}.tunegrid{display:grid;grid-template-columns:1fr 1fr;gap:25px;align-items:center}.tunevalue{font-size:2.2rem;font-weight:950;color:var(--lime)}.range-wrap{height:30px;position:relative;margin:18px 2px 0;cursor:pointer;touch-action:none}.range-track,.range-fill{position:absolute;left:0;right:0;top:11px;height:8px;border-radius:99px}.range-track{background:var(--panel2);border:1px solid var(--line)}.range-fill{right:auto;width:46%;background:var(--lime);box-shadow:0 0 12px #caff3855}.range-thumb{position:absolute;top:5px;left:46%;width:20px;height:20px;border-radius:50%;background:var(--lime);border:3px solid var(--bg);box-shadow:0 0 0 2px var(--lime),0 0 18px #caff3888;transform:translateX(-50%);outline:none}.range-thumb:focus{box-shadow:0 0 0 3px var(--cyan),0 0 20px #caff3888}.range-labels{display:flex;justify-content:space-between;color:var(--muted);font:700 .68rem Consolas}.tuneviz{height:250px;border:1px solid var(--line);border-radius:19px;position:relative;background:linear-gradient(#ffffff07 1px,transparent 1px),linear-gradient(90deg,#ffffff07 1px,transparent 1px);background-size:28px 28px;overflow:hidden}.tuneviz .bot{position:absolute;left:28%;top:52%;width:42px;height:42px;border:3px solid var(--lime);border-radius:50%}.tuneviz .obs{position:absolute;left:72%;top:48%;width:55px;height:80px;background:#ff5bd720;border:2px solid var(--pink);border-radius:12px}.tuneviz .beam2{position:absolute;left:30%;top:55%;width:280px;height:3px;background:linear-gradient(90deg,var(--cyan),transparent);transform:rotate(-4deg);transform-origin:left}.stopline{position:absolute;left:45%;top:25px;bottom:25px;border-left:2px dashed var(--lime);opacity:.8;transition:left .18s}.vizlabel{position:absolute;top:10px;left:45%;transform:translateX(-50%);font:900 .62rem Consolas;color:var(--lime);transition:left .18s;white-space:nowrap}
+.metrics{display:grid;grid-template-columns:repeat(3,1fr);gap:14px;margin-top:35px}.metric{padding:23px;border:1px solid var(--line);border-radius:20px;background:var(--panel)}.metric .big{font-size:2.2rem;font-weight:950;color:var(--lime)}.metric h3{margin:7px 0}.metric p{color:var(--muted);font-size:.85rem}
+.compare{display:grid;grid-template-columns:1fr 1fr;gap:14px;margin-top:35px}.comp{padding:25px;border:1px solid var(--line);border-radius:20px;background:var(--panel)}.comp h3{margin-bottom:8px}.comp p{color:var(--muted);font-size:.88rem}
+.failure{display:grid;grid-template-columns:repeat(3,1fr);gap:14px;margin-top:35px}.fail{padding:23px;border:1px solid var(--line);border-radius:20px;background:var(--panel)}.fail h3{margin-bottom:7px}.fail p{color:var(--muted);font-size:.87rem}.fail .why{margin-top:10px;color:var(--orange);font-weight:900;font-size:.8rem}
+.quiz{margin-top:40px;padding:28px;border:1px solid var(--line);border-radius:25px;background:var(--panel)}.q{padding:19px 0;border-bottom:1px solid var(--line)}.q:last-child{border:0}.q p{font-weight:900;margin-bottom:11px}.opts{display:flex;gap:7px;flex-wrap:wrap}.opt{padding:8px 11px;border:1px solid var(--line);background:var(--panel2);border-radius:10px;color:var(--text);cursor:pointer}.opt.correct{border-color:var(--lime);color:var(--lime)}.opt.wrong{border-color:var(--red);color:var(--red)}.feedback{min-height:20px;margin-top:7px;color:var(--muted);font-size:.78rem}
+.record{margin-top:38px;padding:30px;border:1px solid var(--line);border-radius:25px;background:linear-gradient(135deg,var(--panel),var(--panel2))}.record-grid{display:grid;grid-template-columns:1fr 1fr;gap:25px;margin-top:22px}.record li{list-style:none;padding:10px 0;border-bottom:1px solid var(--line);color:#c6ceda}.record li:before{content:"✓";color:var(--lime);font-weight:950;margin-right:9px}
+.final{padding:42px;border:1px solid #394252;border-radius:30px;background:radial-gradient(circle at 80% 15%,#ff5bd714,transparent 30%),radial-gradient(circle at 15% 85%,#caff3814,transparent 30%),var(--panel)}
+footer{padding:55px 0 80px;border-top:1px solid var(--line);color:#7e899a}footer strong{color:var(--text)}
+.reveal{opacity:0;transform:translateY(18px);transition:.6s}.reveal.show{opacity:1;transform:none}.toast{position:fixed;right:18px;bottom:18px;padding:12px 15px;border:1px solid var(--line);background:var(--panel);border-radius:12px;opacity:0;transform:translateY(15px);transition:.25s;z-index:300}.toast.show{opacity:1;transform:none}
+@media(max-width:900px){.hero-grid,.code-layout,.grid2,.roi,.frame,.calib,.tunegrid,.compare{grid-template-columns:1fr}.timeline{grid-template-columns:1fr 1fr}.step:not(:last-child):after{display:none}.archflow{grid-template-columns:1fr}.archflow .arrow{display:none}.formula,.enc-grid,.params,.metrics,.materials,.failure{grid-template-columns:1fr}.cmdrow{grid-template-columns:1fr}.record-grid{grid-template-columns:1fr}.navlinks{display:none}}
+@media(max-width:600px){section{padding:75px 0}.hero{padding:55px 0 70px}h1{font-size:3.7rem}.camera{min-height:390px}.theme b{display:none}}
+</style>
+
+<style id="lab-site-nav">
+.lab-site-nav{position:fixed;left:50%;bottom:18px;transform:translateX(-50%);z-index:9999;display:flex;gap:7px;align-items:center;padding:7px;border:1px solid var(--line,#2c3543);border-radius:999px;background:rgba(10,12,17,.9);backdrop-filter:blur(16px);box-shadow:0 12px 40px #0007;font-size:.7rem}
+.lab-site-nav a{padding:8px 11px;border:1px solid var(--line,#2c3543);border-radius:999px;color:var(--text,#f5f7fb);font-weight:900;text-decoration:none}
+.lab-site-nav a:hover{border-color:var(--lime,#caff38);color:var(--lime,#caff38)}
+.lab-site-nav .home{background:var(--lime,#caff38);color:#090b05;border-color:var(--lime,#caff38)}
+@media(max-width:650px){.lab-site-nav{left:10px;right:10px;transform:none;justify-content:space-between}.lab-site-nav .label{display:none}}
+</style>
+</head>
+<body>
+<nav><div class="container nav">
+<div class="logo">EXP <i>06</i> · RGB-D LAB</div>
+<div class="navlinks"><a href="#mission">Mission</a><a href="#depth">Depth</a><a href="#encoding">Encoding</a><a href="#roi">ROI</a><a href="#frames">Frames</a><a href="#calibration">Calibration</a><a href="#control">Control</a><a href="#quiz">Viva</a></div>
+<div style="display:flex;gap:8px;align-items:center"><button class="theme" id="themeToggle"><span id="themeIcon">☀️</span><b id="themeLabel">LIGHT</b></button><a class="btn primary" href="#quiz">VIVA →</a></div>
+</div><div class="progress" id="progress"></div></nav>
+
+<header class="hero" id="mission"><div class="container hero-grid">
+<div class="reveal"><div class="kicker"><span class="dot"></span>26EARP302 · EXPERIMENT 06 · EXERCISE · 4 HOURS</div>
+<h1>Give the robot<br><span class="grad">depth.</span></h1>
+<p>LiDAR gave the robot a planar view. Now the camera adds the third dimension. You will acquire an RGB-D depth image, decode it correctly, isolate a region of interest, estimate the nearest robust obstacle distance, publish that measurement and use it to trigger a controlled stop for obstacles that sit outside the LiDAR scan plane.</p>
+<div class="actions"><a class="btn primary" href="#depth">ENTER DEPTH MODE ↓</a><a class="btn" href="#calibration">CALIBRATE THE CAMERA 🎯</a></div>
+<div class="meta"><span class="chip">📷 RGB-D camera</span><span class="chip">🧊 3D perception</span><span class="chip">🧮 Encoding + units</span><span class="chip">🎯 ROI processing</span><span class="chip">📐 Camera intrinsics</span><span class="chip">🛑 Vision-triggered stop</span></div></div>
+<div class="camera reveal"><svg viewBox="0 0 600 520" preserveAspectRatio="none"><path class="ray" d="M300 395 L155 135"/><path class="ray" d="M300 395 L220 115"/><path class="ray" d="M300 395 L300 90"/><path class="ray" d="M300 395 L380 115"/><path class="ray" d="M300 395 L445 135"/><path class="depth" d="M150 150 Q300 95 450 150"/><rect class="box" x="245" y="190" width="110" height="130" rx="8"/><circle class="pixel" cx="285" cy="240" r="8"/><circle class="pixel" cx="330" cy="270" r="7"/></svg>
+<div class="cnode c1">RGB-D CAMERA<br><small>depth image</small></div><div class="cnode c2">ROI<br><small>nearest obstacle</small></div><div class="cnode c3">DEPTH NODE<br><small>distance → topic</small></div><div class="cnode c4">CONTROLLER<br><small>safe stop</small></div>
+<div class="camera-title"><strong>Pixels → metres</strong><span>SEE WHAT LiDAR CAN'T SEE</span></div></div>
+</div></header>
+
+<section><div class="container"><div class="eyebrow">00 · THE MISSION</div><h2>From a flat scan<br>to <span class="grad">3D awareness.</span></h2>
+<p class="lead">The previous experiment used planar LiDAR to react to obstacles. This experiment deliberately breaks that assumption: an obstacle can exist outside the LiDAR scan plane. An RGB-D camera can provide depth information across an image, letting the controller reason about objects that the planar scanner may miss.</p>
+<div class="grid2"><div class="card reveal"><div class="icon">📷</div><h3>Acquire depth correctly</h3><p>Understand the depth image, its encoding, units, invalid pixels and the camera's intrinsic parameters.</p></div>
+<div class="card reveal"><div class="icon">🎯</div><h3>Find the obstacle in an ROI</h3><p>Process a defined region of interest instead of trusting one arbitrary pixel. Extract a robust nearest-obstacle distance.</p></div>
+<div class="card reveal"><div class="icon">🛑</div><h3>Close the control loop</h3><p>Publish the depth-derived distance and use it to trigger a controlled stop for an obstacle outside the LiDAR scan plane.</p></div>
+<div class="card reveal"><div class="icon">🧪</div><h3>Measure camera behaviour</h3><p>Quantify accuracy, bias and valid-pixel availability across distance, surface material and illumination.</p></div></div>
+<div class="callout"><b>Core idea:</b> a depth image is not “just another camera picture.” Each valid pixel can represent a measured distance — but only if you correctly understand its encoding, units, geometry and validity.</div></div></section>
+
+<section id="depth"><div class="container"><div class="eyebrow">01 · WHAT IS DEPTH?</div><h2>RGB says <span class="grad">what.</span><br>Depth says <span class="grad">how far.</span></h2>
+<p class="lead">An RGB image describes appearance using colour channels. A depth image adds geometric information: each pixel corresponds to a measured distance along the camera's sensing geometry, subject to the camera's operating range and validity rules.</p>
+<div class="timeline"><div class="step reveal"><b>SCENE</b><span>Real 3D objects.</span></div><div class="step reveal"><b>SENSE</b><span>Stereo / structured light.</span></div><div class="step reveal"><b>ENCODE</b><span>Depth pixels.</span></div><div class="step reveal"><b>DECODE</b><span>Units + validity.</span></div><div class="step reveal"><b>INTERPRET</b><span>ROI distance.</span></div><div class="step reveal"><b>ACT</b><span>Safe robot stop.</span></div></div>
+<div class="formula">
+<div class="formula-card reveal"><div class="icon">📏</div><h3>Depth value</h3><div class="eq">Z = decoded depth value</div><p>The numerical pixel value must be interpreted using the image encoding and unit convention provided by the camera/ROS interface.</p></div>
+<div class="formula-card reveal"><div class="icon">🚫</div><h3>Invalid depth</h3><div class="eq">invalid ≠ “very far”</div><p>Invalid or unavailable depth should be handled explicitly. Never silently treat missing data as a safe obstacle distance.</p></div></div>
+<div class="callout"><b>Important:</b> the exact depth encoding, unit scale and invalid-value convention depend on the camera driver/message. Inspect the actual message metadata rather than assuming a datatype or unit.</div></div></section>
+
+<section id="encoding"><div class="container"><div class="eyebrow">02 · ENCODING, UNITS & INVALID PIXELS</div><h2>Pixels have a<br><span class="grad">contract.</span></h2>
+<p class="lead">A depth value only becomes meaningful after you know how it is encoded. The image message provides metadata such as its encoding and dimensions. Your node must use the actual camera driver's convention.</p>
+<div class="enc-grid">
+<div class="enc reveal"><div class="big">01</div><h3>Encoding</h3><p>Determine the image datatype/encoding and interpret its numerical values accordingly.</p></div>
+<div class="enc reveal"><div class="big">02</div><h3>Units</h3><p>Determine whether values represent metres, millimetres or another scale before comparing against thresholds.</p></div>
+<div class="enc reveal"><div class="big">03</div><h3>Validity</h3><p>Handle missing, zero, non-finite or otherwise invalid depth according to the camera's actual message semantics.</p></div>
+</div>
+<div class="code-layout"><div class="terminal"><div class="termbar"><span class="ball"></span><span class="ball"></span><span class="ball"></span><span class="term-title">inspect the depth stream</span></div>
+<pre><span class="prompt">$</span> <span class="cmd">ros2 topic list</span>
+
+<span class="prompt">$</span> <span class="cmd">ros2 topic info /depth_topic</span>
+
+<span class="prompt">$</span> <span class="cmd">ros2 topic echo /depth_topic</span>
+
+<span class="prompt">$</span> <span class="cmd">ros2 topic hz /depth_topic</span>
+
+<span class="out"># Replace /depth_topic with the actual
+# depth image topic in your lab.</span></pre></div>
+<div class="explain"><h3>What should you inspect?</h3><p>Look for the image encoding, width/height, step/row layout, frame identifier and the metadata associated with the depth image.</p><p style="margin-top:15px">Then inspect the camera information topic and determine the intrinsic parameters required for pixel deprojection.</p><div class="callout" style="margin-top:18px"><b>Never guess units.</b> A threshold such as “0.5” means completely different things if the image is represented in metres versus millimetres.</div></div></div></div></section>
+
+<section id="roi"><div class="container"><div class="eyebrow">03 · REGION OF INTEREST</div><h2>Don't ask one pixel.<br>Ask the <span class="grad">neighbourhood.</span></h2>
+<p class="lead">Real depth images contain missing pixels, edge effects and local noise. A region of interest (ROI) lets you collect multiple measurements from the area where an obstacle is expected and derive a robust nearest-obstacle distance.</p>
+<div class="roi"><div class="depthview reveal"><div class="depth-label">DEPTH IMAGE · ROI PROCESSING</div><div class="person"></div><div class="roi-box"></div><div class="distance-tag">ROBUST DISTANCE → 0.84 m</div></div>
+<div class="info"><h3>🎯 ROI workflow</h3><p>Choose an image region that is meaningful for the robot's safety/control problem. Then:</p><ul><li>Extract depth values inside the ROI.</li><li>Discard invalid pixels.</li><li>Apply the defined range/validity constraints.</li><li>Use a robust statistic to estimate the nearest obstacle distance.</li><li>Publish the resulting distance for the controller.</li></ul><div class="callout" style="margin-top:18px"><b>Why robust?</b> One bad pixel should not cause a false emergency stop — but the algorithm should still remain sensitive to a genuine nearby obstacle. Your chosen statistic and filtering policy should be documented.</div></div></div>
+<div class="formula">
+<div class="formula-card reveal"><div class="icon">🎯</div><h3>ROI</h3><div class="eq">R = {Z(u,v) | (u,v) ∈ ROI}</div><p>The ROI is a set of image pixels selected for the obstacle-distance calculation.</p></div>
+<div class="formula-card reveal"><div class="icon">📊</div><h3>Robust estimate</h3><div class="eq">d<sub>obs</sub> = robust(R<sub>valid</sub>)</div><p>Use the laboratory's chosen robust estimator; the key is to remove invalid measurements before estimating distance.</p></div></div></div></section>
+
+<section><div class="container"><div class="eyebrow">04 · DEPTH → 3D GEOMETRY</div><h2>A pixel is 2D.<br>The obstacle is <span class="grad">3D.</span></h2>
+<p class="lead">Camera intrinsics connect image coordinates to the camera's geometry. When required, a valid depth value can be deprojected from pixel coordinates into a 3D point in the camera coordinate system.</p>
+<div class="formula">
+<div class="formula-card reveal"><div class="icon">📐</div><h3>Pinhole relationship</h3><div class="eq">x = (u − c<sub>x</sub>) Z / f<sub>x</sub></div><p>Horizontal image coordinate u maps to camera-coordinate x using focal length and principal point.</p></div>
+<div class="formula-card reveal"><div class="icon">📐</div><h3>Vertical relationship</h3><div class="eq">y = (v − c<sub>y</sub>) Z / f<sub>y</sub></div><p>Vertical image coordinate v maps to camera-coordinate y using the corresponding intrinsic parameters.</p></div>
+<div class="formula-card reveal"><div class="icon">📏</div><h3>Depth axis</h3><div class="eq">Z = depth(u,v)</div><p>The exact interpretation of Z must match the camera's depth convention and the operation being performed.</p></div>
+<div class="formula-card reveal"><div class="icon">🎯</div><h3>Why intrinsics matter</h3><div class="eq">pixel → ray → 3D point</div><p>Without the correct camera model, image coordinates cannot be reliably related to physical geometry.</p></div>
+</div>
+<div class="callout"><b>Pre-lab connection:</b> you were asked to review deprojection using camera intrinsics. You do not need to deproject every pixel to perform a simple distance ROI, but understanding the geometry explains why pixel location, focal length and depth belong together.</div></div></section>
+
+<section id="frames"><div class="container"><div class="eyebrow">05 · CAMERA FRAMES</div><h2>Optical frame ≠<br><span class="grad">robot body frame.</span></h2>
+<p class="lead">A depth camera reports measurements in a camera-related coordinate system. ROS also represents the robot using named coordinate frames. Understanding the relationship between the camera optical frame and the robot body convention is essential when turning perception into robot control.</p>
+<div class="frame"><div class="frame-card reveal"><h3>📷 Camera optical frame</h3><p style="color:var(--muted)">The camera's image geometry follows an optical-axis convention. Use the actual frame ID published by the camera driver.</p><div class="axes"><i class="axisx"></i><i class="axisy"></i><i class="axisz"></i><span class="axis-label ax">X</span><span class="axis-label ay">Y</span><span class="axis-label az">Z</span></div></div>
+<div class="frame-card reveal"><h3>🤖 ROS robot body convention</h3><p style="color:var(--muted)">Robot body frames are used to reason about motion/control. The transform between camera and robot frames must be known from the robot's TF setup.</p><div class="axes"><i class="axisx"></i><i class="axisy"></i><i class="axisz"></i><span class="axis-label ax">forward</span><span class="axis-label ay">left/right</span><span class="axis-label az">up</span></div></div></div>
+<div class="command-list">
+<div class="cmdrow"><code>ros2 topic echo /camera_info</code><div><b>Inspect camera intrinsics</b><span class="tag">CAMERA</span></div><p>Use the actual camera-info topic configured in your lab.</p></div>
+<div class="cmdrow"><code>ros2 topic echo /depth_topic</code><div><b>Inspect depth image metadata</b><span class="tag">DEPTH</span></div><p>Check encoding, dimensions and frame information as appropriate for your message/tooling.</p></div>
+<div class="cmdrow"><code>ros2 run tf2_tools view_frames</code><div><b>Inspect the TF tree</b><span class="tag">TF</span></div><p>Use the approved ROS 2 TF tooling in your environment to understand camera-to-robot frame relationships.</p></div>
+</div></div></section>
+
+<section id="calibration"><div class="container"><div class="eyebrow">06 · DEPTH CALIBRATION SWEEP</div><h2>Seven distances.<br>Find the camera's <span class="grad">personality.</span></h2>
+<p class="lead">The experiment requires a calibration sweep at seven reference distances. At each distance, measure the mean reported depth, standard deviation, bias and valid-pixel fraction.</p>
+<div class="calib"><div class="tablebox reveal"><table><thead><tr><th>Reference</th><th>Mean depth</th><th>Std. dev.</th><th>Bias</th><th>Valid pixels</th></tr></thead><tbody>
+<tr><td>R1</td><td>Record</td><td>Record</td><td>Mean − reference</td><td>Fraction</td></tr>
+<tr><td>R2</td><td>Record</td><td>Record</td><td>Mean − reference</td><td>Fraction</td></tr>
+<tr><td>R3</td><td>Record</td><td>Record</td><td>Mean − reference</td><td>Fraction</td></tr>
+<tr><td>R4</td><td>Record</td><td>Record</td><td>Mean − reference</td><td>Fraction</td></tr>
+<tr><td>R5</td><td>Record</td><td>Record</td><td>Mean − reference</td><td>Fraction</td></tr>
+<tr><td>R6</td><td>Record</td><td>Record</td><td>Mean − reference</td><td>Fraction</td></tr>
+<tr><td>R7</td><td>Record</td><td>Record</td><td>Mean − reference</td><td>Fraction</td></tr>
+</tbody></table></div>
+<div class="calibcard reveal"><h3>📏 What each number tells you</h3><p><b>Mean reported distance:</b> where the sensor estimate sits on average.</p><p style="margin-top:10px"><b>Standard deviation:</b> how variable the measurements are at that reference.</p><p style="margin-top:10px"><b>Bias:</b> systematic difference between reported and reference distance.</p><p style="margin-top:10px"><b>Valid-pixel fraction:</b> how much of the ROI actually produced usable depth.</p><div class="callout" style="margin-top:18px"><b>Do not fabricate calibration values.</b> The seven reference distances are to be measured in the lab. This table is your observation scaffold.</div></div></div>
+<div class="formula">
+<div class="formula-card reveal"><div class="icon">📌</div><h3>Bias</h3><div class="eq">bias = mean(reported) − reference</div><p>Sign tells you whether the camera tends to over- or under-report distance under your convention.</p></div>
+<div class="formula-card reveal"><div class="icon">📊</div><h3>Valid fraction</h3><div class="eq">f<sub>valid</sub> = N<sub>valid</sub> / N<sub>ROI</sub></div><p>Tracks depth availability, not just numerical accuracy.</p></div></div></div></section>
+
+<section><div class="container"><div class="eyebrow">07 · SURFACE + ILLUMINATION STUDY</div><h2>Same distance.<br>Different <span class="grad">materials.</span></h2>
+<p class="lead">Depth cameras do not necessarily behave identically on every target. The exercise asks you to study matte, glass, specular, dark and untextured targets under two lighting conditions and explain failures physically.</p>
+<div class="materials"><div class="mat reveal"><b>MATTE</b><span>Diffuse surface</span></div><div class="mat reveal"><b>GLASS</b><span>Transmission/reflection</span></div><div class="mat reveal"><b>SPECULAR</b><span>Strong highlights</span></div><div class="mat reveal"><b>DARK</b><span>Low returned signal</span></div><div class="mat reveal"><b>UNTEXTURED</b><span>Weak visual structure</span></div></div>
+<div class="grid2"><div class="card reveal"><div class="icon">☀️</div><h3>Lighting condition A</h3><p>Repeat the depth observation under the first specified illumination condition. Keep target geometry and distance controlled.</p></div><div class="card reveal"><div class="icon">💡</div><h3>Lighting condition B</h3><p>Repeat under the second specified condition and compare depth availability and accuracy.</p></div></div>
+<div class="callout"><b>Physical explanation matters:</b> don't write only “camera failed.” Ask what the sensing principle needs — surface return, texture, reflection behaviour, illumination — and connect the observed failure to that physical mechanism without assuming a cause you did not observe.</div></div></section>
+
+<section id="control"><div class="container"><div class="eyebrow">08 · VISION-TRIGGERED ROBOT CONTROL</div><h2>Depth becomes a<br><span class="grad">safety signal.</span></h2>
+<p class="lead">Now close the loop. The depth node publishes an obstacle distance derived from the ROI. A controller consumes that value and triggers a controlled stop when the depth obstacle enters the configured safety region.</p>
+<div class="arch reveal"><div class="eyebrow">VISION CONTROL PIPELINE</div><div class="archflow"><div class="archnode">RGB-D depth image<br><small>pixels + depth</small></div><div class="arrow">→</div><div class="archnode">ROI processor<br><small>valid + robust distance</small></div><div class="arrow">→</div><div class="archnode">Distance topic<br><small>d<sub>depth</sub></small></div></div>
+<div class="archflow" style="margin-top:10px"><div class="archnode">Safety controller<br><small>threshold</small></div><div class="arrow">→</div><div class="archnode">Controlled stop<br><small>velocity command</small></div><div class="arrow">→</div><div class="archnode">Robot<br><small>new depth frame</small></div></div></div>
+<div class="formula">
+<div class="formula-card reveal"><div class="icon">🛑</div><h3>Depth stop condition</h3><div class="eq">d<sub>depth</sub> ≤ d<sub>stop</sub> → stop</div><p>Use the safety threshold defined by the laboratory/instructor and respect the actual robot safety protocol.</p></div>
+<div class="formula-card reveal"><div class="icon">🔄</div><h3>Closed-loop behaviour</h3><div class="eq">sense → estimate → decide → command</div><p>The robot keeps acquiring new depth observations rather than making a one-time decision.</p></div></div>
+<div class="code-layout"><div class="terminal"><div class="termbar"><span class="ball"></span><span class="ball"></span><span class="ball"></span><span class="term-title">verify the depth-control chain</span></div>
+<pre><span class="prompt">$</span> <span class="cmd">ros2 node list</span>
+
+<span class="prompt">$</span> <span class="cmd">ros2 topic list</span>
+
+<span class="prompt">$</span> <span class="cmd">ros2 topic echo /depth_distance</span>
+
+<span class="prompt">$</span> <span class="cmd">ros2 topic hz /depth_distance</span>
+
+<span class="prompt">$</span> <span class="cmd">ros2 topic echo /cmd_vel</span>
+
+<span class="out"># Use actual topic names from your setup.
+# Follow laboratory safety protocol.</span></pre></div>
+<div class="explain"><h3>Debug the loop in layers</h3><p><b>Layer 1:</b> Is the depth image arriving?</p><p><b>Layer 2:</b> Is the ROI producing valid measurements?</p><p><b>Layer 3:</b> Is the published distance numerically sensible?</p><p><b>Layer 4:</b> Is the controller receiving it?</p><p><b>Layer 5:</b> Does the safety decision produce the intended controlled stop?</p><div class="callout" style="margin-top:18px"><b>Never test a safety controller by assuming the robot will stop.</b> Use the laboratory's approved test setup and safety procedure.</div></div></div></div></section>
+
+<section><div class="container"><div class="eyebrow">09 · CALIBRATION + TUNING SANDBOX</div><h2>What happens when<br>the <span class="grad">threshold moves?</span></h2>
+<p class="lead">This conceptual sandbox shows why a depth threshold is a design parameter. It is not a substitute for the physical calibration and controlled stop demonstration required by the experiment.</p>
+<div class="tuning reveal"><div class="tunegrid"><div class="tune">
+<div class="tunevalue"><span id="thVal">0.80</span> m</div>
+<p style="color:var(--muted)">Illustrative depth stop threshold</p>
+<div class="range-wrap" id="rangeWrap" aria-label="Depth stop threshold slider">
+  <div class="range-track"></div><div class="range-fill" id="rangeFill"></div><div class="range-thumb" id="rangeThumb" tabindex="0" role="slider" aria-valuemin="0.2" aria-valuemax="1.5" aria-valuenow="0.8"></div>
+</div>
+<div class="range-labels"><span>0.20 m</span><span>0.85 m</span><span>1.50 m</span></div>
+<div class="stat" style="padding:15px;border:1px solid var(--line);border-radius:14px;background:var(--panel2);margin-top:15px"><b id="thText">Obstacle is inside the safety region</b><span id="thDesc">The illustrative obstacle is 0.62 m away.</span></div>
+<button class="btn" id="resetThreshold" style="margin-top:13px">↺ Reset to 0.80 m</button>
+</div>
+<div class="tuneviz" id="depthTuneViz"><div class="beam2" id="beamDepth"></div><div class="bot"></div><div class="obs"></div><div class="stopline" id="stopLine"></div><div class="vizlabel" id="vizLabel">STOP ZONE</div></div></div></div>
+<div class="callout"><b>Real experiment:</b> use measured depth accuracy, bias and availability to understand how much confidence you can place in a threshold. A threshold that looks fine on paper can behave differently with reflective, dark, distant or poorly illuminated targets.</div></div></section>
+
+<section><div class="container"><div class="eyebrow">10 · CAMERA vs LiDAR</div><h2>Two sensors.<br>Different <span class="grad">blind spots.</span></h2>
+<p class="lead">The exercise specifically asks you to find one obstacle detected by LiDAR but missed by the camera, and one detected by the camera but missed by LiDAR. The point is not to crown a winner — it is to understand complementary sensing.</p>
+<div class="compare"><div class="comp reveal"><div class="icon">📡</div><h3>LiDAR catches it, camera misses it</h3><p>Photograph/document the required physical example and explain the depth-camera failure using the observed target/material/illumination and the camera's sensing characteristics.</p></div><div class="comp reveal"><div class="icon">📷</div><h3>Camera catches it, LiDAR misses it</h3><p>Document the required example and explain how the obstacle's position relative to the LiDAR scan plane allows depth imaging to detect something the planar scan does not.</p></div></div>
+<div class="callout"><b>Key insight:</b> “sensor fusion” begins with understanding why sensors disagree. Different fields of view, dimensions, wavelengths, geometry and failure modes create complementary information.</div></div></section>
+
+<section><div class="container"><div class="eyebrow">11 · COMMON FAILURE MODES</div><h2>When depth looks weird,<br><span class="grad">investigate.</span></h2>
+<div class="failure">
+<div class="fail reveal"><h3>⬛ Missing depth</h3><p>A region contains too many invalid pixels to produce a reliable distance.</p><div class="why">Check target material, illumination, operating range, ROI placement and validity handling.</div></div>
+<div class="fail reveal"><h3>✨ Reflective target</h3><p>Glass or specular surfaces can produce unstable or unavailable depth.</p><div class="why">Relate the failure to how the depth sensing method obtains usable returns/correspondences.</div></div>
+<div class="fail reveal"><h3>🌑 Dark target</h3><p>A dark surface may produce reduced depth availability under some sensing conditions.</p><div class="why">Compare valid-pixel fraction and error rather than relying on a single visual impression.</div></div>
+<div class="fail reveal"><h3>📐 Wrong geometry</h3><p>Depth values are numerically plausible but interpreted with the wrong frame/intrinsics.</p><div class="why">Inspect camera info and TF relationships before changing the algorithm.</div></div>
+<div class="fail reveal"><h3>🔢 Wrong units</h3><p>The controller threshold is off by a scale factor.</p><div class="why">Inspect the actual image encoding and unit convention before touching the threshold.</div></div>
+<div class="fail reveal"><h3>🎯 Bad ROI</h3><p>The ROI includes background, floor or irrelevant pixels and produces a misleading obstacle estimate.</p><div class="why">Visualise and justify the ROI relative to the robot's safety/control objective.</div></div>
+</div></div></section>
+
+<section><div class="container"><div class="eyebrow">12 · ROS 2 TOOLKIT</div><h2>Commands you should<br><span class="grad">actually understand.</span></h2>
+<div class="command-list">
+<div class="cmdrow"><code>ros2 topic list</code><div><b>Discover camera streams</b><span class="tag">DISCOVER</span></div><p>Find depth image, camera info and relevant control topics in the running graph.</p></div>
+<div class="cmdrow"><code>ros2 topic info /topic</code><div><b>Inspect connections</b><span class="tag">GRAPH</span></div><p>See publisher/subscriber information for a selected topic.</p></div>
+<div class="cmdrow"><code>ros2 topic echo /topic</code><div><b>Inspect live messages</b><span class="tag">DATA</span></div><p>Useful for confirming message content and metadata where practical.</p></div>
+<div class="cmdrow"><code>ros2 topic hz /topic</code><div><b>Measure publication rate</b><span class="tag">TIMING</span></div><p>Relate sensing update rate to the controller's ability to react.</p></div>
+<div class="cmdrow"><code>ros2 node info /node</code><div><b>Inspect your perception node</b><span class="tag">NODE</span></div><p>Verify its subscriptions and publications.</p></div>
+<div class="cmdrow"><code>ros2 run tf2_tools view_frames</code><div><b>Inspect TF relationships</b><span class="tag">TF</span></div><p>Use the TF tooling available in your ROS 2 environment to understand camera/body frame relationships.</p></div>
+</div></div></section>
+
+<section><div class="container"><div class="eyebrow">13 · MINI VIVA</div><h2>Can you defend your<br><span class="grad">depth pipeline?</span></h2>
+<div class="quiz" id="quiz">
+<div class="q"><p>1. Why must you inspect the depth image encoding?</p><div class="opts"><button class="opt">Because ROS 2 has no cameras</button><button class="opt" data-correct="true">Because the numeric pixel value only has meaning when its encoding and unit convention are known</button><button class="opt">Because RGB images have no pixels</button></div><div class="feedback"></div></div>
+<div class="q"><p>2. Why use an ROI rather than one depth pixel?</p><div class="opts"><button class="opt">To make the image smaller for fun</button><button class="opt" data-correct="true">To use multiple measurements and obtain a more robust obstacle estimate</button><button class="opt">Because a camera has only one pixel</button></div><div class="feedback"></div></div>
+<div class="q"><p>3. What do camera intrinsics help you understand?</p><div class="opts"><button class="opt">Battery voltage</button><button class="opt">Wheel radius</button><button class="opt" data-correct="true">The relationship between image pixels and camera geometry</button></div><div class="feedback"></div></div>
+<div class="q"><p>4. Why is camera optical frame vs robot body frame important?</p><div class="opts"><button class="opt">It changes the keyboard layout</button><button class="opt" data-correct="true">A measured point/direction must be interpreted in the correct coordinate frame before being used for robot control</button><button class="opt">It determines the LiDAR wavelength</button></div><div class="feedback"></div></div>
+<div class="q"><p>5. What does valid-pixel fraction tell you?</p><div class="opts"><button class="opt" data-correct="true">How much of the selected image region contains usable depth measurements</button><button class="opt">Only the robot's speed</button><button class="opt">The camera's RGB colour</button></div><div class="feedback"></div></div>
+<div class="q"><p>6. Why compare camera and LiDAR misses?</p><div class="opts"><button class="opt">To choose the prettier sensor</button><button class="opt" data-correct="true">To understand complementary sensing and different physical blind spots</button><button class="opt">Because both sensors must always agree</button></div><div class="feedback"></div></div>
+</div></div></section>
+
+<section><div class="container"><div class="eyebrow">14 · POST-LAB EVIDENCE</div><h2>Don't say “the camera<br><span class="grad">worked.”</span> Prove it.</h2>
+<div class="record"><div class="record-grid"><div><h3>📊 Calibration evidence</h3><ul style="margin-top:12px"><li>Seven reference distances</li><li>Mean reported depth</li><li>Standard deviation</li><li>Bias at each reference</li><li>Valid-pixel fraction</li></ul></div><div><h3>🧪 Surface study</h3><ul style="margin-top:12px"><li>Matte target response</li><li>Glass target response</li><li>Specular target response</li><li>Dark target response</li><li>Untextured target response</li><li>Two lighting conditions + physical explanation</li></ul></div></div></div>
+<div class="callout"><b>Required comparison:</b> document one obstacle detected by LiDAR but missed by the camera, and one detected by the camera but missed by LiDAR. The explanation is part of the experiment — not an optional photo caption.</div></div></section>
+
+<section><div class="container"><div class="final reveal"><div class="eyebrow">15 · MISSION COMPLETE</div><h2>You gave the robot<br><span class="grad">depth perception.</span></h2><p class="lead">You moved from planar range sensing to three-dimensional perception: decoding depth, handling invalid pixels, extracting robust obstacle distance, understanding camera intrinsics and frames, calibrating accuracy and availability, studying material and illumination effects, and finally using vision as a safety signal for robot control.</p><div class="actions" style="margin-top:25px"><a class="btn primary" href="#mission">↺ REPLAY EXP 06</a><a class="btn" href="#quiz">TAKE VIVA AGAIN</a></div></div></div></section>
+
+<footer><div class="container"><strong>Department of Automation & Robotics</strong><br>ROS 2 Mobile Robotics Laboratory · 26EARP302 · Experiment 06<br><br>Student-first interactive tutorial. Exact RGB-D camera model, image/depth topics, encodings, units, frame IDs, ROI coordinates, calibration distances, controller threshold, lighting conditions and safety procedures must follow the actual laboratory platform and instructor instructions.</div></footer>
+<div class="toast" id="toast"></div>
+<script>
+const themeToggle=document.getElementById("themeToggle"),themeIcon=document.getElementById("themeIcon"),themeLabel=document.getElementById("themeLabel");
+function applyTheme(t){document.body.classList.toggle("light",t==="light");themeIcon.textContent=t==="light"?"🌙":"☀️";themeLabel.textContent=t==="light"?"DARK":"LIGHT";localStorage.setItem("exp06-theme",t)}
+applyTheme(localStorage.getItem("exp06-theme")||"dark");
+themeToggle.onclick=()=>{const t=document.body.classList.contains("light")?"dark":"light";applyTheme(t);toast(t==="light"?"Light mode activated ☀️":"Dark mode activated 🌙")};
+
+const rangeWrap=document.getElementById("rangeWrap"),rangeThumb=document.getElementById("rangeThumb"),rangeFill=document.getElementById("rangeFill"),thVal=document.getElementById("thVal"),thText=document.getElementById("thText"),thDesc=document.getElementById("thDesc"),stopLine=document.getElementById("stopLine"),vizLabel=document.getElementById("vizLabel"),resetThreshold=document.getElementById("resetThreshold");
+const MIN=.2,MAX=1.5,OBSTACLE=.62;let thresholdValue=.8,dragging=false;
+function setThreshold(v){thresholdValue=Math.max(MIN,Math.min(MAX,Math.round(v/.05)*.05));const pct=(thresholdValue-MIN)/(MAX-MIN)*100;thVal.textContent=thresholdValue.toFixed(2);rangeFill.style.width=pct+"%";rangeThumb.style.left=pct+"%";rangeThumb.setAttribute("aria-valuenow",thresholdValue.toFixed(2));stopLine.style.left=(12+pct*.76)+"%";vizLabel.style.left=(12+pct*.76)+"%";if(OBSTACLE<=thresholdValue){thText.textContent="🛑 Obstacle is inside the safety region";thDesc.textContent="At the illustrative 0.62 m obstacle distance, the controller would enter its stop condition."}else{thText.textContent="✅ Obstacle is outside the safety threshold";thDesc.textContent="At the illustrative 0.62 m obstacle distance, the threshold has not been crossed."}}
+function valueFromPointer(e){const r=rangeWrap.getBoundingClientRect();return MIN+Math.max(0,Math.min(1,(e.clientX-r.left)/r.width))*(MAX-MIN)}
+rangeWrap.addEventListener("pointerdown",e=>{dragging=true;rangeWrap.setPointerCapture(e.pointerId);setThreshold(valueFromPointer(e));e.preventDefault()});rangeWrap.addEventListener("pointermove",e=>{if(dragging)setThreshold(valueFromPointer(e))});rangeWrap.addEventListener("pointerup",()=>dragging=false);rangeWrap.addEventListener("pointercancel",()=>dragging=false);
+rangeThumb.addEventListener("keydown",e=>{let v=thresholdValue;if(e.key==="ArrowRight"||e.key==="ArrowUp")v+=.05;else if(e.key==="ArrowLeft"||e.key==="ArrowDown")v-=.05;else if(e.key==="Home")v=MIN;else if(e.key==="End")v=MAX;else return;e.preventDefault();setThreshold(v)});resetThreshold.onclick=()=>setThreshold(.8);setThreshold(.8);
+
+document.querySelectorAll(".opt").forEach(b=>b.onclick=()=>{const q=b.closest(".q"),fb=q.querySelector(".feedback");q.querySelectorAll(".opt").forEach(x=>x.classList.remove("correct","wrong"));if(b.dataset.correct==="true"){b.classList.add("correct");fb.textContent="Correct ✓ That's the perception/control idea."}else{b.classList.add("wrong");fb.textContent="Not quite. Revisit the sensing → interpretation → control chain."}});
+const observer=new IntersectionObserver(es=>es.forEach(e=>{if(e.isIntersecting)e.target.classList.add("show")}),{threshold:.1});document.querySelectorAll(".reveal").forEach(e=>observer.observe(e));
+function toast(s){const t=document.getElementById("toast");t.textContent=s;t.classList.add("show");setTimeout(()=>t.classList.remove("show"),1900)}
+window.addEventListener("scroll",()=>{const h=document.documentElement.scrollHeight-innerHeight;document.getElementById("progress").style.width=(scrollY/h*100)+"%"});
+</script>
+
+<div class="lab-site-nav"><a href="exp05.html">← <span class="label">EXP 05</span></a><a class="home" href="index.html">⌂ <span class="label">LAB HOME</span></a><a href="exp07.html"><span class="label">EXP 07</span> →</a></div>
+</body>
+</html>

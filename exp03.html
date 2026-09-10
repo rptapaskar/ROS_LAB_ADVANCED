@@ -1,0 +1,221 @@
+<!doctype html>
+<html lang="en">
+<head>
+<meta charset="utf-8"><meta name="viewport" content="width=device-width,initial-scale=1">
+<title>EXP 03 — ROS 2 Node, Topic & Multi-Sensor Interfacing</title>
+<style>
+:root{--bg:#07080c;--panel:#11151d;--panel2:#171c26;--line:#2b3240;--text:#f5f7fb;--muted:#aeb7c6;--lime:#caff38;--cyan:#55e8ff;--pink:#ff5bd7;--orange:#ffad58;--red:#ff657e;--max:1220px}
+body.light{--bg:#f5f7fb;--panel:#fff;--panel2:#f0f3f7;--line:#d7dde7;--text:#111620;--muted:#5f6878}
+*{box-sizing:border-box;margin:0;padding:0}html{scroll-behavior:smooth}
+body{font-family:Inter,system-ui,-apple-system,"Segoe UI",sans-serif;color:var(--text);line-height:1.58;background:radial-gradient(circle at 85% 4%,#caff3814,transparent 25%),radial-gradient(circle at 10% 25%,#55e8ff12,transparent 24%),var(--bg);overflow-x:hidden}
+body.light{background:radial-gradient(circle at 85% 4%,#7ca01416,transparent 25%),radial-gradient(circle at 10% 25%,#0091b412,transparent 24%),var(--bg)}
+a{text-decoration:none;color:inherit}button{font:inherit}.container{width:min(var(--max),92%);margin:auto}
+nav{position:sticky;top:0;z-index:100;background:#07080cd9;backdrop-filter:blur(18px);border-bottom:1px solid var(--line)}body.light nav{background:#f5f7fbd9}
+.nav{height:66px;display:flex;align-items:center;justify-content:space-between;gap:14px}.logo{font-weight:950;letter-spacing:-.04em}.logo i{font-style:normal;color:var(--lime)}
+.navlinks{display:flex;gap:16px;font-size:.77rem;color:var(--muted)}.navlinks a:hover{color:var(--lime)}
+.btn,.theme{border:1px solid var(--line);background:var(--panel);color:var(--text);padding:10px 15px;border-radius:999px;font-weight:900;cursor:pointer;transition:.2s}.btn:hover,.theme:hover{transform:translateY(-2px);border-color:var(--lime)}.btn.primary{background:var(--lime);color:#090b05;border-color:var(--lime)}
+.theme{padding:7px 10px;font-size:.72rem}.theme span{display:inline-grid;place-items:center;width:25px;height:25px;border-radius:50%;background:var(--panel2);margin-right:6px}
+.progress{height:2px;background:linear-gradient(90deg,var(--lime),var(--cyan),var(--pink));width:0}
+.hero{min-height:calc(100vh - 68px);padding:75px 0 90px;display:flex;align-items:center}.hero-grid{display:grid;grid-template-columns:1.05fr .95fr;gap:55px;align-items:center}
+.kicker{display:inline-flex;gap:8px;align-items:center;padding:7px 11px;border:1px solid var(--line);border-radius:999px;background:var(--panel);font-size:.72rem;font-weight:900;color:var(--muted);margin-bottom:20px}.dot{width:8px;height:8px;border-radius:50%;background:var(--lime);box-shadow:0 0 18px var(--lime)}
+h1{font-size:clamp(3.2rem,6.6vw,6.7rem);line-height:.87;letter-spacing:-.075em}.grad{background:linear-gradient(105deg,var(--lime),var(--cyan),var(--pink));-webkit-background-clip:text;background-clip:text;color:transparent}
+.hero p{max-width:740px;color:var(--muted);font-size:1.05rem;margin:25px 0}.actions{display:flex;gap:9px;flex-wrap:wrap}.meta{display:flex;gap:9px;flex-wrap:wrap;margin-top:25px}.chip{padding:8px 10px;border:1px solid var(--line);background:var(--panel);border-radius:11px;font-size:.73rem;color:var(--muted)}
+.graph{min-height:520px;border:1px solid var(--line);border-radius:34px;background:linear-gradient(#ffffff09 1px,transparent 1px),linear-gradient(90deg,#ffffff09 1px,transparent 1px);background-size:35px 35px;position:relative;overflow:hidden}
+body.light .graph{background:linear-gradient(#14202d0d 1px,transparent 1px),linear-gradient(90deg,#14202d0d 1px,transparent 1px);background-size:35px 35px}
+.graph svg{position:absolute;inset:0;width:100%;height:100%}.gline{stroke:var(--cyan);stroke-width:2;stroke-dasharray:8 7;animation:dash 3s linear infinite}.gline2{stroke:var(--lime);stroke-width:2;stroke-dasharray:8 7;animation:dash 2.3s linear infinite reverse}@keyframes dash{to{stroke-dashoffset:-100}}
+.gnode{position:absolute;padding:13px 15px;border:1px solid var(--line);background:var(--panel);border-radius:16px;font-size:.74rem;font-weight:900;box-shadow:0 12px 35px #0006;text-align:center}.g1{left:7%;top:13%;color:var(--cyan)}.g2{left:38%;top:7%;color:var(--lime)}.g3{right:7%;top:18%;color:var(--pink)}.g4{left:7%;bottom:18%;color:var(--orange)}.g5{right:8%;bottom:12%;color:var(--cyan)}
+.graph-title{position:absolute;left:50%;top:50%;transform:translate(-50%,-50%);text-align:center}.graph-title strong{display:block;font-size:3rem;letter-spacing:-.06em}.graph-title span{color:var(--muted);font-size:.7rem;white-space:nowrap}
+section{padding:100px 0}.eyebrow{font-size:.72rem;letter-spacing:.16em;color:var(--lime);font-weight:950;text-transform:uppercase;margin-bottom:10px}h2{font-size:clamp(2.45rem,5vw,4.6rem);line-height:.93;letter-spacing:-.065em;margin-bottom:17px}.lead{max-width:850px;color:var(--muted)}
+.grid2{display:grid;grid-template-columns:1fr 1fr;gap:15px;margin-top:36px}.card{padding:27px;border:1px solid var(--line);border-radius:22px;background:#ffffff04}body.light .card{background:#fff}.icon{font-size:2rem;margin-bottom:10px}.card h3{font-size:1.3rem;margin-bottom:8px}.card p{color:var(--muted)}
+.callout{margin-top:32px;padding:23px 26px;border-left:4px solid var(--lime);border-radius:0 18px 18px 0;background:var(--panel2);color:#cdd4df}.callout b{color:var(--lime)}
+.timeline{display:grid;grid-template-columns:repeat(5,1fr);gap:9px;margin-top:40px}.step{padding:20px 15px;border:1px solid var(--line);border-radius:17px;background:var(--panel);position:relative}.step:not(:last-child):after{content:"→";position:absolute;right:-16px;top:40%;color:#596274;z-index:2}.step b{display:block;margin-bottom:5px}.step span{color:var(--muted);font-size:.82rem}
+.arch{margin-top:40px;padding:30px;border:1px solid var(--line);border-radius:26px;background:var(--panel)}.archflow{display:grid;grid-template-columns:1fr auto 1fr auto 1fr;gap:10px;align-items:center;margin-top:24px}.archnode{text-align:center;padding:18px 10px;border:1px solid var(--line);border-radius:15px;background:var(--panel2);font-size:.78rem;font-weight:900}.arrow{text-align:center;color:#667082;font-size:1.3rem}
+.code-layout{display:grid;grid-template-columns:1fr 1fr;gap:17px;margin-top:38px}.terminal{border:1px solid var(--line);border-radius:22px;overflow:hidden;background:#0b0e13}.termbar{height:42px;display:flex;align-items:center;gap:7px;padding:0 14px;background:#151923;border-bottom:1px solid #252b37}.ball{width:9px;height:9px;border-radius:50%;background:#4a5362}.term-title{margin-left:6px;color:#7f8999;font-size:.72rem}pre{padding:22px;min-height:350px;color:#dce5d7;font-family:Consolas,monospace;font-size:.81rem;line-height:1.75;white-space:pre-wrap}.prompt{color:var(--lime)}.cmd{color:#f6f7fa}.out{color:#93a0b2}
+.explain{border:1px solid var(--line);border-radius:22px;background:var(--panel);padding:26px}.explain h3{font-size:1.5rem;margin-bottom:7px}.explain p{color:var(--muted)}.code{display:inline-block;margin:10px 0;padding:7px 10px;background:#090c11;border:1px solid #2e3542;border-radius:9px;color:var(--lime);font-family:Consolas,monospace}
+.command-list{display:grid;gap:10px;margin-top:34px}.cmdrow{display:grid;grid-template-columns:225px 1fr 1.1fr;gap:15px;padding:17px;border:1px solid var(--line);border-radius:15px;background:var(--panel);align-items:start}.cmdrow code{color:var(--lime);font-weight:900}.cmdrow p{color:var(--muted);font-size:.85rem}.tag{display:inline-block;margin-left:7px;padding:3px 6px;border-radius:6px;background:var(--panel2);font-size:.6rem;color:var(--muted);font-weight:900}
+.topic-grid{display:grid;grid-template-columns:repeat(2,1fr);gap:14px;margin-top:35px}.topic{padding:22px;border:1px solid var(--line);border-radius:20px;background:var(--panel)}.topic code{color:var(--cyan);font-weight:900}.topic h3{margin:8px 0 5px}.topic p{color:var(--muted);font-size:.88rem}
+.sensor{display:grid;grid-template-columns:110px 1fr;gap:16px;align-items:center;padding:20px;border:1px solid var(--line);border-radius:18px;background:var(--panel)}.sensor-icon{font-size:3rem;text-align:center}.sensor p{color:var(--muted);font-size:.87rem}.meter{height:8px;background:#262d38;border-radius:99px;overflow:hidden;margin-top:9px}.meter i{display:block;height:100%;width:70%;background:linear-gradient(90deg,var(--lime),var(--cyan))}
+.fault-grid{display:grid;grid-template-columns:repeat(2,1fr);gap:14px;margin-top:35px}.fault{padding:23px;border:1px solid var(--line);border-radius:20px;background:var(--panel)}.fault h3{margin-bottom:7px}.fault p{color:var(--muted);font-size:.88rem}.fault .symptom{color:var(--red);font-weight:900}.fault .fix{color:var(--lime);font-weight:900;margin-top:10px}
+.quiz{margin-top:40px;padding:28px;border:1px solid var(--line);border-radius:25px;background:var(--panel)}.q{padding:19px 0;border-bottom:1px solid var(--line)}.q:last-child{border:0}.q p{font-weight:900;margin-bottom:11px}.opts{display:flex;gap:7px;flex-wrap:wrap}.opt{padding:8px 11px;border:1px solid var(--line);background:var(--panel2);border-radius:10px;color:var(--text);cursor:pointer}.opt.correct{border-color:var(--lime);color:var(--lime)}.opt.wrong{border-color:var(--red);color:var(--red)}.feedback{min-height:20px;margin-top:7px;color:var(--muted);font-size:.78rem}
+.record{margin-top:38px;padding:30px;border:1px solid var(--line);border-radius:25px;background:linear-gradient(135deg,var(--panel),var(--panel2))}.record-grid{display:grid;grid-template-columns:1fr 1fr;gap:25px;margin-top:22px}.record li{list-style:none;padding:10px 0;border-bottom:1px solid var(--line);color:#c6ceda}.record li:before{content:"✓";color:var(--lime);font-weight:950;margin-right:9px}
+.final{padding:42px;border:1px solid #394252;border-radius:30px;background:radial-gradient(circle at 80% 15%,#ff5bd714,transparent 30%),radial-gradient(circle at 15% 85%,#caff3814,transparent 30%),var(--panel)}
+footer{padding:55px 0 80px;border-top:1px solid var(--line);color:#7e899a}footer strong{color:var(--text)}
+.reveal{opacity:0;transform:translateY(18px);transition:.6s}.reveal.show{opacity:1;transform:none}.toast{position:fixed;right:18px;bottom:18px;padding:12px 15px;border:1px solid var(--line);background:var(--panel);border-radius:12px;opacity:0;transform:translateY(15px);transition:.25s;z-index:300}.toast.show{opacity:1;transform:none}
+@media(max-width:900px){.hero-grid,.code-layout,.record-grid,.grid2{grid-template-columns:1fr}.timeline{grid-template-columns:1fr 1fr}.step:not(:last-child):after{display:none}.archflow{grid-template-columns:1fr}.archflow .arrow{display:none}.fault-grid,.topic-grid{grid-template-columns:1fr}.cmdrow{grid-template-columns:1fr}.navlinks{display:none}}
+@media(max-width:600px){section{padding:75px 0}.hero{padding:55px 0 70px}h1{font-size:3.7rem}.graph{min-height:390px}.theme b{display:none}}
+</style>
+
+<style id="lab-site-nav">
+.lab-site-nav{position:fixed;left:50%;bottom:18px;transform:translateX(-50%);z-index:9999;display:flex;gap:7px;align-items:center;padding:7px;border:1px solid var(--line,#2c3543);border-radius:999px;background:rgba(10,12,17,.9);backdrop-filter:blur(16px);box-shadow:0 12px 40px #0007;font-size:.7rem}
+.lab-site-nav a{padding:8px 11px;border:1px solid var(--line,#2c3543);border-radius:999px;color:var(--text,#f5f7fb);font-weight:900;text-decoration:none}
+.lab-site-nav a:hover{border-color:var(--lime,#caff38);color:var(--lime,#caff38)}
+.lab-site-nav .home{background:var(--lime,#caff38);color:#090b05;border-color:var(--lime,#caff38)}
+@media(max-width:650px){.lab-site-nav{left:10px;right:10px;transform:none;justify-content:space-between}.lab-site-nav .label{display:none}}
+</style>
+</head>
+<body>
+<nav><div class="container nav">
+<div class="logo">EXP <i>03</i> · SENSOR LAB</div>
+<div class="navlinks"><a href="#mission">Mission</a><a href="#python">Python</a><a href="#sensors">Sensors</a><a href="#qos">QoS</a><a href="#faults">Faults</a><a href="#bag">Bag</a><a href="#quiz">Viva</a></div>
+<div style="display:flex;gap:8px;align-items:center"><button class="theme" id="themeToggle"><span id="themeIcon">☀️</span><b id="themeLabel">LIGHT</b></button><a class="btn primary" href="#quiz">VIVA →</a></div>
+</div><div class="progress" id="progress"></div></nav>
+
+<header class="hero" id="mission"><div class="container hero-grid">
+<div class="reveal"><div class="kicker"><span class="dot"></span>26EARP302 · EXPERIMENT 03 · DEMONSTRATION · 4 HOURS</div>
+<h1>Make the<br><span class="grad">sensors talk.</span></h1>
+<p>Experiment 2 showed you the ROS 2 graph. Experiment 3 makes you build inside it. You will create a Python package with multiple monitor nodes, subscribe to LiDAR, IMU and odometry, extract useful measurements, understand quality-of-service matching, inject communication faults, diagnose the graph and record a multi-sensor bag for later experiments.</p>
+<div class="actions"><a class="btn primary" href="#python">START BUILDING ↓</a><a class="btn" href="#faults">ENTER DEBUG MODE 🧩</a></div>
+<div class="meta"><span class="chip">🐍 ROS 2 Python</span><span class="chip">📡 LaserScan + IMU + Odom</span><span class="chip">⚙️ QoS</span><span class="chip">🧩 Fault Injection</span><span class="chip">🎥 Multi-sensor rosbag</span></div></div>
+<div class="graph reveal"><svg viewBox="0 0 600 520" preserveAspectRatio="none"><path class="gline" d="M110 110 C230 55,315 85,485 150 C520 165,505 240,430 270"/><path class="gline2" d="M110 385 C220 300,310 345,480 285"/><path class="gline" d="M285 125 C275 215,220 300,125 385"/><path class="gline2" d="M285 125 C350 180,410 225,480 285"/></svg>
+<div class="gnode g1">LASER NODE<br><small>LaserScan</small></div><div class="gnode g2">MONITOR<br><small>Python package</small></div><div class="gnode g3">IMU NODE<br><small>Imu</small></div><div class="gnode g4">ODOM NODE<br><small>Odometry</small></div><div class="gnode g5">DIAGNOSTICS<br><small>QoS + faults</small></div>
+<div class="graph-title"><strong>3 ×</strong><span>SENSOR STREAMS → ONE ENGINEER</span></div></div>
+</div></header>
+
+<section><div class="container"><div class="eyebrow">00 · THE MISSION</div><h2>You're no longer<br>just <span class="grad">observing ROS 2.</span></h2>
+<p class="lead">This experiment is about building a small multi-sensor monitoring system and learning how to tell whether a ROS 2 communication problem is caused by the publisher, subscriber, topic, QoS policy, remapping, domain configuration or driver.</p>
+<div class="grid2"><div class="card reveal"><div class="icon">🐍</div><h3>Build a real Python package</h3><p>Create one ROS 2 Python package containing multiple nodes, entry points and a common launch file.</p></div>
+<div class="card reveal"><div class="icon">📡</div><h3>Subscribe to three sensor streams</h3><p>Implement subscribers for <code>LaserScan</code>, <code>Imu</code> and <code>Odometry</code> and extract meaningful information from each.</p></div>
+<div class="card reveal"><div class="icon">⚠️</div><h3>Break it on purpose</h3><p>Investigate instructor-induced faults including QoS mismatch, topic remap, domain conflict and driver termination.</p></div>
+<div class="card reveal"><div class="icon">🧠</div><h3>Diagnose, don't guess</h3><p>Use command-line diagnostics and measured evidence to identify why a stream is missing or unhealthy.</p></div></div>
+<div class="callout"><b>Experiment 3 mindset:</b> “The topic is visible” is not the same as “the subscriber is receiving valid data.” Your job is to prove what is happening.</div></div></section>
+
+<section id="python"><div class="container"><div class="eyebrow">01 · ROS 2 PYTHON PACKAGE</div><h2>Build the monitoring<br><span class="grad">machine.</span></h2>
+<p class="lead">The pre-lab asks you to review Python package structure, <code>setup.py</code> entry points and the colcon build workflow. The goal is a package that can expose three executable monitor nodes and a common launch file.</p>
+<div class="code-layout"><div class="terminal"><div class="termbar"><span class="ball"></span><span class="ball"></span><span class="ball"></span><span class="term-title">~/ros2_ws/src</span></div>
+<pre><span class="prompt">$</span> <span class="cmd">cd ~/ros2_ws/src</span>
+<span class="prompt">$</span> <span class="cmd">ros2 pkg create --build-type ament_python sensor_monitor</span>
+
+<span class="prompt">$</span> <span class="cmd">cd ~/ros2_ws</span>
+<span class="prompt">$</span> <span class="cmd">colcon build --symlink-install</span>
+<span class="prompt">$</span> <span class="cmd">source install/setup.bash</span>
+
+<span class="prompt">$</span> <span class="cmd">ros2 pkg list | grep sensor_monitor</span>
+<span class="out">sensor_monitor</span>
+
+<span class="prompt">$</span> <span class="cmd">ros2 run sensor_monitor laser_monitor</span>
+<span class="prompt">$</span> <span class="cmd">ros2 run sensor_monitor imu_monitor</span>
+<span class="prompt">$</span> <span class="cmd">ros2 run sensor_monitor odom_monitor</span></pre></div>
+<div class="explain"><div class="eyebrow">PACKAGE ANATOMY</div><h3>One package, multiple jobs.</h3><p>A typical Python package has a Python module directory, package metadata and an entry-point configuration. Each monitor becomes an executable entry point, while a launch file can bring up the complete monitoring system.</p>
+<div class="callout" style="margin-top:18px"><b>Why entry points?</b> They let you expose Python functions as ROS 2 executables so you can run them using <code>ros2 run</code>.</div>
+<h3 style="margin-top:22px">The build loop</h3><p>Edit → build → source → run → inspect → repeat. With <code>--symlink-install</code>, Python development is more convenient because installed files can point back to the source tree.</p></div></div>
+<div class="arch reveal"><div class="eyebrow">COMMON LAUNCH FILE</div><div class="archflow"><div class="archnode">laser_monitor<br><small>LaserScan</small></div><div class="arrow">+</div><div class="archnode">imu_monitor<br><small>Imu</small></div><div class="arrow">+</div><div class="archnode">odom_monitor<br><small>Odometry</small></div></div><p style="margin-top:20px;color:var(--muted)">A launch file composes these nodes so the complete monitoring system can be started consistently rather than opening three independent terminals every time.</p></div></div></section>
+
+<section id="sensors"><div class="container"><div class="eyebrow">02 · THREE STREAMS · THREE STORIES</div><h2>Don't just print messages.<br><span class="grad">Extract meaning.</span></h2>
+<p class="lead">The learning outcome explicitly asks you to interpret raw sensor messages, including invalid and out-of-range returns. Your monitor nodes should therefore calculate useful quantities rather than dumping entire messages.</p>
+<div class="topic-grid">
+<div class="sensor reveal"><div class="sensor-icon">📡</div><div><code>sensor_msgs/LaserScan</code><h3>LiDAR monitor</h3><p>Useful fields include <code>angle_min</code>, <code>angle_increment</code> and the <code>ranges</code> array. A sample's bearing can be related to its array index.</p><div class="meter"><i style="width:82%"></i></div></div></div>
+<div class="sensor reveal"><div class="sensor-icon">🧭</div><div><code>sensor_msgs/Imu</code><h3>IMU monitor</h3><p>Inspect inertial quantities and distinguish a stationary sensor's baseline/rest behaviour from motion-induced changes.</p><div class="meter"><i style="width:67%"></i></div></div></div>
+<div class="sensor reveal"><div class="sensor-icon">🛞</div><div><code>nav_msgs/Odometry</code><h3>Odometry monitor</h3><p>Observe pose and twist information and relate the reported values to the robot's stationary and moving states.</p><div class="meter"><i style="width:74%"></i></div></div></div>
+<div class="sensor reveal"><div class="sensor-icon">🧪</div><div><b>Health monitor</b><h3>Turn raw data into evidence</h3><p>Record publication rate, minimum range, bearing, invalid-return fraction and IMU rest bias in your observation sheet.</p><div class="meter"><i style="width:92%"></i></div></div></div>
+</div>
+<div class="callout"><b>LaserScan mini-formula:</b> for a valid range sample at array index <code>i</code>, the corresponding beam angle is commonly related to <code>angle = angle_min + i × angle_increment</code>. Your task is to understand the message structure and handle invalid/out-of-range values according to the sensor specification and lab procedure.</div>
+</div></section>
+
+<section><div class="container"><div class="eyebrow">03 · CALLBACK DESIGN</div><h2>Every message is<br>a <span class="grad">callback event.</span></h2>
+<p class="lead">A subscriber callback runs when a message is delivered to the node. Keep the callback focused: receive → validate → extract → update/print the required observation.</p>
+<div class="timeline"><div class="step reveal"><b>SUBSCRIBE</b><span>Declare topic + message type.</span></div><div class="step reveal"><b>RECEIVE</b><span>ROS 2 delivers a message.</span></div><div class="step reveal"><b>VALIDATE</b><span>Check ranges / validity.</span></div><div class="step reveal"><b>EXTRACT</b><span>Compute useful quantities.</span></div><div class="step reveal"><b>REPORT</b><span>Log, measure or store evidence.</span></div></div>
+<div class="code-layout"><div class="terminal"><div class="termbar"><span class="ball"></span><span class="ball"></span><span class="ball"></span><span class="term-title">monitor pattern</span></div>
+<pre><span class="cmd">def callback(self, msg):</span>
+    <span class="cmd"># 1. validate</span>
+    <span class="cmd"># 2. extract</span>
+    <span class="cmd"># 3. interpret</span>
+    <span class="cmd"># 4. report</span>
+
+<span class="cmd">self.create_subscription(
+    LaserScan,
+    topic_name,
+    self.callback,
+    qos_profile
+)</span></pre></div>
+<div class="explain"><h3>What belongs inside?</h3><p><b>Validate:</b> identify invalid/out-of-range samples before using them.</p><p><b>Extract:</b> compute minimum valid range, associated bearing, invalid-return fraction or other required observation.</p><p><b>Interpret:</b> connect the number to the physical experiment.</p><p><b>Report:</b> log a concise result rather than flooding the terminal with giant message dumps.</p><div class="callout" style="margin-top:18px"><b>Engineering rule:</b> a monitor should make the data easier to understand, not merely make the terminal noisier.</div></div></div></div></section>
+
+<section id="qos"><div class="container"><div class="eyebrow">04 · QUALITY OF SERVICE</div><h2>QoS is the<br><span class="grad">communication contract.</span></h2>
+<p class="lead">The experiment deliberately uses quality-of-service mismatch as a fault. A subscriber can know a topic exists and still fail to receive data if the offered and requested QoS settings are incompatible.</p>
+<div class="grid2"><div class="card reveal"><div class="icon">🤝</div><h3>Publisher offers</h3><p>The publisher's QoS profile describes how it offers the data stream.</p></div><div class="card reveal"><div class="icon">🙋</div><h3>Subscriber requests</h3><p>The subscriber declares what communication behaviour it can accept. Compatibility matters.</p></div><div class="card reveal"><div class="icon">💥</div><h3>Mismatch = no expected flow</h3><p>The graph may still look alive while the expected subscriber callback does not receive the stream you thought it would.</p></div><div class="card reveal"><div class="icon">🔬</div><h3>Diagnose with evidence</h3><p>Inspect topic information, endpoint details and your node's configuration rather than immediately rewriting code.</p></div></div>
+<div class="callout"><b>Experiment target:</b> don't merely know the word QoS. Be able to explain how a QoS mismatch can create a communication failure and how you would prove that this is the cause.</div>
+</div></section>
+
+<section><div class="container"><div class="eyebrow">05 · DIAGNOSTIC COMMAND DECK</div><h2>Your terminal is now<br>a <span class="grad">lab instrument.</span></h2>
+<p class="lead">Use the commands below as a diagnostic ladder. Start broad, then narrow the search.</p>
+<div class="command-list">
+<div class="cmdrow"><code>ros2 node list</code><div><b>Is my node alive?</b><span class="tag">STEP 1</span></div><p>Confirms whether the monitor node is visible in the running graph.</p></div>
+<div class="cmdrow"><code>ros2 node info /node</code><div><b>What does it connect to?</b><span class="tag">STEP 2</span></div><p>Inspect the node's publishers/subscribers and interfaces.</p></div>
+<div class="cmdrow"><code>ros2 topic list</code><div><b>Does the topic exist?</b><span class="tag">STEP 3</span></div><p>Discover the currently visible topic names.</p></div>
+<div class="cmdrow"><code>ros2 topic type /topic</code><div><b>What type is it?</b><span class="tag">STEP 4</span></div><p>Verify that your subscriber expects the correct message interface.</p></div>
+<div class="cmdrow"><code>ros2 topic info /topic</code><div><b>Who is connected?</b><span class="tag">STEP 5</span></div><p>Inspect publisher/subscriber endpoint information and counts.</p></div>
+<div class="cmdrow"><code>ros2 topic echo /topic</code><div><b>Is data actually flowing?</b><span class="tag">STEP 6</span></div><p>Observe live messages independently of your monitor node.</p></div>
+<div class="cmdrow"><code>ros2 topic hz /topic</code><div><b>How healthy is the rate?</b><span class="tag">STEP 7</span></div><p>Estimate publication frequency and compare it with your expected sensor behaviour.</p></div>
+<div class="cmdrow"><code>ros2 topic info -v /topic</code><div><b>Inspect endpoint details</b><span class="tag">QoS</span></div><p>When supported by the installed ROS 2 CLI, verbose topic information can expose more endpoint/QoS detail.</p></div>
+<div class="cmdrow"><code>ros2 topic pub ...</code><div><b>Can I generate a controlled stream?</b></div><p>Useful for software-only testing, but do not use it casually on a physical actuator topic.</p></div>
+</div>
+<div class="callout"><b>Diagnostic ladder:</b> Node alive? → Topic exists? → Type matches? → Publisher exists? → Data flows? → Rate healthy? → QoS compatible? → Correct remap/domain/driver?</div>
+</div></section>
+
+<section id="faults"><div class="container"><div class="eyebrow">06 · FAULT INJECTION ARENA</div><h2>Now we deliberately<br><span class="grad">break the graph.</span></h2>
+<p class="lead">The second session is not additional coding time. It is diagnosis time. Your instructor can induce faults and you must use evidence to identify the failure and explain why the chosen fix resolves it.</p>
+<div class="fault-grid">
+<div class="fault reveal"><h3>💥 Fault A — QoS mismatch</h3><p class="symptom">Symptom: topic is visible, but your callback does not receive expected data.</p><p class="fix">Investigation → compare endpoint/QoS configuration → restore a compatible profile.</p></div>
+<div class="fault reveal"><h3>🔀 Fault B — Topic remap</h3><p class="symptom">Symptom: your node is listening, but the intended sensor stream is not arriving.</p><p class="fix">Investigation → inspect actual topic names and node connections → correct the remap/configuration.</p></div>
+<div class="fault reveal"><h3>🌐 Fault C — Domain conflict</h3><p class="symptom">Symptom: expected nodes/topics disappear from your graph even though another system may be running.</p><p class="fix">Investigation → compare ROS domain configuration → restore the intended domain setup.</p></div>
+<div class="fault reveal"><h3>🛑 Fault D — Driver termination</h3><p class="symptom">Symptom: a sensor stream stops because its producing driver/process is no longer running.</p><p class="fix">Investigation → inspect node/process state and topic endpoints → restore the approved driver bring-up.</p></div>
+</div>
+<div class="arch reveal"><div class="eyebrow">FAULT DIAGNOSIS FLOW</div><div class="archflow"><div class="archnode">OBSERVE<br><small>What changed?</small></div><div class="arrow">→</div><div class="archnode">ISOLATE<br><small>Where does flow stop?</small></div><div class="arrow">→</div><div class="archnode">EXPLAIN<br><small>What mechanism caused it?</small></div></div><div class="archflow"><div class="archnode">FIX<br><small>Change the cause</small></div><div class="arrow">→</div><div class="archnode">VERIFY<br><small>Data returns</small></div><div class="arrow">→</div><div class="archnode">DOCUMENT<br><small>Evidence + reasoning</small></div></div></div>
+</div></section>
+
+<section><div class="container"><div class="eyebrow">07 · MEASUREMENT MODE</div><h2>Stationary vs moving:<br><span class="grad">make the comparison.</span></h2>
+<p class="lead">The experiment specifically calls for measurement of sensor health while the robot is stationary and in motion.</p>
+<div class="grid2">
+<div class="card reveal"><div class="icon">🧍</div><h3>Stationary baseline</h3><p>Measure the sensor behaviour when the robot is not moving. This provides a reference for rest bias, background readings and invalid/out-of-range behaviour.</p></div>
+<div class="card reveal"><div class="icon">🏃</div><h3>Motion response</h3><p>Repeat the observation during controlled teleoperation and compare the sensor output with the physical event that caused the change.</p></div>
+<div class="card reveal"><div class="icon">📊</div><h3>Record numbers</h3><p>Publication rate, minimum range, bearing, invalid-return fraction and IMU rest bias belong in the observation record.</p></div>
+<div class="card reveal"><div class="icon">🧠</div><h3>Interpret, don't worship numbers</h3><p>A measurement is useful only when you can explain what physical quantity it represents, what frame it belongs to and what conditions produced it.</p></div>
+</div></div></section>
+
+<section id="bag"><div class="container"><div class="eyebrow">08 · MULTI-SENSOR ROSBAG</div><h2>Capture the experiment<br>so you can <span class="grad">replay it later.</span></h2>
+<p class="lead">The post-lab activity asks you to record a bag containing all three sensor streams during teleoperation for use in later experiments.</p>
+<div class="code-layout"><div class="terminal"><div class="termbar"><span class="ball"></span><span class="ball"></span><span class="ball"></span><span class="term-title">reference recording</span></div>
+<pre><span class="prompt">$</span> <span class="cmd">ros2 bag record /laser_topic /imu_topic /odom_topic</span>
+<span class="out">[INFO] Recording...
+[INFO] Press Ctrl-C to stop.</span>
+
+<span class="prompt">$</span> <span class="cmd">ros2 bag info BAG_DIRECTORY</span>
+<span class="out">Topics: ...
+Duration: ...
+Messages: ...</span>
+
+<span class="prompt">$</span> <span class="cmd">ros2 bag play BAG_DIRECTORY</span>
+<span class="out">[INFO] Playback started...</span></pre></div>
+<div class="explain"><div class="eyebrow">WHY IT MATTERS</div><h3>Future you will thank present you.</h3><p>A reference recording lets later experiments analyse the same sensor streams without repeating the entire physical run.</p><div class="callout" style="margin-top:18px"><b>Document it:</b> record the exact topic names, run conditions and what the robot was doing. A bag without context is much less useful.</div></div></div></div></section>
+
+<section id="quiz"><div class="container"><div class="eyebrow">09 · MINI VIVA + DEBUG CHALLENGE</div><h2>Can you diagnose<br>before you <span class="grad">touch the code?</span></h2>
+<div class="quiz">
+<div class="q"><p>1. A topic appears in <code>ros2 topic list</code>, but your callback receives nothing. What should you investigate?</p><div class="opts"><button class="opt">Immediately rewrite the callback</button><button class="opt" data-correct="true">Endpoint/QoS compatibility, topic connections and whether data actually flows</button><button class="opt">Assume the sensor is broken</button></div><div class="feedback"></div></div>
+<div class="q"><p>2. Which message type is associated with the LiDAR stream in this experiment?</p><div class="opts"><button class="opt" data-correct="true">sensor_msgs/LaserScan</button><button class="opt">sensor_msgs/Imu</button><button class="opt">nav_msgs/Odometry</button></div><div class="feedback"></div></div>
+<div class="q"><p>3. What does <code>angle_increment</code> help you determine in a LaserScan?</p><div class="opts"><button class="opt">Battery voltage</button><button class="opt">ROS domain</button><button class="opt" data-correct="true">The angular spacing between successive range samples</button></div><div class="feedback"></div></div>
+<div class="q"><p>4. Why should invalid/out-of-range LaserScan values be handled explicitly?</p><div class="opts"><button class="opt">To make the code longer</button><button class="opt" data-correct="true">Because they should not be blindly treated as valid physical range measurements</button><button class="opt">Because ROS 2 cannot publish arrays</button></div><div class="feedback"></div></div>
+<div class="q"><p>5. What is the purpose of a common launch file?</p><div class="opts"><button class="opt">To replace Python</button><button class="opt" data-correct="true">To compose and start the multiple monitor nodes consistently</button><button class="opt">To permanently change the robot hardware</button></div><div class="feedback"></div></div>
+<div class="q"><p>6. An instructor terminates a sensor driver. What is the strongest first response?</p><div class="opts"><button class="opt">Change every QoS setting</button><button class="opt">Reboot everything randomly</button><button class="opt" data-correct="true">Inspect node/topic state and identify where the producing stream disappeared</button></div><div class="feedback"></div></div>
+</div></div></section>
+
+<section><div class="container"><div class="eyebrow">10 · POST-LAB EVIDENCE</div><h2>Document the fault.<br>Defend the <span class="grad">reasoning.</span></h2>
+<div class="record"><div class="record-grid"><div><h3>📋 Record these measurements</h3><ul style="margin-top:12px"><li>Publication rate</li><li>Minimum range + bearing</li><li>Invalid-return fraction</li><li>IMU rest bias</li><li>Stationary vs motion observations</li></ul></div><div><h3>🧩 Record these diagnostic facts</h3><ul style="margin-top:12px"><li>Induced fault</li><li>Diagnostic evidence collected</li><li>Root cause identified</li><li>Fix applied</li><li>Evidence that the fix worked</li></ul></div></div></div>
+<div class="callout"><b>Best answer in a viva:</b> “I observed X, I checked Y, that showed Z, therefore the fault was A. I changed B, then verified C.” That's engineering reasoning.</div></div></section>
+
+<section><div class="container"><div class="final reveal"><div class="eyebrow">11 · MISSION COMPLETE</div><h2>You can now<br><span class="grad">debug a sensor graph.</span></h2><p class="lead">You built the package, wrote the monitors, subscribed to three streams, interpreted raw data, measured sensor health, experienced QoS and graph faults, diagnosed the cause and preserved a multi-sensor dataset. Next, the experiments move from monitoring toward estimation, planning and autonomous behaviour.</p><div class="actions" style="margin-top:25px"><a class="btn primary" href="#mission">↺ REPLAY EXP 03</a><a class="btn" href="#quiz">TAKE VIVA AGAIN</a></div></div></div></section>
+
+<footer><div class="container"><strong>Department of Automation & Robotics</strong><br>ROS 2 Mobile Robotics Laboratory · 26EARP302 · Experiment 03<br><br>Student-first interactive tutorial. Exact topic names, package names, launch files, QoS profiles, robot drivers and safety procedures must follow the actual laboratory configuration and instructor instructions.</div></footer>
+<div class="toast" id="toast"></div>
+<script>
+const themeToggle=document.getElementById("themeToggle"),themeIcon=document.getElementById("themeIcon"),themeLabel=document.getElementById("themeLabel");
+function applyTheme(t){document.body.classList.toggle("light",t==="light");themeIcon.textContent=t==="light"?"🌙":"☀️";themeLabel.textContent=t==="light"?"DARK":"LIGHT";localStorage.setItem("exp03-theme",t)}
+applyTheme(localStorage.getItem("exp03-theme")||"dark");
+themeToggle.onclick=()=>{const t=document.body.classList.contains("light")?"dark":"light";applyTheme(t);toast(t==="light"?"Light mode activated ☀️":"Dark mode activated 🌙")};
+document.querySelectorAll(".opt").forEach(b=>b.onclick=()=>{const q=b.closest(".q"),fb=q.querySelector(".feedback");q.querySelectorAll(".opt").forEach(x=>x.classList.remove("correct","wrong"));if(b.dataset.correct==="true"){b.classList.add("correct");fb.textContent="Correct ✓ Strong diagnosis."}else{b.classList.add("wrong");fb.textContent="Not quite. Start with evidence: node → topic → type → endpoint → flow → QoS/configuration."}});
+const observer=new IntersectionObserver(es=>es.forEach(e=>{if(e.isIntersecting)e.target.classList.add("show")}),{threshold:.1});document.querySelectorAll(".reveal").forEach(e=>observer.observe(e));
+function toast(s){const t=document.getElementById("toast");t.textContent=s;t.classList.add("show");setTimeout(()=>t.classList.remove("show"),1900)}
+window.addEventListener("scroll",()=>{const h=document.documentElement.scrollHeight-innerHeight;document.getElementById("progress").style.width=(scrollY/h*100)+"%"});
+</script>
+
+<div class="lab-site-nav"><a href="exp02.html">← <span class="label">EXP 02</span></a><a class="home" href="index.html">⌂ <span class="label">LAB HOME</span></a><a href="exp04.html"><span class="label">EXP 04</span> →</a></div>
+</body>
+</html>

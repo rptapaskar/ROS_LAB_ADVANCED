@@ -1,0 +1,221 @@
+<!doctype html>
+<html lang="en">
+<head>
+<meta charset="utf-8"><meta name="viewport" content="width=device-width,initial-scale=1">
+<title>EXP 04 — Differential Drive Kinematics & Odometry Estimation</title>
+<style>
+:root{--bg:#07080c;--panel:#11151d;--panel2:#171c26;--line:#2b3240;--text:#f5f7fb;--muted:#aeb7c6;--lime:#caff38;--cyan:#55e8ff;--pink:#ff5bd7;--orange:#ffad58;--red:#ff657e;--max:1220px}
+body.light{--bg:#f5f7fb;--panel:#fff;--panel2:#f0f3f7;--line:#d7dde7;--text:#111620;--muted:#5f6878}
+*{box-sizing:border-box;margin:0;padding:0}html{scroll-behavior:smooth}
+body{font-family:Inter,system-ui,-apple-system,"Segoe UI",sans-serif;color:var(--text);line-height:1.58;background:radial-gradient(circle at 85% 4%,#caff3814,transparent 25%),radial-gradient(circle at 10% 25%,#55e8ff12,transparent 24%),var(--bg);overflow-x:hidden}
+body.light{background:radial-gradient(circle at 85% 4%,#7ca01416,transparent 25%),radial-gradient(circle at 10% 25%,#0091b412,transparent 24%),var(--bg)}
+a{text-decoration:none;color:inherit}button{font:inherit}.container{width:min(var(--max),92%);margin:auto}
+nav{position:sticky;top:0;z-index:100;background:#07080cd9;backdrop-filter:blur(18px);border-bottom:1px solid var(--line)}body.light nav{background:#f5f7fbd9}
+.nav{height:66px;display:flex;align-items:center;justify-content:space-between;gap:14px}.logo{font-weight:950;letter-spacing:-.04em}.logo i{font-style:normal;color:var(--lime)}
+.navlinks{display:flex;gap:15px;font-size:.75rem;color:var(--muted)}.navlinks a:hover{color:var(--lime)}
+.btn,.theme{border:1px solid var(--line);background:var(--panel);color:var(--text);padding:10px 15px;border-radius:999px;font-weight:900;cursor:pointer;transition:.2s}.btn:hover,.theme:hover{transform:translateY(-2px);border-color:var(--lime)}.btn.primary{background:var(--lime);color:#090b05;border-color:var(--lime)}
+.theme{padding:7px 10px;font-size:.72rem}.theme span{display:inline-grid;place-items:center;width:25px;height:25px;border-radius:50%;background:var(--panel2);margin-right:6px}
+.progress{height:2px;background:linear-gradient(90deg,var(--lime),var(--cyan),var(--pink));width:0}
+.hero{min-height:calc(100vh - 68px);padding:75px 0 90px;display:flex;align-items:center}.hero-grid{display:grid;grid-template-columns:1.04fr .96fr;gap:55px;align-items:center}
+.kicker{display:inline-flex;gap:8px;align-items:center;padding:7px 11px;border:1px solid var(--line);border-radius:999px;background:var(--panel);font-size:.72rem;font-weight:900;color:var(--muted);margin-bottom:20px}.dot{width:8px;height:8px;border-radius:50%;background:var(--lime);box-shadow:0 0 18px var(--lime)}
+h1{font-size:clamp(3.1rem,6.5vw,6.6rem);line-height:.87;letter-spacing:-.075em}.grad{background:linear-gradient(105deg,var(--lime),var(--cyan),var(--pink));-webkit-background-clip:text;background-clip:text;color:transparent}
+.hero p{max-width:750px;color:var(--muted);font-size:1.05rem;margin:25px 0}.actions{display:flex;gap:9px;flex-wrap:wrap}.meta{display:flex;gap:9px;flex-wrap:wrap;margin-top:25px}.chip{padding:8px 10px;border:1px solid var(--line);background:var(--panel);border-radius:11px;font-size:.73rem;color:var(--muted)}
+.robot{min-height:520px;border:1px solid var(--line);border-radius:34px;background:linear-gradient(#ffffff09 1px,transparent 1px),linear-gradient(90deg,#ffffff09 1px,transparent 1px);background-size:35px 35px;position:relative;overflow:hidden}
+body.light .robot{background:linear-gradient(#14202d0d 1px,transparent 1px),linear-gradient(90deg,#14202d0d 1px,transparent 1px);background-size:35px 35px}
+.robot svg{position:absolute;inset:0;width:100%;height:100%}.path{fill:none;stroke:var(--cyan);stroke-width:3;stroke-dasharray:11 8;animation:dash 3s linear infinite}.path2{fill:none;stroke:var(--lime);stroke-width:2;stroke-dasharray:7 8;animation:dash 2s linear infinite reverse}@keyframes dash{to{stroke-dashoffset:-120}}
+.chipnode{position:absolute;padding:12px 14px;border:1px solid var(--line);background:var(--panel);border-radius:15px;font-size:.72rem;font-weight:900;box-shadow:0 12px 35px #0006;text-align:center}.n1{left:7%;top:10%;color:var(--cyan)}.n2{right:7%;top:15%;color:var(--pink)}.n3{left:7%;bottom:13%;color:var(--orange)}.n4{right:7%;bottom:11%;color:var(--lime)}
+.robot-title{position:absolute;left:50%;top:48%;transform:translate(-50%,-50%);text-align:center}.robot-title strong{display:block;font-size:3.3rem;letter-spacing:-.08em}.robot-title span{color:var(--muted);font-size:.68rem;white-space:nowrap}
+section{padding:100px 0}.eyebrow{font-size:.72rem;letter-spacing:.16em;color:var(--lime);font-weight:950;text-transform:uppercase;margin-bottom:10px}h2{font-size:clamp(2.45rem,5vw,4.6rem);line-height:.93;letter-spacing:-.065em;margin-bottom:17px}.lead{max-width:870px;color:var(--muted)}
+.grid2{display:grid;grid-template-columns:1fr 1fr;gap:15px;margin-top:36px}.card{padding:27px;border:1px solid var(--line);border-radius:22px;background:#ffffff04}body.light .card{background:#fff}.icon{font-size:2rem;margin-bottom:10px}.card h3{font-size:1.3rem;margin-bottom:8px}.card p{color:var(--muted)}
+.callout{margin-top:32px;padding:23px 26px;border-left:4px solid var(--lime);border-radius:0 18px 18px 0;background:var(--panel2);color:#cdd4df}.callout b{color:var(--lime)}
+.timeline{display:grid;grid-template-columns:repeat(5,1fr);gap:9px;margin-top:40px}.step{padding:20px 15px;border:1px solid var(--line);border-radius:17px;background:var(--panel);position:relative}.step:not(:last-child):after{content:"→";position:absolute;right:-16px;top:40%;color:#596274;z-index:2}.step b{display:block;margin-bottom:5px}.step span{color:var(--muted);font-size:.82rem}
+.arch{margin-top:40px;padding:30px;border:1px solid var(--line);border-radius:26px;background:var(--panel)}.archflow{display:grid;grid-template-columns:1fr auto 1fr auto 1fr;gap:10px;align-items:center;margin-top:24px}.archnode{text-align:center;padding:18px 10px;border:1px solid var(--line);border-radius:15px;background:var(--panel2);font-size:.78rem;font-weight:900}.arrow{text-align:center;color:#667082;font-size:1.3rem}
+.formula{display:grid;grid-template-columns:repeat(2,1fr);gap:14px;margin-top:35px}.formula-card{padding:25px;border:1px solid var(--line);border-radius:20px;background:var(--panel);text-align:center}.formula-card .eq{font-family:Georgia,serif;font-size:1.35rem;margin:13px 0;color:var(--text)}.formula-card p{color:var(--muted);font-size:.84rem}
+.code-layout{display:grid;grid-template-columns:1fr 1fr;gap:17px;margin-top:38px}.terminal{border:1px solid var(--line);border-radius:22px;overflow:hidden;background:#0b0e13}.termbar{height:42px;display:flex;align-items:center;gap:7px;padding:0 14px;background:#151923;border-bottom:1px solid #252b37}.ball{width:9px;height:9px;border-radius:50%;background:#4a5362}.term-title{margin-left:6px;color:#7f8999;font-size:.72rem}pre{padding:22px;min-height:350px;color:#dce5d7;font-family:Consolas,monospace;font-size:.81rem;line-height:1.75;white-space:pre-wrap}.prompt{color:var(--lime)}.cmd{color:#f6f7fa}.out{color:#93a0b2}
+.explain{border:1px solid var(--line);border-radius:22px;background:var(--panel);padding:26px}.explain h3{font-size:1.5rem;margin-bottom:7px}.explain p{color:var(--muted)}.code{display:inline-block;margin:10px 0;padding:7px 10px;background:#090c11;border:1px solid #2e3542;border-radius:9px;color:var(--lime);font-family:Consolas,monospace}
+.data-grid{display:grid;grid-template-columns:repeat(3,1fr);gap:14px;margin-top:35px}.data{padding:23px;border:1px solid var(--line);border-radius:20px;background:var(--panel)}.data h3{margin:9px 0 6px}.data p{color:var(--muted);font-size:.86rem}.value{font-size:2rem;font-weight:950;color:var(--lime);letter-spacing:-.05em}
+.sliderbox{margin-top:35px;padding:28px;border:1px solid var(--line);border-radius:24px;background:var(--panel)}input[type=range]{width:100%;accent-color:#caff38}.simgrid{display:grid;grid-template-columns:1fr 1fr;gap:20px;align-items:center}.sim{height:280px;border:1px solid var(--line);border-radius:20px;background:linear-gradient(#ffffff07 1px,transparent 1px),linear-gradient(90deg,#ffffff07 1px,transparent 1px);background-size:28px 28px;position:relative;overflow:hidden}.simrobot{position:absolute;width:70px;height:45px;border:3px solid var(--lime);border-radius:12px;left:calc(50% - 35px);top:calc(50% - 22px);transform:rotate(0deg);transition:.15s}.wheel{position:absolute;width:10px;height:23px;background:var(--cyan);border-radius:3px;top:9px}.wl{left:-7px}.wr{right:-7px}.arrowx{position:absolute;left:50%;top:50%;height:3px;background:var(--pink);transform-origin:left;width:75px;transition:.15s}.simstats{display:grid;gap:10px}.stat{padding:16px;border:1px solid var(--line);border-radius:14px;background:var(--panel2)}.stat b{display:block}.stat span{color:var(--muted);font-size:.82rem}
+.error{display:grid;grid-template-columns:repeat(3,1fr);gap:14px;margin-top:35px}.err{padding:23px;border:1px solid var(--line);border-radius:20px;background:var(--panel)}.err .big{font-size:2rem;font-weight:950;color:var(--red)}.err h3{margin:7px 0}.err p{color:var(--muted);font-size:.86rem}
+.surface{display:grid;grid-template-columns:1fr 1fr;gap:14px;margin-top:35px}.surface .card{min-height:180px}
+.direction{display:grid;grid-template-columns:1fr 1fr;gap:14px;margin-top:35px}.dir{padding:25px;border:1px solid var(--line);border-radius:20px;background:var(--panel)}.dir h3{font-size:1.5rem}.dir p{color:var(--muted);margin-top:7px}.dir.good{border-color:#31521e}.dir.warn{border-color:#59313d}
+.quiz{margin-top:40px;padding:28px;border:1px solid var(--line);border-radius:25px;background:var(--panel)}.q{padding:19px 0;border-bottom:1px solid var(--line)}.q:last-child{border:0}.q p{font-weight:900;margin-bottom:11px}.opts{display:flex;gap:7px;flex-wrap:wrap}.opt{padding:8px 11px;border:1px solid var(--line);background:var(--panel2);border-radius:10px;color:var(--text);cursor:pointer}.opt.correct{border-color:var(--lime);color:var(--lime)}.opt.wrong{border-color:var(--red);color:var(--red)}.feedback{min-height:20px;margin-top:7px;color:var(--muted);font-size:.78rem}
+.record{margin-top:38px;padding:30px;border:1px solid var(--line);border-radius:25px;background:linear-gradient(135deg,var(--panel),var(--panel2))}.record-grid{display:grid;grid-template-columns:1fr 1fr;gap:25px;margin-top:22px}.record li{list-style:none;padding:10px 0;border-bottom:1px solid var(--line);color:#c6ceda}.record li:before{content:"✓";color:var(--lime);font-weight:950;margin-right:9px}
+.final{padding:42px;border:1px solid #394252;border-radius:30px;background:radial-gradient(circle at 80% 15%,#ff5bd714,transparent 30%),radial-gradient(circle at 15% 85%,#caff3814,transparent 30%),var(--panel)}
+footer{padding:55px 0 80px;border-top:1px solid var(--line);color:#7e899a}footer strong{color:var(--text)}
+.reveal{opacity:0;transform:translateY(18px);transition:.6s}.reveal.show{opacity:1;transform:none}.toast{position:fixed;right:18px;bottom:18px;padding:12px 15px;border:1px solid var(--line);background:var(--panel);border-radius:12px;opacity:0;transform:translateY(15px);transition:.25s;z-index:300}.toast.show{opacity:1;transform:none}
+@media(max-width:900px){.hero-grid,.code-layout,.grid2,.simgrid,.surface,.direction{grid-template-columns:1fr}.timeline{grid-template-columns:1fr 1fr}.step:not(:last-child):after{display:none}.archflow{grid-template-columns:1fr}.archflow .arrow{display:none}.formula,.data-grid,.error{grid-template-columns:1fr}.navlinks{display:none}}
+@media(max-width:600px){section{padding:75px 0}.hero{padding:55px 0 70px}h1{font-size:3.7rem}.robot{min-height:390px}.theme b{display:none}}
+</style>
+
+<style id="lab-site-nav">
+.lab-site-nav{position:fixed;left:50%;bottom:18px;transform:translateX(-50%);z-index:9999;display:flex;gap:7px;align-items:center;padding:7px;border:1px solid var(--line,#2c3543);border-radius:999px;background:rgba(10,12,17,.9);backdrop-filter:blur(16px);box-shadow:0 12px 40px #0007;font-size:.7rem}
+.lab-site-nav a{padding:8px 11px;border:1px solid var(--line,#2c3543);border-radius:999px;color:var(--text,#f5f7fb);font-weight:900;text-decoration:none}
+.lab-site-nav a:hover{border-color:var(--lime,#caff38);color:var(--lime,#caff38)}
+.lab-site-nav .home{background:var(--lime,#caff38);color:#090b05;border-color:var(--lime,#caff38)}
+@media(max-width:650px){.lab-site-nav{left:10px;right:10px;transform:none;justify-content:space-between}.lab-site-nav .label{display:none}}
+</style>
+</head>
+<body>
+<nav><div class="container nav">
+<div class="logo">EXP <i>04</i> · ODOMETRY LAB</div>
+<div class="navlinks"><a href="#mission">Mission</a><a href="#kinematics">Kinematics</a><a href="#odom">Odometry</a><a href="#ros">ROS 2</a><a href="#errors">Errors</a><a href="#trials">Trials</a><a href="#quiz">Viva</a></div>
+<div style="display:flex;gap:8px;align-items:center"><button class="theme" id="themeToggle"><span id="themeIcon">☀️</span><b id="themeLabel">LIGHT</b></button><a class="btn primary" href="#quiz">VIVA →</a></div>
+</div><div class="progress" id="progress"></div></nav>
+
+<header class="hero" id="mission"><div class="container hero-grid">
+<div class="reveal"><div class="kicker"><span class="dot"></span>26EARP302 · EXPERIMENT 04 · EXERCISE · 4 HOURS</div>
+<h1>Turn wheel<br>motion into<br><span class="grad">position.</span></h1>
+<p>This is where encoder ticks become robot motion. You will derive differential-drive forward kinematics, implement discrete dead-reckoned odometry, publish pose and transforms in ROS 2, compare your estimate with platform odometry, and test how systematic errors and wheel slip distort a supposedly “correct” trajectory.</p>
+<div class="actions"><a class="btn primary" href="#kinematics">START THE KINEMATICS MISSION ↓</a><a class="btn" href="#errors">HUNT THE ERROR 🔎</a></div>
+<div class="meta"><span class="chip">🛞 Wheel angular velocity</span><span class="chip">📐 Differential-drive kinematics</span><span class="chip">🧭 Dead reckoning</span><span class="chip">📡 ROS 2 pose + TF</span><span class="chip">🎯 Square trajectory</span><span class="chip">🧪 Slip + systematic error</span></div></div>
+<div class="robot reveal"><svg viewBox="0 0 600 520" preserveAspectRatio="none"><path class="path" d="M120 390 L120 145 Q120 105 160 105 L450 105 Q490 105 490 145 L490 390 Q490 430 450 430 L160 430 Q120 430 120 390"/><path class="path2" d="M130 390 L130 155 Q130 120 165 120 L440 120 Q475 120 475 155 L475 375"/></svg>
+<div class="chipnode n1">LEFT WHEEL<br><small>ω<sub>L</sub></small></div><div class="chipnode n2">RIGHT WHEEL<br><small>ω<sub>R</sub></small></div><div class="chipnode n3">ENCODERS<br><small>Δticks → Δs</small></div><div class="chipnode n4">ODOMETRY<br><small>x, y, θ</small></div>
+<div class="robot-title"><strong>Δx, Δy, Δθ</strong><span>WHEELS → BODY MOTION → POSE ESTIMATE</span></div></div>
+</div></header>
+
+<section><div class="container"><div class="eyebrow">00 · THE MISSION</div><h2>You're making a<br><span class="grad">robot believe</span> where it is.</h2>
+<p class="lead">Odometry is an estimate. It is built from motion measurements and a model. That makes this experiment much more than an equation exercise: you will test the model against a physical trajectory and then explain where the disagreement comes from.</p>
+<div class="grid2"><div class="card reveal"><div class="icon">📐</div><h3>Derive the motion model</h3><p>Relate left/right wheel angular velocities, wheel radius and track width to the robot's linear and angular velocity.</p></div>
+<div class="card reveal"><div class="icon">🧮</div><h3>Implement discrete odometry</h3><p>Update <code>x, y, θ</code> over time from wheel motion and publish the resulting pose/transform in ROS 2.</p></div>
+<div class="card reveal"><div class="icon">🎯</div><h3>Close the square</h3><p>Execute a closed-square trajectory and compare commanded, reported and physically measured waypoints.</p></div>
+<div class="card reveal"><div class="icon">🧪</div><h3>Explain the error</h3><p>Separate wheel-radius error, track-width error, encoder resolution and random wheel slip — and understand what repeated directional trials reveal.</p></div></div>
+<div class="callout"><b>Core idea:</b> your robot does not directly measure “I am at x = 2.3 m.” It infers motion from wheel measurements and a kinematic model. Every model assumption can become an error source.</div></div></section>
+
+<section id="kinematics"><div class="container"><div class="eyebrow">01 · DIFFERENTIAL-DRIVE KINEMATICS</div><h2>Two wheels.<br>One <span class="grad">instantaneous motion.</span></h2>
+<p class="lead">For a differential-drive robot, the two driven wheels determine the robot's forward and angular velocity. Let wheel radius be <code>r</code>, track width be <code>L</code>, and left/right wheel angular velocities be <code>ω<sub>L</sub></code> and <code>ω<sub>R</sub></code>.</p>
+<div class="formula">
+<div class="formula-card reveal"><div class="icon">🚀</div><h3>Linear velocity</h3><div class="eq">v = r/2 · (ω<sub>R</sub> + ω<sub>L</sub>)</div><p>Equal wheel motion drives forward/backward translation. The sign depends on your convention.</p></div>
+<div class="formula-card reveal"><div class="icon">↻</div><h3>Angular velocity</h3><div class="eq">ω = r/L · (ω<sub>R</sub> − ω<sub>L</sub>)</div><p>A difference in wheel velocities creates rotation about the instantaneous centre of rotation.</p></div>
+<div class="formula-card reveal"><div class="icon">🛞</div><h3>Wheel linear velocity</h3><div class="eq">v<sub>L</sub> = rω<sub>L</sub> &nbsp; · &nbsp; v<sub>R</sub> = rω<sub>R</sub></div><p>Angular wheel speed becomes tangential wheel speed through wheel radius.</p></div>
+<div class="formula-card reveal"><div class="icon">⭕</div><h3>Instantaneous centre</h3><div class="eq">R = v/ω</div><p>For nonzero angular velocity, the robot follows a circular arc around an instantaneous centre of rotation.</p></div>
+</div>
+<div class="callout"><b>Special cases:</b> if <code>ω<sub>L</sub> = ω<sub>R</sub></code>, ideal motion is straight. If the wheel speeds are equal and opposite, the robot rotates about its centre. Otherwise, the body follows a curved path.</div></div></section>
+
+<section><div class="container"><div class="eyebrow">02 · ROLLING CONSTRAINT</div><h2>Why does the model<br>work at all?</h2>
+<p class="lead">The differential-drive model is built around the rolling constraint: under ideal conditions the wheels roll without lateral slip at the contact point. This constraint links wheel motion to the robot body's motion.</p>
+<div class="timeline"><div class="step reveal"><b>WHEEL SPEED</b><span>Encoder-derived angular motion.</span></div><div class="step reveal"><b>WHEEL TRAVEL</b><span>Convert angular travel using r.</span></div><div class="step reveal"><b>BODY VELOCITY</b><span>Combine left + right motion.</span></div><div class="step reveal"><b>POSE UPDATE</b><span>Integrate v and ω over Δt.</span></div><div class="step reveal"><b>ESTIMATE</b><span>Obtain x, y, θ.</span></div></div>
+<div class="arch reveal"><div class="eyebrow">THE MODEL IN ONE LINE</div><div class="archflow"><div class="archnode">Encoder changes<br><small>Δticks</small></div><div class="arrow">→</div><div class="archnode">Wheel travel<br><small>Δs<sub>L</sub>, Δs<sub>R</sub></small></div><div class="arrow">→</div><div class="archnode">Robot increment<br><small>Δs, Δθ</small></div></div></div>
+</div></section>
+
+<section id="odom"><div class="container"><div class="eyebrow">03 · DISCRETE DEAD-RECKONED ODOMETRY</div><h2>Integrate tiny motions<br>into a <span class="grad">trajectory.</span></h2>
+<p class="lead">A discrete odometry node repeatedly estimates how far each wheel travelled during a sampling interval, converts that into body motion, and updates the pose.</p>
+<div class="code-layout"><div class="terminal"><div class="termbar"><span class="ball"></span><span class="ball"></span><span class="ball"></span><span class="term-title">odometry_update()</span></div>
+<pre><span class="cmd">ΔsL = r · ΔθL</span>
+<span class="cmd">ΔsR = r · ΔθR</span>
+
+<span class="cmd">Δs = (ΔsR + ΔsL) / 2</span>
+<span class="cmd">Δθ = (ΔsR - ΔsL) / L</span>
+
+<span class="cmd">x ← x + Δs · cos(θ + Δθ/2)</span>
+<span class="cmd">y ← y + Δs · sin(θ + Δθ/2)</span>
+<span class="cmd">θ ← θ + Δθ</span>
+
+<span class="out">repeat at each update → estimated pose</span></pre></div>
+<div class="explain"><div class="eyebrow">WHY THE MID-HEADING TERM?</div><h3>Don't blindly integrate in the old direction.</h3><p>During a curved motion the robot's heading changes over the interval. A midpoint-style heading <code>θ + Δθ/2</code> gives a useful discrete approximation for the direction associated with the motion increment.</p>
+<div class="callout" style="margin-top:18px"><b>Sign conventions matter.</b> Pick a consistent positive direction for wheel rotation and heading. A sign error can make a mathematically neat implementation produce a physically wrong trajectory.</div>
+</div></div>
+<div class="callout"><b>Implementation challenge:</b> your node must maintain the previous wheel state, compute increments, update pose and publish the result. The source specification does not prescribe a particular programming language or exact topic/frame names for this node, so use the laboratory's established ROS 2 conventions.</div></div></section>
+
+<section id="ros"><div class="container"><div class="eyebrow">04 · ROS 2 IMPLEMENTATION</div><h2>From equation<br>to <span class="grad">ROS 2 graph.</span></h2>
+<p class="lead">The learning outcome requires the resulting pose and transform to be published in ROS 2. The important concept is that your odometry estimate becomes a stream other nodes and visualisation tools can consume.</p>
+<div class="arch reveal"><div class="eyebrow">ODOMETRY NODE</div><div class="archflow"><div class="archnode">Wheel / encoder input<br><small>Δ wheel motion</small></div><div class="arrow">→</div><div class="archnode">Your odometry node<br><small>kinematics + integration</small></div><div class="arrow">→</div><div class="archnode">Pose / transform<br><small>ROS 2 output</small></div></div>
+<div class="archflow" style="margin-top:10px"><div class="archnode">RViz2<br><small>visualise</small></div><div class="arrow">←</div><div class="archnode">Odometry topic<br><small>reported estimate</small></div><div class="arrow">←</div><div class="archnode">TF tree<br><small>frame relationship</small></div></div></div>
+<div class="command-list">
+<div class="cmdrow"><code>ros2 node list</code><div><b>Find your odometry node</b><span class="tag">CHECK</span></div><p>Confirm the node is alive in the graph.</p></div>
+<div class="cmdrow"><code>ros2 topic list</code><div><b>Discover the odometry stream</b><span class="tag">CHECK</span></div><p>Use your laboratory's actual odometry topic name.</p></div>
+<div class="cmdrow"><code>ros2 topic echo /odom</code><div><b>Inspect pose data</b><span class="tag">CHECK</span></div><p>Observe the reported pose/twist stream and compare it with physical behaviour.</p></div>
+<div class="cmdrow"><code>ros2 topic hz /odom</code><div><b>Check update rate</b><span class="tag">CHECK</span></div><p>Measure the publication frequency of the odometry stream.</p></div>
+</div>
+<div class="callout"><b>Verification principle:</b> visual agreement in RViz2 is useful, but the stronger validation is numerical comparison against the platform odometry and physical measurements.</div></div></section>
+
+<section><div class="container"><div class="eyebrow">05 · INTERACTIVE KINEMATICS SANDBOX</div><h2>Play with the wheels.<br>Watch the robot <span class="grad">change.</span></h2>
+<p class="lead">Move the wheel-speed sliders. This simplified visual sandbox helps build intuition before you touch the physical robot.</p>
+<div class="sliderbox reveal"><div class="simgrid"><div class="sim"><div class="simrobot" id="simrobot"><i class="wheel wl"></i><i class="wheel wr"></i></div><div class="arrowx" id="arrowx"></div></div>
+<div class="simstats"><div class="stat"><b>Left wheel ω<sub>L</sub>: <span id="lv">1.0</span> rad/s</b><input id="left" type="range" min="-3" max="3" value="1" step=".1"></div>
+<div class="stat"><b>Right wheel ω<sub>R</sub>: <span id="rv">1.0</span> rad/s</b><input id="right" type="range" min="-3" max="3" value="1" step=".1"></div>
+<div class="stat"><b>Linear velocity v: <span id="vv">1.00</span> r/s</b><span>Illustrative r = 1 unit, L = 2 units</span></div>
+<div class="stat"><b>Angular velocity ω: <span id="av">0.00</span> rad/s</b><span>Positive = one chosen rotational direction; negative = the opposite</span></div>
+</div></div></div></section>
+
+<section id="errors"><div class="container"><div class="eyebrow">06 · WHERE ODOMETRY GOES WRONG</div><h2>The equation can be right<br>and the <span class="grad">trajectory can still be wrong.</span></h2>
+<p class="lead">The experiment explicitly asks you to attribute observed error to wheel-radius error, track-width error, wheel slip and encoder resolution. These do not all behave the same way.</p>
+<div class="error">
+<div class="err reveal"><div class="big">r</div><h3>Wheel-radius error</h3><p>If the actual effective radius differs from the value used by your model, wheel travel is systematically scaled. Distance estimates can drift even when the robot behaves consistently.</p></div>
+<div class="err reveal"><div class="big">L</div><h3>Track-width error</h3><p>If the assumed distance between wheel contact lines is wrong, the inferred angular motion is biased. This is especially visible in turning and closed-loop trajectories.</p></div>
+<div class="err reveal"><div class="big">🛞</div><h3>Wheel slip</h3><p>The rolling model assumes ideal contact. Slip makes encoder-derived travel disagree with actual ground motion and can vary with surface, acceleration and direction.</p></div>
+<div class="err reveal"><div class="big">#</div><h3>Encoder resolution</h3><p>Finite encoder resolution means motion is represented in discrete increments. This contributes measurement quantisation and can matter differently at different speeds and distances.</p></div>
+<div class="err reveal"><div class="big">↻</div><h3>Systematic vs random</h3><p>A repeatable bias can accumulate predictably. Random slip or disturbances may vary between trials. The experiment asks you to use repeated trials to separate these behaviours.</p></div>
+<div class="err reveal"><div class="big">⚙️</div><h3>Model vs reality</h3><p>Odometry is not “wrong” simply because it disagrees with physical measurement. The disagreement is evidence about the model, parameters and measurement assumptions.</p></div>
+</div></div></section>
+
+<section><div class="container"><div class="eyebrow">07 · SQUARE TRAJECTORY</div><h2>The ultimate test:<br><span class="grad">can you close the loop?</span></h2>
+<p class="lead">A square is deliberately unforgiving. Four straight segments and four turns create repeated opportunities for small errors to accumulate. When the robot returns toward its starting point, the final mismatch becomes a visible closure error.</p>
+<div class="arch reveal"><div class="archflow"><div class="archnode">Start<br><small>P₀</small></div><div class="arrow">→</div><div class="archnode">Side 1<br><small>straight</small></div><div class="arrow">→</div><div class="archnode">Turn<br><small>≈ 90°</small></div></div>
+<div class="archflow"><div class="archnode">Side 2<br><small>straight</small></div><div class="arrow">→</div><div class="archnode">Turn × 3<br><small>repeat</small></div><div class="arrow">→</div><div class="archnode">End<br><small>compare P₄ ↔ P₀</small></div></div></div>
+<div class="surface"><div class="card reveal"><div class="icon">📍</div><h3>Commanded trajectory</h3><p>The path you intended the robot to execute from the command sequence.</p></div><div class="card reveal"><div class="icon">📡</div><h3>Odometry-reported trajectory</h3><p>The path estimated by the robot/platform or your odometry implementation.</p></div><div class="card reveal"><div class="icon">📏</div><h3>Physically measured waypoints</h3><p>Ground-truth-like measurements obtained from physical markers/waypoints during the experiment.</p></div><div class="card reveal"><div class="icon">🎯</div><h3>Compare on common axes</h3><p>Plot all three so the nature and direction of the error can be seen rather than hidden inside a single number.</p></div></div>
+</div></section>
+
+<section id="trials"><div class="container"><div class="eyebrow">08 · THE EXPERIMENT THAT SEPARATES MODEL ERROR FROM SLIP</div><h2>Same square.<br>Different <span class="grad">surface + direction.</span></h2>
+<p class="lead">The specification asks for repeated trials on more than one surface and in both rotational directions. This is not busywork: changing surface and turning direction changes the evidence available about systematic error and wheel slip.</p>
+<div class="direction"><div class="dir good reveal"><h3>↻ Clockwise circuit</h3><p>Record closure error and compare the measured and estimated trajectory. Note which side/turns show the largest discrepancy.</p></div><div class="dir warn reveal"><h3>↺ Counter-clockwise circuit</h3><p>Repeat the same style of trial in the opposite rotational direction. A change in error pattern can reveal direction-dependent effects such as asymmetric slip or parameter bias.</p></div></div>
+<div class="grid2"><div class="card reveal"><div class="icon">🧱</div><h3>Surface A</h3><p>Use the first specified laboratory surface. Keep the trajectory procedure consistent and record the closure error.</p></div><div class="card reveal"><div class="icon">🪵</div><h3>Surface B</h3><p>Repeat on a second surface as specified by the laboratory. Compare whether the error remains consistent or changes substantially.</p></div></div>
+<div class="callout"><b>Interpretation challenge:</b> if the error changes strongly with surface or direction, be cautious about blaming only wheel radius or track width. The experiment is designed to make you investigate wheel slip and systematic effects using repeated evidence.</div></div></section>
+
+<section><div class="container"><div class="eyebrow">09 · ERROR METRICS</div><h2>Turn “it missed the start”<br>into <span class="grad">numbers.</span></h2>
+<p class="lead">The post-lab asks you to report closure error normalised per metre travelled and per radian turned, with mean and standard deviation over trials.</p>
+<div class="formula">
+<div class="formula-card reveal"><div class="icon">📏</div><h3>Closure error</h3><div class="eq">e = distance(P<sub>end</sub>, P<sub>start</sub>)</div><p>Use the physical/defined position comparison required by your laboratory procedure.</p></div>
+<div class="formula-card reveal"><div class="icon">📐</div><h3>Per metre travelled</h3><div class="eq">e<sub>m</sub> = e / D</div><p>Normalises closure error by total travelled distance D.</p></div>
+<div class="formula-card reveal"><div class="icon">↻</div><h3>Per radian turned</h3><div class="eq">e<sub>rad</sub> = e / |Θ|</div><p>Normalises error by total absolute heading change |Θ| over the trial.</p></div>
+<div class="formula-card reveal"><div class="icon">📊</div><h3>Trial statistics</h3><div class="eq">mean ± standard deviation</div><p>Summarise repeated trials to distinguish typical behaviour from trial-to-trial variation.</p></div>
+</div>
+<div class="callout"><b>Important:</b> use the exact error definition and measurement convention specified by your instructor/observation sheet when reporting final results. The source specification gives the normalisation requirements but not a complete prescribed statistical formula.</div></div></section>
+
+<section><div class="container"><div class="eyebrow">10 · TROUBLESHOOTING YOUR ODOMETRY NODE</div><h2>Debug the <span class="grad">math + graph + robot.</span></h2>
+<div class="command-list">
+<div class="cmdrow"><code>ros2 node list</code><div><b>Is my node running?</b><span class="tag">GRAPH</span></div><p>First prove that your odometry node exists.</p></div>
+<div class="cmdrow"><code>ros2 topic list</code><div><b>Is the expected stream visible?</b><span class="tag">GRAPH</span></div><p>Confirm the input and output topics used by your implementation.</p></div>
+<div class="cmdrow"><code>ros2 topic info /topic</code><div><b>Who publishes/subscribes?</b><span class="tag">GRAPH</span></div><p>Inspect endpoint counts and connections.</p></div>
+<div class="cmdrow"><code>ros2 topic echo /odom</code><div><b>Are pose values changing?</b><span class="tag">DATA</span></div><p>Check whether position and orientation behave plausibly during motion.</p></div>
+<div class="cmdrow"><code>ros2 topic hz /odom</code><div><b>Is it updating?</b><span class="tag">DATA</span></div><p>Measure publication frequency.</p></div>
+<div class="cmdrow"><code>rviz2</code><div><b>Does the trajectory look plausible?</b><span class="tag">VIS</span></div><p>Use RViz2 as a visual sanity check, not as the only validation method.</p></div>
+</div>
+<div class="callout"><b>Debug in layers:</b> wheel input → increment calculation → kinematic equations → integration → pose output → TF/frame interpretation → physical trajectory. If the final path is wrong, don't assume the final line of code is the culprit.</div></div></section>
+
+<section id="quiz"><div class="container"><div class="eyebrow">11 · MINI VIVA</div><h2>Can you defend<br>your <span class="grad">odometry?</span></h2>
+<div class="quiz">
+<div class="q"><p>1. What happens ideally when both wheel angular velocities are equal?</p><div class="opts"><button class="opt">The robot must spin in place</button><button class="opt" data-correct="true">The robot translates straight</button><button class="opt">The robot disappears from the TF tree</button></div><div class="feedback"></div></div>
+<div class="q"><p>2. What creates angular velocity in a differential-drive model?</p><div class="opts"><button class="opt">Only battery voltage</button><button class="opt" data-correct="true">A difference between right and left wheel velocities</button><button class="opt">The number of ROS nodes</button></div><div class="feedback"></div></div>
+<div class="q"><p>3. Why is odometry called dead reckoning?</p><div class="opts"><button class="opt">It uses GPS only</button><button class="opt">It never changes</button><button class="opt" data-correct="true">It estimates current state by integrating measured motion from a reference state</button></div><div class="feedback"></div></div>
+<div class="q"><p>4. What does an incorrect track width primarily bias?</p><div class="opts"><button class="opt">The terminal font</button><button class="opt" data-correct="true">The inferred rotational motion</button><button class="opt">The LiDAR message type</button></div><div class="feedback"></div></div>
+<div class="q"><p>5. Why repeat trials on different surfaces?</p><div class="opts"><button class="opt">To make the report longer</button><button class="opt" data-correct="true">To investigate how surface-dependent slip affects the observed error</button><button class="opt">Because kinematics changes its units</button></div><div class="feedback"></div></div>
+<div class="q"><p>6. Why compare clockwise and counter-clockwise circuits?</p><div class="opts"><button class="opt">Because only clockwise robots work</button><button class="opt">To change the ROS domain</button><button class="opt" data-correct="true">Directional differences can reveal systematic or asymmetric effects, including slip behaviour</button></div><div class="feedback"></div></div>
+</div></div></section>
+
+<section><div class="container"><div class="eyebrow">12 · POST-LAB DELIVERABLES</div><h2>Don't report a plot.<br>Report a <span class="grad">story.</span></h2>
+<div class="record"><div class="record-grid"><div><h3>📊 Your plots should show</h3><ul style="margin-top:12px"><li>Commanded trajectory</li><li>Odometry-reported trajectory</li><li>Physically measured waypoints</li><li>Common axes and clear labels</li><li>Closure/endpoint comparison</li></ul></div><div><h3>🧠 Your discussion should explain</h3><ul style="margin-top:12px"><li>Error per metre travelled</li><li>Error per radian turned</li><li>Mean + standard deviation across trials</li><li>Surface-to-surface differences</li><li>Clockwise vs counter-clockwise differences</li></ul></div></div></div>
+<div class="callout"><b>Best viva answer:</b> “The trajectory error is not just a failure number. Its magnitude, repeatability, dependence on distance/rotation, surface and direction provide clues about whether the dominant cause is parameter bias, encoder quantisation or wheel slip.”</div></div></section>
+
+<section><div class="container"><div class="final reveal"><div class="eyebrow">13 · MISSION COMPLETE</div><h2>You turned<br><span class="grad">ticks into motion.</span></h2><p class="lead">You derived the differential-drive model, implemented discrete odometry, published a pose estimate, validated it against the platform, measured physical waypoints, ran a square trajectory and used repeated surface/direction trials to investigate systematic error and slip. You are now ready to treat odometry as an engineering measurement — not just an equation.</p><div class="actions" style="margin-top:25px"><a class="btn primary" href="#mission">↺ REPLAY EXP 04</a><a class="btn" href="#quiz">TAKE VIVA AGAIN</a></div></div></div></section>
+
+<footer><div class="container"><strong>Department of Automation & Robotics</strong><br>ROS 2 Mobile Robotics Laboratory · 26EARP302 · Experiment 04<br><br>Student-first interactive tutorial. Exact wheel radius, track width, encoder conventions, topic names, frame names, trajectory dimensions, surfaces and measurement procedure must follow the actual laboratory platform and instructor instructions.</div></footer>
+<div class="toast" id="toast"></div>
+<script>
+const themeToggle=document.getElementById("themeToggle"),themeIcon=document.getElementById("themeIcon"),themeLabel=document.getElementById("themeLabel");
+function applyTheme(t){document.body.classList.toggle("light",t==="light");themeIcon.textContent=t==="light"?"🌙":"☀️";themeLabel.textContent=t==="light"?"DARK":"LIGHT";localStorage.setItem("exp04-theme",t)}
+applyTheme(localStorage.getItem("exp04-theme")||"dark");
+themeToggle.onclick=()=>{const t=document.body.classList.contains("light")?"dark":"light";applyTheme(t);toast(t==="light"?"Light mode activated ☀️":"Dark mode activated 🌙")};
+
+const left=document.getElementById("left"),right=document.getElementById("right"),lv=document.getElementById("lv"),rv=document.getElementById("rv"),vv=document.getElementById("vv"),av=document.getElementById("av"),robot=document.getElementById("simrobot"),arrow=document.getElementById("arrowx");
+function sim(){let l=+left.value,r=+right.value,v=(r+l)/2,w=(r-l)/2;lv.textContent=l.toFixed(1);rv.textContent=r.toFixed(1);vv.textContent=v.toFixed(2);av.textContent=w.toFixed(2);let deg=Math.max(-55,Math.min(55,w*18));robot.style.transform="rotate("+deg+"deg)";arrow.style.transform="rotate("+deg+"deg)";arrow.style.width=(45+Math.min(75,Math.abs(v)*25))+"px"}
+left.oninput=sim;right.oninput=sim;sim();
+
+document.querySelectorAll(".opt").forEach(b=>b.onclick=()=>{const q=b.closest(".q"),fb=q.querySelector(".feedback");q.querySelectorAll(".opt").forEach(x=>x.classList.remove("correct","wrong"));if(b.dataset.correct==="true"){b.classList.add("correct");fb.textContent="Correct ✓ That's the engineering idea."}else{b.classList.add("wrong");fb.textContent="Not quite. Go back to the model and ask what the variable physically represents."}});
+const observer=new IntersectionObserver(es=>es.forEach(e=>{if(e.isIntersecting)e.target.classList.add("show")}),{threshold:.1});document.querySelectorAll(".reveal").forEach(e=>observer.observe(e));
+function toast(s){const t=document.getElementById("toast");t.textContent=s;t.classList.add("show");setTimeout(()=>t.classList.remove("show"),1900)}
+window.addEventListener("scroll",()=>{const h=document.documentElement.scrollHeight-innerHeight;document.getElementById("progress").style.width=(scrollY/h*100)+"%"});
+</script>
+
+<div class="lab-site-nav"><a href="exp03.html">← <span class="label">EXP 03</span></a><a class="home" href="index.html">⌂ <span class="label">LAB HOME</span></a><a href="exp05.html"><span class="label">EXP 05</span> →</a></div>
+</body>
+</html>

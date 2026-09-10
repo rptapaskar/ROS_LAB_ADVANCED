@@ -1,0 +1,593 @@
+<!doctype html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width,initial-scale=1">
+<title>EXP 10 — Design of a Local Navigator for a Specified Robotic Requirement</title>
+<style>
+:root{
+ --bg:#07090d;--panel:#11161f;--panel2:#181e29;--line:#2c3543;
+ --text:#f5f7fb;--muted:#aeb8c8;--lime:#caff38;--cyan:#55e8ff;
+ --pink:#ff5bd7;--orange:#ffb45c;--red:#ff687d
+}
+body.light{--bg:#f5f7fb;--panel:#fff;--panel2:#eef2f7;--line:#d6dde8;--text:#111722;--muted:#5f6979}
+*{box-sizing:border-box;margin:0;padding:0}
+html{scroll-behavior:smooth}
+body{
+ font-family:Inter,system-ui,-apple-system,"Segoe UI",sans-serif;color:var(--text);
+ line-height:1.58;background:
+ radial-gradient(circle at 85% 4%,#caff3813,transparent 25%),
+ radial-gradient(circle at 10% 25%,#55e8ff12,transparent 25%),var(--bg);
+ overflow-x:hidden
+}
+body.light{background:radial-gradient(circle at 85% 4%,#89ad1815,transparent 25%),radial-gradient(circle at 10% 25%,#009bb314,transparent 25%),var(--bg)}
+a{color:inherit;text-decoration:none}button{font:inherit}
+.container{width:min(1220px,92%);margin:auto}
+nav{position:sticky;top:0;z-index:100;background:#07090ddd;backdrop-filter:blur(18px);border-bottom:1px solid var(--line)}
+body.light nav{background:#f5f7fbdd}
+.nav{height:66px;display:flex;align-items:center;justify-content:space-between;gap:12px}
+.logo{font-weight:950;letter-spacing:-.04em}.logo i{font-style:normal;color:var(--lime)}
+.navlinks{display:flex;gap:12px;color:var(--muted);font-size:.67rem}
+.navlinks a:hover{color:var(--lime)}
+.btn,.theme,.mini,.option{
+ border:1px solid var(--line);background:var(--panel);color:var(--text);
+ border-radius:999px;padding:10px 15px;font-weight:900;cursor:pointer;transition:.2s
+}
+.btn:hover,.theme:hover,.mini:hover,.option:hover{transform:translateY(-2px);border-color:var(--lime)}
+.btn.primary{background:var(--lime);color:#090b05;border-color:var(--lime)}
+.theme{padding:7px 10px;font-size:.7rem}.theme span{
+ display:inline-grid;place-items:center;width:25px;height:25px;border-radius:50%;
+ background:var(--panel2);margin-right:5px
+}
+.progress{height:2px;width:0;background:linear-gradient(90deg,var(--lime),var(--cyan),var(--pink))}
+.hero{min-height:calc(100vh - 68px);display:flex;align-items:center;padding:70px 0 90px}
+.hero-grid{display:grid;grid-template-columns:1.02fr .98fr;gap:48px;align-items:center}
+.kicker{
+ display:inline-flex;gap:8px;align-items:center;padding:7px 11px;border:1px solid var(--line);
+ border-radius:999px;background:var(--panel);font-size:.7rem;font-weight:900;color:var(--muted);margin-bottom:20px
+}
+.dot{width:8px;height:8px;border-radius:50%;background:var(--lime);box-shadow:0 0 18px var(--lime)}
+h1{font-size:clamp(3rem,6vw,6.1rem);line-height:.86;letter-spacing:-.078em}
+.grad{background:linear-gradient(105deg,var(--lime),var(--cyan),var(--pink));-webkit-background-clip:text;background-clip:text;color:transparent}
+.hero p{font-size:1.04rem;color:var(--muted);max-width:790px;margin:25px 0}
+.actions{display:flex;gap:9px;flex-wrap:wrap}.meta{display:flex;gap:8px;flex-wrap:wrap;margin-top:24px}
+.chip{padding:8px 10px;border:1px solid var(--line);background:var(--panel);border-radius:11px;font-size:.72rem;color:var(--muted)}
+.hero-art{
+ min-height:520px;border:1px solid var(--line);border-radius:34px;position:relative;overflow:hidden;
+ background:linear-gradient(#ffffff08 1px,transparent 1px),linear-gradient(90deg,#ffffff08 1px,transparent 1px);
+ background-size:35px 35px
+}
+body.light .hero-art{background:linear-gradient(#1522350d 1px,transparent 1px),linear-gradient(90deg,#1522350d 1px,transparent 1px);background-size:35px 35px}
+.hero-art svg{position:absolute;inset:0;width:100%;height:100%}
+.path{fill:none;stroke:var(--cyan);stroke-width:5;stroke-dasharray:9 8}
+.avoid{fill:none;stroke:var(--pink);stroke-width:4;stroke-dasharray:7 7}
+.safe{fill:none;stroke:var(--lime);stroke-width:5}
+.robot{fill:var(--lime)}
+.obs{fill:#ff5bd72a;stroke:var(--pink);stroke-width:4}
+.goal{fill:#55e8ff18;stroke:var(--cyan);stroke-width:4}
+.wall{fill:none;stroke:var(--orange);stroke-width:7}
+.artlabel{position:absolute;padding:10px 12px;border:1px solid var(--line);background:var(--panel);border-radius:13px;font-size:.68rem;font-weight:900;box-shadow:0 12px 35px #0005}
+.l1{left:6%;top:8%;color:var(--cyan)}.l2{right:6%;top:12%;color:var(--pink)}
+.l3{left:6%;bottom:12%;color:var(--lime)}.l4{right:6%;bottom:10%;color:var(--orange)}
+.arttitle{position:absolute;left:50%;top:54%;transform:translate(-50%,-50%);text-align:center}
+.arttitle strong{font-size:2.25rem;display:block;letter-spacing:-.07em}.arttitle span{font-size:.65rem;color:var(--muted);white-space:nowrap}
+section{padding:100px 0}.eyebrow{font-size:.7rem;letter-spacing:.16em;color:var(--lime);font-weight:950;text-transform:uppercase;margin-bottom:10px}
+h2{font-size:clamp(2.45rem,5vw,4.6rem);line-height:.93;letter-spacing:-.065em;margin-bottom:17px}
+.lead{max-width:930px;color:var(--muted)}
+.grid2{display:grid;grid-template-columns:1fr 1fr;gap:15px;margin-top:35px}
+.card{padding:27px;border:1px solid var(--line);border-radius:22px;background:#ffffff04}
+.icon{font-size:2rem;margin-bottom:9px}.card h3{font-size:1.3rem;margin-bottom:7px}.card p{color:var(--muted)}
+.callout{margin-top:30px;padding:22px 25px;border-left:4px solid var(--lime);border-radius:0 18px 18px 0;background:var(--panel2);color:#cbd4df}
+.callout b{color:var(--lime)}
+.flow{display:grid;grid-template-columns:1fr auto 1fr auto 1fr auto 1fr;gap:8px;align-items:center;margin-top:38px}
+.node{padding:19px 10px;text-align:center;border:1px solid var(--line);border-radius:16px;background:var(--panel);font-size:.75rem;font-weight:900}
+.arr{text-align:center;color:#6b7585;font-size:1.25rem}
+.arch{margin-top:38px;padding:28px;border:1px solid var(--line);border-radius:25px;background:var(--panel)}
+.archgrid{display:grid;grid-template-columns:repeat(5,1fr);gap:9px;margin-top:23px}
+.archnode{padding:18px 10px;text-align:center;border:1px solid var(--line);border-radius:15px;background:var(--panel2);font-size:.74rem;font-weight:900}
+.archnode small{color:var(--muted);font-weight:500}
+.phasegrid{display:grid;grid-template-columns:repeat(4,1fr);gap:13px;margin-top:35px}
+.phase{padding:23px;border:1px solid var(--line);border-radius:20px;background:var(--panel);position:relative}
+.phase .num{font-size:2.6rem;font-weight:950;color:var(--lime);line-height:1}
+.phase h3{margin:9px 0 7px}.phase p,.phase li{color:var(--muted);font-size:.83rem}.phase ul{margin:8px 0 0 18px}
+.stategrid{display:grid;grid-template-columns:repeat(6,1fr);gap:8px;margin-top:35px}
+.state{padding:18px 8px;text-align:center;border:1px solid var(--line);border-radius:15px;background:var(--panel);font-size:.73rem;font-weight:900}
+.state.active{border-color:var(--lime);box-shadow:0 0 25px #caff3815}
+.matrix{margin-top:35px;overflow:auto;border:1px solid var(--line);border-radius:20px}
+table{width:100%;border-collapse:collapse;min-width:900px}th,td{padding:14px;border-bottom:1px solid var(--line);text-align:left;font-size:.79rem}
+th{background:var(--panel2);color:var(--lime);font-size:.68rem;text-transform:uppercase}td{color:var(--muted)}td strong{color:var(--text)}
+.paramgrid{display:grid;grid-template-columns:repeat(3,1fr);gap:14px;margin-top:35px}
+.param{padding:22px;border:1px solid var(--line);border-radius:19px;background:var(--panel)}
+.param h3{margin-bottom:6px}.param p{color:var(--muted);font-size:.82rem}.param .source{color:var(--orange);font-size:.71rem;font-weight:900;margin-top:10px}
+.codegrid{display:grid;grid-template-columns:1fr 1fr;gap:16px;margin-top:36px}
+.terminal{border:1px solid var(--line);border-radius:21px;overflow:hidden;background:#0b0e13}
+.termbar{height:40px;padding:0 13px;display:flex;align-items:center;gap:6px;background:#151923;border-bottom:1px solid #252b37}
+.ball{width:9px;height:9px;border-radius:50%;background:#566071}.term-title{margin-left:5px;color:#7e8999;font-size:.7rem}
+pre{padding:20px;min-height:290px;color:#dce5d7;font:12.5px/1.7 Consolas,monospace;white-space:pre-wrap}
+.prompt{color:var(--lime)}.cmd{color:#f6f7fa}.out{color:#95a0b0}
+.cmdlist{display:grid;gap:9px;margin-top:31px}
+.cmdrow{display:grid;grid-template-columns:280px 1fr 1.3fr;gap:15px;padding:16px;border:1px solid var(--line);border-radius:14px;background:var(--panel)}
+.cmdrow code{color:var(--lime);font-weight:900}.cmdrow p{color:var(--muted);font-size:.82rem}
+.interactive{margin-top:38px;padding:29px;border:1px solid var(--line);border-radius:27px;background:var(--panel)}
+.controls{display:grid;grid-template-columns:1fr 1fr;gap:25px;align-items:center}
+.slider label{display:flex;justify-content:space-between;font-weight:900}.slider input{width:100%;accent-color:var(--lime);margin:15px 0}
+.v{color:var(--lime);font-size:1.5rem;font-weight:950}
+.navviz{height:350px;border:1px solid var(--line);border-radius:20px;overflow:hidden;background:
+ linear-gradient(#ffffff07 1px,transparent 1px),linear-gradient(90deg,#ffffff07 1px,transparent 1px);background-size:30px 30px}
+.navviz svg{width:100%;height:100%}
+.readouts{display:grid;grid-template-columns:repeat(3,1fr);gap:9px;margin-top:12px}
+.read{padding:12px;border:1px solid var(--line);border-radius:12px;background:var(--panel2);font-size:.72rem;color:var(--muted)}
+.read b{display:block;color:var(--text);font-size:.98rem}
+.safegrid{display:grid;grid-template-columns:repeat(3,1fr);gap:14px;margin-top:35px}
+.safeCard{padding:23px;border:1px solid var(--line);border-radius:20px;background:var(--panel)}
+.safeCard h3{margin-bottom:7px}.safeCard p{color:var(--muted);font-size:.84rem}.why{margin-top:9px;color:var(--orange);font-size:.75rem;font-weight:900}
+.accept{display:grid;grid-template-columns:repeat(3,1fr);gap:14px;margin-top:35px}
+.trial{padding:23px;border:1px solid var(--line);border-radius:20px;background:var(--panel)}
+.trial .n{font-size:2.1rem;color:var(--cyan);font-weight:950}.trial h3{margin:6px 0}.trial p{color:var(--muted);font-size:.83rem}
+.score{margin-top:35px;display:grid;grid-template-columns:repeat(5,1fr);gap:9px}
+.score .s{padding:17px 10px;text-align:center;border:1px solid var(--line);border-radius:15px;background:var(--panel);font-size:.72rem;font-weight:900}
+.quiz{margin-top:38px;padding:28px;border:1px solid var(--line);border-radius:25px;background:var(--panel)}
+.q{padding:19px 0;border-bottom:1px solid var(--line)}.q:last-child{border:0}.q p{font-weight:900;margin-bottom:10px}
+.opts{display:flex;gap:7px;flex-wrap:wrap}.option{border-radius:10px;padding:8px 11px;background:var(--panel2);font-size:.77rem}
+.option.correct{border-color:var(--lime);color:var(--lime)}.option.wrong{border-color:var(--red);color:var(--red)}
+.feedback{min-height:20px;color:var(--muted);font-size:.77rem;margin-top:7px}
+.checklist{display:grid;grid-template-columns:1fr 1fr;gap:14px;margin-top:35px}
+.check{padding:22px;border:1px solid var(--line);border-radius:18px;background:var(--panel);color:var(--muted)}
+.check span{color:var(--lime);font-size:1.2rem;margin-right:8px}.check b{color:var(--text)}
+.final{padding:43px;border:1px solid #394252;border-radius:30px;background:
+ radial-gradient(circle at 80% 15%,#ff5bd714,transparent 30%),
+ radial-gradient(circle at 15% 85%,#caff3814,transparent 30%),var(--panel)}
+footer{padding:55px 0 80px;border-top:1px solid var(--line);color:#7e899a}footer strong{color:var(--text)}
+.reveal{opacity:0;transform:translateY(18px);transition:.6s}.reveal.show{opacity:1;transform:none}
+.toast{position:fixed;right:18px;bottom:18px;padding:12px 15px;border:1px solid var(--line);background:var(--panel);border-radius:12px;opacity:0;transform:translateY(15px);transition:.25s;z-index:300}
+.toast.show{opacity:1;transform:none}
+@media(max-width:900px){
+ .hero-grid,.grid2,.codegrid,.controls{grid-template-columns:1fr}
+ .flow,.archgrid,.stategrid{grid-template-columns:1fr}.arr{display:none}
+ .phasegrid,.paramgrid,.safegrid,.accept,.score{grid-template-columns:1fr}
+ .cmdrow{grid-template-columns:1fr}.checklist{grid-template-columns:1fr}.navlinks{display:none}
+}
+@media(max-width:600px){section{padding:75px 0}.hero{padding:55px 0 70px}h1{font-size:3.7rem}.hero-art{min-height:390px}.theme b{display:none}}
+</style>
+
+<style id="lab-site-nav">
+.lab-site-nav{position:fixed;left:50%;bottom:18px;transform:translateX(-50%);z-index:9999;display:flex;gap:7px;align-items:center;padding:7px;border:1px solid var(--line,#2c3543);border-radius:999px;background:rgba(10,12,17,.9);backdrop-filter:blur(16px);box-shadow:0 12px 40px #0007;font-size:.7rem}
+.lab-site-nav a{padding:8px 11px;border:1px solid var(--line,#2c3543);border-radius:999px;color:var(--text,#f5f7fb);font-weight:900;text-decoration:none}
+.lab-site-nav a:hover{border-color:var(--lime,#caff38);color:var(--lime,#caff38)}
+.lab-site-nav .home{background:var(--lime,#caff38);color:#090b05;border-color:var(--lime,#caff38)}
+@media(max-width:650px){.lab-site-nav{left:10px;right:10px;transform:none;justify-content:space-between}.lab-site-nav .label{display:none}}
+</style>
+</head>
+<body>
+<nav>
+<div class="container nav">
+<div class="logo">EXP <i>10</i> · NAVIGATOR LAB</div>
+<div class="navlinks">
+<a href="#mission">Mission</a><a href="#architecture">Architecture</a><a href="#state">State</a>
+<a href="#params">Parameters</a><a href="#safety">Safety</a><a href="#acceptance">Acceptance</a><a href="#quiz">Viva</a>
+</div>
+<div style="display:flex;gap:8px;align-items:center">
+<button class="theme" id="theme"><span id="ti">☀️</span><b id="tl">LIGHT</b></button>
+<a class="btn primary" href="#quiz">VIVA →</a>
+</div>
+</div><div class="progress" id="progress"></div>
+</nav>
+
+<header class="hero" id="mission">
+<div class="container hero-grid">
+<div class="reveal">
+<div class="kicker"><span class="dot"></span>26EARP302 · EXPERIMENT 10 · DESIGN ENQUIRY · 3 SESSIONS · 6 HOURS · 10 MARKS</div>
+<h1>Can you design<br>a navigator that<br><span class="grad">doesn't panic?</span></h1>
+<p>This is the capstone design enquiry. You are given a requirement and a safety envelope — move the robot from a start pose to a goal pose six metres away through an obstacle field without contact. <b>No architecture. No sensor arbitration policy. No thresholds. No recovery behaviour is supplied.</b> You decide, implement, test, defend.</p>
+<div class="actions"><a class="btn primary" href="#architecture">DESIGN THE NAVIGATOR ↓</a><a class="btn" href="#safety">MEET THE SAFETY LIMITER 🛡️</a></div>
+<div class="meta">
+<span class="chip">🎯 6 m goal</span><span class="chip">🧱 Obstacles</span><span class="chip">📡 LiDAR</span>
+<span class="chip">📷 RGB-D</span><span class="chip">🧭 IMU</span><span class="chip">🛞 Odometry</span>
+<span class="chip">🧠 State machine</span><span class="chip">🛡️ Safety limiter</span><span class="chip">⚠️ Sensor dropout</span>
+</div>
+</div>
+<div class="hero-art reveal">
+<svg viewBox="0 0 600 520">
+<path class="path" d="M70 405 C150 405 185 345 250 350 C325 356 335 260 405 255 C465 250 475 180 530 120"/>
+<path class="avoid" d="M70 405 C155 410 185 360 245 365 C320 372 338 295 395 282"/>
+<path class="safe" d="M70 405 C150 405 185 345 250 350 C325 356 335 260 405 255 C465 250 475 180 530 120"/>
+<rect x="225" y="320" width="54" height="54" rx="10" class="obs"/>
+<rect x="375" y="225" width="65" height="54" rx="10" class="obs"/>
+<rect x="425" y="145" width="70" height="45" rx="10" class="obs"/>
+<path d="M50 445 L555 445" class="wall"/>
+<circle cx="70" cy="405" r="10" class="robot"/>
+<circle cx="530" cy="120" r="14" class="goal"/>
+<circle cx="70" cy="405" r="28" class="unc"/>
+<path d="M70 405 L130 380" stroke="var(--lime)" stroke-width="3"/>
+</svg>
+<div class="artlabel l1">GOAL SEEKING<br><small>where do I want to go?</small></div>
+<div class="artlabel l2">OBSTACLE AVOIDANCE<br><small>where can I safely go?</small></div>
+<div class="artlabel l3">SAFETY LIMITER<br><small>what may I never command?</small></div>
+<div class="artlabel l4">RECOVERY<br><small>what if the plan breaks?</small></div>
+<div class="arttitle"><strong>Policy + Safety<br>+ State.</strong><span>DESIGN → TEST → BREAK → DEFEND</span></div>
+</div>
+</div>
+</header>
+
+<section>
+<div class="container">
+<div class="eyebrow">00 · THE MISSION</div>
+<h2>Welcome to the<br><span class="grad">capstone.</span></h2>
+<p class="lead">Experiment 10 is deliberately different from the earlier guided experiments. You are given <b>what the robot must accomplish</b> and <b>the safety envelope</b>. The design itself is yours to create and defend.</p>
+<div class="grid2">
+<div class="card reveal"><div class="icon">🎯</div><h3>The requirement</h3><p>Move the robot from the specified start pose to a goal pose six metres away through an obstacle field without contact.</p></div>
+<div class="card reveal"><div class="icon">🚫</div><h3>What is NOT supplied</h3><p>No navigation architecture, sensor arbitration policy, threshold set, control law, state machine or recovery behaviour is supplied.</p></div>
+<div class="card reveal"><div class="icon">🧠</div><h3>Your job</h3><p>Decide and defend the architecture, implement the navigator, parameterise it, test it, induce failures and explain the observed behaviour.</p></div>
+<div class="card reveal"><div class="icon">🛡️</div><h3>The non-negotiable</h3><p>The safety limiter must remain independent from the goal-seeking policy. The robot's desire to reach the goal can never override the safety envelope.</p></div>
+</div>
+<div class="callout"><b>The mindset shift:</b> Experiments 4–9 gave you measurements. Experiment 10 asks: <b>what engineering decisions should those measurements cause you to make?</b></div>
+</div>
+</section>
+
+<section id="architecture">
+<div class="container">
+<div class="eyebrow">01 · ARCHITECTURE</div>
+<h2>Build the navigator<br>as <span class="grad">layers.</span></h2>
+<p class="lead">A robust local navigator should not be one giant “go-to-goal” function. Separate the responsibility for deciding where to go, avoiding obstacles, handling abnormal states and enforcing safety.</p>
+<div class="arch reveal">
+<div class="eyebrow">REFERENCE ARCHITECTURE — YOUR DESIGN MUST BE DEFENDED</div>
+<div class="archgrid">
+<div class="archnode">SENSORS<br><small>LiDAR · RGB-D · IMU · odom</small></div>
+<div class="archnode">STATE ESTIMATION<br><small>pose · velocity · health</small></div>
+<div class="archnode">NAVIGATION POLICY<br><small>goal + obstacle reasoning</small></div>
+<div class="archnode">SAFETY LIMITER<br><small>independent constraint</small></div>
+<div class="archnode">VELOCITY COMMAND<br><small>safe output</small></div>
+</div>
+<div class="callout"><b>Critical design idea:</b> the safety limiter sits downstream of the navigation policy. Even if the goal-seeking controller requests an unsafe velocity, the limiter must be able to override or constrain it.</div>
+</div>
+<div class="flow">
+<div class="node">Sensor<br>observations</div><div class="arr">→</div>
+<div class="node">State +<br>health</div><div class="arr">→</div>
+<div class="node">Goal-seeking +<br>obstacle policy</div><div class="arr">→</div>
+<div class="node">Safety limiter<br>→ cmd_vel</div>
+</div>
+<div class="grid2">
+<div class="card reveal"><div class="icon">🧭</div><h3>Goal-seeking policy</h3><p>Produces motion that attempts to reduce distance/orientation error to the goal.</p></div>
+<div class="card reveal"><div class="icon">📡</div><h3>Obstacle policy</h3><p>Uses available sensing to prevent the goal-seeking behaviour from blindly driving into obstacles.</p></div>
+<div class="card reveal"><div class="icon">⚠️</div><h3>State handling</h3><p>Defines what the robot does when sensing is degraded, an obstacle blocks progress, or the current policy cannot safely continue.</p></div>
+<div class="card reveal"><div class="icon">🔄</div><h3>Recovery behaviour</h3><p>Provides a deliberate response to failure instead of letting the controller oscillate, stall or continue unsafely.</p></div>
+</div>
+</div>
+</section>
+
+<section id="state">
+<div class="container">
+<div class="eyebrow">02 · STATE MACHINE</div>
+<h2>Don't code a mess.<br>Design a <span class="grad">state machine.</span></h2>
+<p class="lead">The laboratory explicitly asks for a state machine. The state machine is your answer to the question: <b>“Given what is happening right now, what should the robot do next?”</b></p>
+<div class="stategrid">
+<div class="state active">START<br><small>initialise</small></div>
+<div class="state">SEEK GOAL<br><small>goal policy</small></div>
+<div class="state">AVOID<br><small>obstacle policy</small></div>
+<div class="state">RECOVER<br><small>unstick / reassess</small></div>
+<div class="state">DEGRADED<br><small>sensor issue</small></div>
+<div class="state">GOAL / STOP<br><small>terminate</small></div>
+</div>
+<div class="phasegrid">
+<div class="phase reveal"><div class="num">01</div><h3>🎯 SEEK</h3><p>When the path is safe, move toward the goal.</p><ul><li>Compute goal direction</li><li>Generate desired motion</li><li>Respect velocity limits</li></ul></div>
+<div class="phase reveal"><div class="num">02</div><h3>🧱 AVOID</h3><p>When obstacle proximity becomes unsafe, abandon or modify the direct goal-seeking command.</p><ul><li>Choose free space</li><li>Reduce speed</li><li>Turn safely</li></ul></div>
+<div class="phase reveal"><div class="num">03</div><h3>🔄 RECOVER</h3><p>When progress stalls or the policy enters an undesirable configuration, execute a defined recovery strategy.</p><ul><li>Stop / reorient</li><li>Reassess sensors</li><li>Resume only when safe</li></ul></div>
+<div class="phase reveal"><div class="num">04</div><h3>⚠️ DEGRADED</h3><p>When an expected sensor becomes unavailable, switch to the explicitly designed safe response.</p><ul><li>Detect dropout</li><li>Limit motion</li><li>Recover or stop</li></ul></div>
+</div>
+<div class="callout"><b>State-machine question:</b> for every transition, write the condition. “Obstacle detected” is not enough — define what threshold, persistence, hysteresis or health condition causes the transition, and justify it using evidence from Experiments 4–9.</div>
+</div>
+</section>
+
+<section id="params">
+<div class="container">
+<div class="eyebrow">03 · PARAMETER TABLE</div>
+<h2>Your parameters need<br>a <span class="grad">reason.</span></h2>
+<p class="lead">The strongest requirement in this experiment is that thresholds and gains must be justified against <b>your own measurements from Experiments 4 to 9</b>. Do not invent a number and call it “tuned”.</p>
+<div class="paramgrid">
+<div class="param reveal"><h3>🛑 Stop distance</h3><p>Distance at which the safety behaviour must prevent continued unsafe motion.</p><div class="source">SOURCE → Exp 05 stopping-distance evidence</div></div>
+<div class="param reveal"><h3>🐢 Slow-down distance</h3><p>Distance at which the navigator begins reducing speed before the hard safety boundary.</p><div class="source">SOURCE → Exp 05 reactive-control data</div></div>
+<div class="param reveal"><h3>📈 Steering gain</h3><p>Gain used by the goal-seeking or avoidance controller to convert directional error into angular velocity.</p><div class="source">SOURCE → measured robot response / prior trials</div></div>
+<div class="param reveal"><h3>🚗 Velocity limit</h3><p>Maximum command allowed by the navigation policy before the independent safety limiter applies its own constraints.</p><div class="source">SOURCE → platform behaviour + Exp 04/05 evidence</div></div>
+<div class="param reveal"><h3>📡 Sensor health threshold</h3><p>Criterion for deciding whether a sensor stream is sufficiently healthy to support navigation.</p><div class="source">SOURCE → Exp 03 sensor communication/quality evidence</div></div>
+<div class="param reveal"><h3>🧭 Pose tolerance</h3><p>Goal-distance and heading criteria used to decide when the robot has reached the target.</p><div class="source">SOURCE → localisation / odometry evidence</div></div>
+<div class="param reveal"><h3>🔁 Recovery timeout</h3><p>Maximum time or condition before the navigator changes state when progress is not occurring.</p><div class="source">SOURCE → your design hypothesis + trials</div></div>
+<div class="param reveal"><h3>↔️ Hysteresis</h3><p>Prevents rapid switching between states when a measurement hovers around a threshold.</p><div class="source">SOURCE → measured sensor variability</div></div>
+<div class="param reveal"><h3>🧱 Clearance margin</h3><p>Additional buffer between detected obstacle distance and the minimum allowed robot clearance.</p><div class="source">SOURCE → Exp 05 + robot geometry</div></div>
+</div>
+<div class="callout"><b>Engineering rule:</b> every parameter row should answer three questions — <b>What is it? Where did the value come from? Why is that value appropriate?</b></div>
+</div>
+</section>
+
+<section>
+<div class="container">
+<div class="eyebrow">04 · DESIGN THE CONTROL LAW</div>
+<h2>Goal seeking should be<br>simple. Safety should be <span class="grad">stronger.</span></h2>
+<div class="grid2">
+<div class="card reveal"><div class="icon">🎯</div><h3>Goal direction</h3><p>Use the current robot pose and goal pose to determine the desired direction of travel. The exact formulation is your design decision.</p></div>
+<div class="card reveal"><div class="icon">🌀</div><h3>Heading control</h3><p>Convert heading error into a controlled angular command while respecting your experimentally justified gain and velocity limits.</p></div>
+<div class="card reveal"><div class="icon">📡</div><h3>Obstacle influence</h3><p>Modify or replace the goal command when obstacle geometry makes direct motion unsafe. Potential-field, switching or blended approaches are possible design choices.</p></div>
+<div class="card reveal"><div class="icon">🛡️</div><h3>Independent safety layer</h3><p>The final command is constrained by the safety limiter regardless of what the goal-seeking controller wants.</p></div>
+</div>
+<div class="flow">
+<div class="node">Desired<br>goal velocity</div><div class="arr">+</div>
+<div class="node">Obstacle<br>response</div><div class="arr">→</div>
+<div class="node">Candidate<br>command</div><div class="arr">→</div>
+<div class="node">SAFETY<br>LIMITER</div>
+</div>
+<div class="callout"><b>Design choice:</b> potential fields, switching and blended approaches are explicitly suggested by the laboratory brief. You must select an approach and defend why it is appropriate for the requirement and safety envelope.</div>
+</div>
+</section>
+
+<section>
+<div class="container">
+<div class="eyebrow">05 · INTERACTIVE NAVIGATOR SANDBOX</div>
+<h2>Watch the policy<br><span class="grad">make decisions.</span></h2>
+<p class="lead">This is a conceptual sandbox for understanding architecture. It is not a substitute for the physical acceptance test. Move the obstacle and safety margin to see why the safety limiter must be independent.</p>
+<div class="interactive reveal">
+<div class="controls">
+<div class="slider">
+<label><span>Obstacle proximity</span><span id="distVal" class="v">0.80 m</span></label>
+<input id="dist" type="range" min=".15" max="1.5" step=".05" value=".8">
+<label style="margin-top:15px"><span>Safety margin</span><span id="marginVal" class="v">0.30 m</span></label>
+<input id="margin" type="range" min=".10" max=".60" step=".05" value=".30">
+<div class="callout" style="margin-top:15px"><b>Decision:</b> if obstacle proximity falls below the effective safety boundary, the safety layer should prevent an unsafe forward command.</div>
+</div>
+<div>
+<div class="navviz"><svg viewBox="0 0 600 350">
+<path d="M55 280 C180 275 240 245 330 210 C410 180 490 125 550 70" class="path"/>
+<rect id="obstacle" x="315" y="160" width="80" height="75" rx="12" class="obs"/>
+<circle cx="55" cy="280" r="12" class="robot"/>
+<circle cx="550" cy="70" r="13" class="goal"/>
+<circle id="safeRing" cx="355" cy="198" r="75" class="unc"/>
+<line x1="55" y1="280" x2="140" y2="258" stroke="var(--lime)" stroke-width="4"/>
+</svg></div>
+<div class="readouts"><div class="read"><b id="decision">SEEK GOAL</b>Navigator state</div><div class="read"><b id="cmd">v = +0.25 m/s</b>Candidate command</div><div class="read"><b id="limit">SAFE</b>Limiter status</div></div>
+</div>
+</div>
+</div>
+</div>
+</section>
+
+<section id="safety">
+<div class="container">
+<div class="eyebrow">06 · THE SAFETY LIMITER</div>
+<h2>The navigator can be clever.<br>The limiter must be <span class="grad">strict.</span></h2>
+<p class="lead">The experiment specifically requires an independent safety limiter. This is a safety architecture principle: the component deciding <i>what the robot wants to do</i> must not be the only component deciding <i>what the robot is allowed to do</i>.</p>
+<div class="safegrid">
+<div class="safeCard reveal"><h3>🧱 Clearance constraint</h3><p>Constrain forward motion based on measured obstacle distance and the experimentally determined safety envelope.</p><div class="why">Evidence → Exp 05 stopping-distance measurements</div></div>
+<div class="safeCard reveal"><h3>⚡ Velocity constraint</h3><p>Prevent candidate commands from exceeding the permitted velocity range.</p><div class="why">Evidence → robot response + safety requirement</div></div>
+<div class="safeCard reveal"><h3>🛑 Emergency stop behaviour</h3><p>Define what happens when the safety boundary is crossed or sensor health becomes unacceptable.</p><div class="why">Evidence → Exp 05 + sensor reliability work</div></div>
+<div class="safeCard reveal"><h3>🔒 Independence</h3><p>The safety limiter must be capable of overriding the goal-seeking policy.</p><div class="why">Architecture → safety must dominate intent</div></div>
+<div class="safeCard reveal"><h3>⚠️ Sensor dropout</h3><p>An unexpected sensor loss must produce a defined safe response rather than undefined behaviour.</p><div class="why">Test → induced dropout during acceptance</div></div>
+<div class="safeCard reveal"><h3>🔄 Recovery</h3><p>After a safety intervention, resume motion only when the recovery condition has actually been satisfied.</p><div class="why">Design → explicit state transition</div></div>
+</div>
+<div class="callout"><b>Golden rule:</b> “Reach the goal” is a performance objective. “Do not contact an obstacle” is a safety constraint. If they conflict, safety wins.</div>
+</div>
+</section>
+
+<section>
+<div class="container">
+<div class="eyebrow">07 · SENSOR ARBITRATION</div>
+<h2>What if the sensors<br><span class="grad">disagree?</span></h2>
+<p class="lead">Your navigator must include explicit sensor arbitration. Earlier experiments give you the evidence needed to decide which sensor should influence which decision and what happens when a sensor becomes unreliable.</p>
+<div class="matrix reveal">
+<table>
+<thead><tr><th>Decision</th><th>Possible evidence</th><th>Design question</th><th>Failure response</th></tr></thead>
+<tbody>
+<tr><td><strong>Obstacle proximity</strong></td><td>LiDAR / RGB-D</td><td>Which sensor is trusted under this geometry?</td><td>Use the designed safety fallback.</td></tr>
+<tr><td><strong>Robot pose</strong></td><td>Odometry / fused estimate</td><td>Which estimate is appropriate for local motion?</td><td>Enter degraded/recovery state if needed.</td></tr>
+<tr><td><strong>Heading</strong></td><td>IMU / fused orientation</td><td>What orientation estimate supports the control law?</td><td>Limit motion if health is unacceptable.</td></tr>
+<tr><td><strong>Sensor health</strong></td><td>Publication / validity / measurement quality</td><td>When is a stream no longer trustworthy?</td><td>Safe stop or explicit fallback.</td></tr>
+<tr><td><strong>Conflicting observations</strong></td><td>Multiple ranging estimates</td><td>Which evidence dominates and why?</td><td>Conservative safety response.</td></tr>
+</tbody>
+</table>
+</div>
+<div class="callout"><b>Do not write “use LiDAR because LiDAR is better”.</b> Reference the measured conditions and failure behaviour established in Experiment 08.</div>
+</div>
+</section>
+
+<section>
+<div class="container">
+<div class="eyebrow">08 · ROS 2 INTEGRATION</div>
+<h2>Now turn the design<br>into a <span class="grad">package.</span></h2>
+<p class="lead">The brief requires implementation and integration as a parameterised ROS 2 package. The architecture should be understandable before code is written.</p>
+<div class="codegrid">
+<div class="terminal reveal"><div class="termbar"><span class="ball"></span><span class="ball"></span><span class="ball"></span><span class="term-title">Build + launch</span></div><pre><span class="prompt">$</span> <span class="cmd">colcon build --symlink-install</span>
+<span class="prompt">$</span> <span class="cmd">source install/setup.bash</span>
+<span class="prompt">$</span> <span class="cmd">ros2 launch &lt;your_package&gt; &lt;your_launch&gt;.py</span>
+
+<span class="out"># Your launch file should compose
+# the navigator and its required
+# configuration in a reproducible way.</span></pre></div>
+<div class="terminal reveal"><div class="termbar"><span class="ball"></span><span class="ball"></span><span class="ball"></span><span class="term-title">Inspect the running design</span></div><pre><span class="prompt">$</span> <span class="cmd">ros2 node list</span>
+<span class="prompt">$</span> <span class="cmd">ros2 topic list</span>
+<span class="prompt">$</span> <span class="cmd">ros2 topic echo /cmd_vel</span>
+<span class="prompt">$</span> <span class="cmd">ros2 topic hz &lt;sensor_topic&gt;</span>
+
+<span class="out"># Replace placeholders with the
+# actual names used in your package.</span></pre></div>
+</div>
+<div class="cmdlist">
+<div class="cmdrow"><code>colcon build --symlink-install</code><div><b>Build the package</b></div><p>Compile/build the ROS 2 workspace and keep Python package changes convenient during development.</p></div>
+<div class="cmdrow"><code>source install/setup.bash</code><div><b>Source the workspace</b></div><p>Make the built package available in the current shell.</p></div>
+<div class="cmdrow"><code>ros2 launch ...</code><div><b>Launch the system</b></div><p>Start the navigator using your launch configuration and parameter set.</p></div>
+<div class="cmdrow"><code>ros2 node list</code><div><b>Check architecture</b></div><p>Confirm the expected nodes are running and identify accidental duplicates or missing components.</p></div>
+<div class="cmdrow"><code>ros2 topic echo /cmd_vel</code><div><b>Inspect the command</b></div><p>See what velocity the navigator is actually producing — especially when the limiter should intervene.</p></div>
+<div class="cmdrow"><code>ros2 topic hz &lt;topic&gt;</code><div><b>Check sensor health</b></div><p>Publication-rate evidence can help identify a sensor dropout or degraded stream.</p></div>
+</div>
+<div class="callout"><b>Parameterised means reproducible.</b> Do not bury critical thresholds and gains inside source code. Expose the design parameters so they can be inspected, changed and justified during testing.</div>
+</div>
+</section>
+
+<section id="acceptance">
+<div class="container">
+<div class="eyebrow">09 · ACCEPTANCE TEST</div>
+<h2>Don't demo it once.<br><span class="grad">Try to break it.</span></h2>
+<p class="lead">The acceptance test is deliberately broader than “the robot reached the goal”. The post-lab requires results over <b>three trials per scenario</b>, including success, time to goal, path length, minimum clearance and any contact.</p>
+<div class="accept">
+<div class="trial reveal"><div class="n">01</div><h3>Normal obstacle field</h3><p>Run the specified scenario repeatedly. Measure whether the robot reaches the goal without contact and how efficiently it does so.</p></div>
+<div class="trial reveal"><div class="n">02</div><h3>Constrained / challenging layout</h3><p>Use the defined acceptance scenarios to expose the weaknesses of the navigation policy and recovery logic.</p></div>
+<div class="trial reveal"><div class="n">03</div><h3>Sensor dropout</h3><p>Introduce the unannounced sensor dropout and observe whether the safety limiter and state handling behave as designed.</p></div>
+</div>
+<div class="score">
+<div class="s">✓ SUCCESS</div><div class="s">⏱ TIME TO GOAL</div><div class="s">📏 PATH LENGTH</div><div class="s">🧱 MIN CLEARANCE</div><div class="s">💥 CONTACT?</div>
+</div>
+<div class="callout"><b>Three trials matter.</b> One successful run proves that the robot succeeded once. Repeated trials give evidence about reliability and variability.</div>
+</div>
+</section>
+
+<section>
+<div class="container">
+<div class="eyebrow">10 · SENSOR DROPOUT</div>
+<h2>The moment your design<br>gets <span class="grad">real.</span></h2>
+<p class="lead">The brief includes an unannounced sensor-dropout test. This is not a surprise for the sake of drama; it checks whether sensor health, state handling and the safety limiter were actually designed rather than assumed.</p>
+<div class="grid2">
+<div class="card reveal"><div class="icon">1️⃣</div><h3>Detect</h3><p>Define what evidence indicates that the expected sensor is unavailable or no longer trustworthy.</p></div>
+<div class="card reveal"><div class="icon">2️⃣</div><h3>Contain</h3><p>Prevent the robot from continuing with an unsafe command based on stale or missing information.</p></div>
+<div class="card reveal"><div class="icon">3️⃣</div><h3>Transition</h3><p>Move to a defined degraded, recovery or safe-stop state.</p></div>
+<div class="card reveal"><div class="icon">4️⃣</div><h3>Recover</h3><p>Resume only when your explicitly defined recovery conditions have been satisfied.</p></div>
+</div>
+<div class="callout"><b>Defence question:</b> “What exactly would your software do if the LiDAR/RGB-D stream disappeared right now?” If the answer is “it depends”, your state machine is incomplete.</div>
+</div>
+</section>
+
+<section>
+<div class="container">
+<div class="eyebrow">11 · DESIGN REVIEW</div>
+<h2>Before implementation,<br>defend the <span class="grad">blueprint.</span></h2>
+<div class="grid2">
+<div class="card reveal"><div class="icon">🗺️</div><h3>Architecture diagram</h3><p>Show sensors, state estimation, navigation policy, safety limiter, commands and the information flow between them.</p></div>
+<div class="card reveal"><div class="icon">🔀</div><h3>State machine</h3><p>Show states, transitions, triggers, safety conditions and recovery paths.</p></div>
+<div class="card reveal"><div class="icon">📋</div><h3>Parameter table</h3><p>List every important threshold/gain, its value, source of evidence and reason for selection.</p></div>
+<div class="card reveal"><div class="icon">🧪</div><h3>Acceptance plan</h3><p>Define how you will measure success, time, path length, minimum clearance, contact and failure modes.</p></div>
+</div>
+<div class="callout"><b>Design review rule:</b> implementation is not permitted until the architecture, state machine and parameter table are sufficiently defined for someone else to understand your design.</div>
+</div>
+</section>
+
+<section>
+<div class="container">
+<div class="eyebrow">12 · FAILURE MODES</div>
+<h2>Every failure should<br>teach you <span class="grad">something.</span></h2>
+<div class="safegrid">
+<div class="safeCard reveal"><h3>🔁 Oscillation</h3><p>The navigator repeatedly switches steering direction or states instead of making progress.</p><div class="why">Investigate → thresholds, gains, hysteresis, policy interaction</div></div>
+<div class="safeCard reveal"><h3>🧱 Corner trap</h3><p>The local policy finds itself in a geometry from which the selected obstacle-avoidance strategy cannot escape.</p><div class="why">Investigate → potential-field / switching limitations</div></div>
+<div class="safeCard reveal"><h3>🐢 Excessive caution</h3><p>The robot remains safe but takes an impractically long time or path to reach the goal.</p><div class="why">Investigate → clearance margin, speed, policy tuning</div></div>
+<div class="safeCard reveal"><h3>🏎️ Over-aggressive motion</h3><p>The robot reaches the goal quickly but loses clearance or approaches obstacles too aggressively.</p><div class="why">Investigate → velocity limits and safety thresholds</div></div>
+<div class="safeCard reveal"><h3>⚠️ Dropout blindness</h3><p>The navigator continues behaving as if a missing sensor were still healthy.</p><div class="why">Investigate → sensor health and state transition logic</div></div>
+<div class="safeCard reveal"><h3>🎯 Goal fixation</h3><p>The goal-seeking policy dominates obstacle information and produces unsafe candidate commands.</p><div class="why">Investigate → arbitration and independent limiter</div></div>
+</div>
+</div>
+</section>
+
+<section id="quiz">
+<div class="container">
+<div class="eyebrow">13 · MINI VIVA</div>
+<h2>Can you defend<br>your <span class="grad">navigator?</span></h2>
+<div class="quiz">
+<div class="q"><p>1. What is deliberately NOT given to you in Experiment 10?</p><div class="opts"><button class="option">The requirement</button><button class="option">The safety envelope</button><button class="option" data-correct="true">The architecture, arbitration policy, thresholds, control law, state machine and recovery behaviour</button></div><div class="feedback"></div></div>
+<div class="q"><p>2. Why must the safety limiter be independent?</p><div class="opts"><button class="option">To make the code longer</button><button class="option" data-correct="true">So it can constrain or override unsafe commands generated by the navigation policy</button><button class="option">So the robot reaches the goal faster</button></div><div class="feedback"></div></div>
+<div class="q"><p>3. Where should important thresholds and gains come from?</p><div class="opts"><button class="option">Random values</button><button class="option">Internet examples</button><button class="option" data-correct="true">Your own measurements from Experiments 4–9, together with justified design requirements</button></div><div class="feedback"></div></div>
+<div class="q"><p>4. Why include an unannounced sensor dropout?</p><div class="opts"><button class="option">To surprise students</button><button class="option" data-correct="true">To test whether sensor-health handling, safety and recovery were genuinely designed</button><button class="option">To increase battery consumption</button></div><div class="feedback"></div></div>
+<div class="q"><p>5. What should happen if goal seeking and safety disagree?</p><div class="opts"><button class="option">Goal seeking always wins</button><button class="option">Whichever controller publishes last wins</button><button class="option" data-correct="true">The safety constraint wins</button></div><div class="feedback"></div></div>
+<div class="q"><p>6. Why use three trials per scenario?</p><div class="opts"><button class="option">Because one trial is illegal</button><button class="option" data-correct="true">To provide evidence of repeatability/reliability rather than relying on a single successful run</button><button class="option">To make the robot travel exactly 18 m</button></div><div class="feedback"></div></div>
+<div class="q"><p>7. Which result is NOT enough to claim a good navigator?</p><div class="opts"><button class="option" data-correct="true">“It reached the goal once.”</button><button class="option">Success rate over repeated trials</button><button class="option">Minimum clearance and failure modes</button></div><div class="feedback"></div></div>
+</div>
+</div>
+</section>
+
+<section>
+<div class="container">
+<div class="eyebrow">14 · POST-LAB CHECKLIST</div>
+<h2>Before your oral defence,<br>have the <span class="grad">evidence.</span></h2>
+<div class="checklist">
+<div class="check"><span>✓</span><b>Architecture:</b> design diagram showing sensing, estimation, policy, safety and command flow.</div>
+<div class="check"><span>✓</span><b>State machine:</b> states, transitions, triggers and recovery behaviour documented.</div>
+<div class="check"><span>✓</span><b>Parameter table:</b> every important threshold/gain has a value and evidence-based justification.</div>
+<div class="check"><span>✓</span><b>ROS 2 package:</b> navigator integrated and parameterised with a reproducible launch configuration.</div>
+<div class="check"><span>✓</span><b>Acceptance results:</b> three trials per scenario with success, time, path length, minimum clearance and contact recorded.</div>
+<div class="check"><span>✓</span><b>Dropout:</b> behaviour of the independent safety limiter documented.</div>
+<div class="check"><span>✓</span><b>Revision:</b> design changes made during implementation recorded with reasons.</div>
+<div class="check"><span>✓</span><b>Defence:</b> explain what worked, what failed, why it failed and what measurement/design decision would improve it.</div>
+</div>
+<div class="callout"><b>Best defence answer:</b> “We chose this architecture because… We selected this threshold from… The measurement showed… When the sensor dropped out, the state changed from… to… The limiter then… Our failure mode was… and we changed… because…”</div>
+</div>
+</section>
+
+<section>
+<div class="container">
+<div class="final reveal">
+<div class="eyebrow">15 · MISSION COMPLETE</div>
+<h2>You were not given<br>a navigator.<br>You <span class="grad">designed one.</span></h2>
+<p class="lead">Experiment 10 is the point where the laboratory stops asking you to implement a prescribed solution. You must transform evidence from Experiments 4–9 into an engineered local navigation system — one that seeks the goal, handles obstacles, survives degraded sensing, recovers from failure and remains bounded by an independent safety limiter.</p>
+<p class="lead" style="margin-top:15px"><b>The final question is not “Did the robot move?”</b> It is: <b>“Can you defend why your robot moved the way it did — and prove that it remained safe?”</b></p>
+<div class="actions" style="margin-top:25px"><a class="btn primary" href="#mission">↺ REPLAY EXP 10</a><a class="btn" href="#quiz">TAKE VIVA AGAIN</a></div>
+</div>
+</div>
+</section>
+
+<footer>
+<div class="container">
+<strong>Department of Automation & Robotics</strong><br>
+ROS 2 Mobile Robotics Laboratory · 26EARP302 · Experiment 10<br><br>
+Student-first interactive design-enquiry tutorial. The uploaded experiment brief specifies the requirement, safety envelope, design-enquiry framing, learning outcomes, allocated sessions, pre-lab and post-lab evidence. Exact robot geometry, topic names, sensor health criteria, obstacle layouts, numerical safety limits, parameter values and acceptance scenarios should follow the approved laboratory implementation and the group's defended design.
+</div>
+</footer>
+
+<div class="toast" id="toast"></div>
+
+<script>
+const theme=document.getElementById("theme"),ti=document.getElementById("ti"),tl=document.getElementById("tl");
+function setTheme(t){
+ document.body.classList.toggle("light",t==="light");
+ ti.textContent=t==="light"?"🌙":"☀️";tl.textContent=t==="light"?"DARK":"LIGHT";
+ localStorage.setItem("exp10-theme",t)
+}
+setTheme(localStorage.getItem("exp10-theme")||"dark");
+theme.onclick=()=>{
+ let t=document.body.classList.contains("light")?"dark":"light";
+ setTheme(t);toast(t==="light"?"Light mode activated ☀️":"Dark mode activated 🌙")
+};
+
+const dist=document.getElementById("dist"),margin=document.getElementById("margin");
+function updateNav(){
+ let d=+dist.value,m=+margin.value;
+ document.getElementById("distVal").textContent=d.toFixed(2)+" m";
+ document.getElementById("marginVal").textContent=m.toFixed(2)+" m";
+ const unsafe=d < (0.25+m*.75);
+ document.getElementById("decision").textContent=unsafe?"SAFETY OVERRIDE":"SEEK GOAL";
+ document.getElementById("cmd").textContent=unsafe?"v = 0.00 m/s":"v = +0.25 m/s";
+ document.getElementById("limit").textContent=unsafe?"LIMITER ACTIVE":"SAFE";
+ const r=45+m*95;
+ document.getElementById("safeRing").setAttribute("r",r);
+ const ox=315+(1.5-d)*42;
+ document.getElementById("obstacle").setAttribute("x",ox);
+ document.getElementById("safeRing").setAttribute("cx",ox+40);
+}
+dist.oninput=updateNav;margin.oninput=updateNav;updateNav();
+
+document.querySelectorAll(".option").forEach(b=>b.onclick=()=>{
+ let q=b.closest(".q"),fb=q.querySelector(".feedback");
+ q.querySelectorAll(".option").forEach(x=>x.classList.remove("correct","wrong"));
+ if(b.dataset.correct==="true"){
+  b.classList.add("correct");fb.textContent="Correct ✓ Now connect that principle to your own design evidence."
+ }else{
+  b.classList.add("wrong");fb.textContent="Not quite. Revisit the architecture, safety and acceptance sections."
+ }
+});
+
+const obs=new IntersectionObserver(es=>es.forEach(e=>{if(e.isIntersecting)e.target.classList.add("show")}),{threshold:.1});
+document.querySelectorAll(".reveal").forEach(e=>obs.observe(e));
+window.addEventListener("scroll",()=>{
+ let h=document.documentElement.scrollHeight-innerHeight;
+ document.getElementById("progress").style.width=(scrollY/h*100)+"%"
+});
+function toast(s){
+ let t=document.getElementById("toast");t.textContent=s;t.classList.add("show");
+ setTimeout(()=>t.classList.remove("show"),1800)
+}
+</script>
+
+<div class="lab-site-nav"><a href="exp09.html">← <span class="label">EXP 09</span></a><a class="home" href="index.html">⌂ <span class="label">LAB HOME</span></a><a href="exp11.html"><span class="label">EXP 11</span> →</a></div>
+</body>
+</html>

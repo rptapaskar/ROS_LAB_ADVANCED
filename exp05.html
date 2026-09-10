@@ -1,0 +1,248 @@
+<!doctype html>
+<html lang="en">
+<head>
+<meta charset="utf-8"><meta name="viewport" content="width=device-width,initial-scale=1">
+<title>EXP 05 — LiDAR-Based Obstacle Detection & Reactive Navigation</title>
+<style>
+:root{--bg:#07080c;--panel:#11151d;--panel2:#171c26;--line:#2b3240;--text:#f5f7fb;--muted:#aeb7c6;--lime:#caff38;--cyan:#55e8ff;--pink:#ff5bd7;--orange:#ffad58;--red:#ff657e;--max:1220px}
+body.light{--bg:#f5f7fb;--panel:#fff;--panel2:#f0f3f7;--line:#d7dde7;--text:#111620;--muted:#5f6878}
+*{box-sizing:border-box;margin:0;padding:0}html{scroll-behavior:smooth}
+body{font-family:Inter,system-ui,-apple-system,"Segoe UI",sans-serif;color:var(--text);line-height:1.58;background:radial-gradient(circle at 85% 4%,#caff3814,transparent 25%),radial-gradient(circle at 10% 25%,#55e8ff12,transparent 24%),var(--bg);overflow-x:hidden}
+body.light{background:radial-gradient(circle at 85% 4%,#7ca01416,transparent 25%),radial-gradient(circle at 10% 25%,#0091b412,transparent 24%),var(--bg)}
+a{text-decoration:none;color:inherit}button{font:inherit}.container{width:min(var(--max),92%);margin:auto}
+nav{position:sticky;top:0;z-index:100;background:#07080cd9;backdrop-filter:blur(18px);border-bottom:1px solid var(--line)}body.light nav{background:#f5f7fbd9}
+.nav{height:66px;display:flex;align-items:center;justify-content:space-between;gap:14px}.logo{font-weight:950;letter-spacing:-.04em}.logo i{font-style:normal;color:var(--lime)}
+.navlinks{display:flex;gap:15px;font-size:.73rem;color:var(--muted)}.navlinks a:hover{color:var(--lime)}
+.btn,.theme{border:1px solid var(--line);background:var(--panel);color:var(--text);padding:10px 15px;border-radius:999px;font-weight:900;cursor:pointer;transition:.2s}.btn:hover,.theme:hover{transform:translateY(-2px);border-color:var(--lime)}.btn.primary{background:var(--lime);color:#090b05;border-color:var(--lime)}
+.theme{padding:7px 10px;font-size:.72rem}.theme span{display:inline-grid;place-items:center;width:25px;height:25px;border-radius:50%;background:var(--panel2);margin-right:6px}
+.progress{height:2px;background:linear-gradient(90deg,var(--lime),var(--cyan),var(--pink));width:0}
+.hero{min-height:calc(100vh - 68px);padding:75px 0 90px;display:flex;align-items:center}.hero-grid{display:grid;grid-template-columns:1.04fr .96fr;gap:55px;align-items:center}
+.kicker{display:inline-flex;gap:8px;align-items:center;padding:7px 11px;border:1px solid var(--line);border-radius:999px;background:var(--panel);font-size:.72rem;font-weight:900;color:var(--muted);margin-bottom:20px}.dot{width:8px;height:8px;border-radius:50%;background:var(--lime);box-shadow:0 0 18px var(--lime)}
+h1{font-size:clamp(3rem,6.3vw,6.3rem);line-height:.87;letter-spacing:-.075em}.grad{background:linear-gradient(105deg,var(--lime),var(--cyan),var(--pink));-webkit-background-clip:text;background-clip:text;color:transparent}
+.hero p{max-width:760px;color:var(--muted);font-size:1.05rem;margin:25px 0}.actions{display:flex;gap:9px;flex-wrap:wrap}.meta{display:flex;gap:9px;flex-wrap:wrap;margin-top:25px}.chip{padding:8px 10px;border:1px solid var(--line);background:var(--panel);border-radius:11px;font-size:.73rem;color:var(--muted)}
+.scan{min-height:520px;border:1px solid var(--line);border-radius:34px;background:radial-gradient(circle at 50% 53%,#55e8ff10,transparent 20%),linear-gradient(#ffffff09 1px,transparent 1px),linear-gradient(90deg,#ffffff09 1px,transparent 1px);background-size:auto,35px 35px,35px 35px;position:relative;overflow:hidden}
+body.light .scan{background:radial-gradient(circle at 50% 53%,#00a4bf10,transparent 20%),linear-gradient(#14202d0d 1px,transparent 1px),linear-gradient(90deg,#14202d0d 1px,transparent 1px);background-size:auto,35px 35px,35px 35px}
+.scan svg{position:absolute;inset:0;width:100%;height:100%}.beam{stroke:var(--lime);stroke-width:2;opacity:.65;stroke-dasharray:7 8;animation:dash 2.2s linear infinite}.arc{fill:none;stroke:var(--cyan);stroke-width:2;opacity:.6}.ob{fill:var(--pink);filter:drop-shadow(0 0 8px #ff5bd7)}
+@keyframes dash{to{stroke-dashoffset:-100}}
+.scan-node{position:absolute;padding:12px 14px;border:1px solid var(--line);background:var(--panel);border-radius:15px;font-size:.72rem;font-weight:900;box-shadow:0 12px 35px #0006;text-align:center}.s1{left:7%;top:10%;color:var(--cyan)}.s2{right:7%;top:15%;color:var(--pink)}.s3{left:7%;bottom:13%;color:var(--orange)}.s4{right:7%;bottom:11%;color:var(--lime)}
+.scan-title{position:absolute;left:50%;top:53%;transform:translate(-50%,-50%);text-align:center}.scan-title strong{display:block;font-size:2.8rem;letter-spacing:-.07em}.scan-title span{color:var(--muted);font-size:.68rem;white-space:nowrap}
+section{padding:100px 0}.eyebrow{font-size:.72rem;letter-spacing:.16em;color:var(--lime);font-weight:950;text-transform:uppercase;margin-bottom:10px}h2{font-size:clamp(2.45rem,5vw,4.6rem);line-height:.93;letter-spacing:-.065em;margin-bottom:17px}.lead{max-width:880px;color:var(--muted)}
+.grid2{display:grid;grid-template-columns:1fr 1fr;gap:15px;margin-top:36px}.card{padding:27px;border:1px solid var(--line);border-radius:22px;background:#ffffff04}body.light .card{background:#fff}.icon{font-size:2rem;margin-bottom:10px}.card h3{font-size:1.3rem;margin-bottom:8px}.card p{color:var(--muted)}
+.callout{margin-top:32px;padding:23px 26px;border-left:4px solid var(--lime);border-radius:0 18px 18px 0;background:var(--panel2);color:#cdd4df}.callout b{color:var(--lime)}
+.timeline{display:grid;grid-template-columns:repeat(5,1fr);gap:9px;margin-top:40px}.step{padding:20px 15px;border:1px solid var(--line);border-radius:17px;background:var(--panel);position:relative}.step:not(:last-child):after{content:"→";position:absolute;right:-16px;top:40%;color:#596274;z-index:2}.step b{display:block;margin-bottom:5px}.step span{color:var(--muted);font-size:.82rem}
+.arch{margin-top:40px;padding:30px;border:1px solid var(--line);border-radius:26px;background:var(--panel)}.archflow{display:grid;grid-template-columns:1fr auto 1fr auto 1fr;gap:10px;align-items:center;margin-top:24px}.archnode{text-align:center;padding:18px 10px;border:1px solid var(--line);border-radius:15px;background:var(--panel2);font-size:.78rem;font-weight:900}.arrow{text-align:center;color:#667082;font-size:1.3rem}
+.sector{display:grid;grid-template-columns:1fr 1fr;gap:18px;margin-top:38px}.sector-map{height:360px;border:1px solid var(--line);border-radius:23px;background:var(--panel);position:relative;overflow:hidden}.sector-map .robot{position:absolute;left:50%;bottom:45px;width:55px;height:55px;border:3px solid var(--lime);border-radius:50%;transform:translateX(-50%)}.sector-map .robot:after{content:"";position:absolute;left:23px;top:-6px;width:5px;height:24px;background:var(--lime);transform:rotate(0deg);transform-origin:50% 30px}.ray{position:absolute;left:50%;bottom:72px;height:220px;width:2px;background:linear-gradient(var(--lime),transparent);transform-origin:bottom center;opacity:.7}.ray.r1{transform:rotate(-55deg)}.ray.r2{transform:rotate(-28deg)}.ray.r3{transform:rotate(0deg)}.ray.r4{transform:rotate(28deg)}.ray.r5{transform:rotate(55deg)}.wall{position:absolute;top:72px;left:18%;right:18%;height:10px;background:var(--pink);border-radius:8px}.sector-label{position:absolute;left:50%;top:22px;transform:translateX(-50%);font-size:.7rem;color:var(--muted);font-weight:900}
+.info{padding:27px;border:1px solid var(--line);border-radius:23px;background:var(--panel)}.info h3{font-size:1.5rem;margin-bottom:8px}.info p{color:var(--muted)}.info ul{margin:15px 0 0 18px;color:var(--muted)}.info li{margin:6px 0}
+.formula{display:grid;grid-template-columns:repeat(2,1fr);gap:14px;margin-top:35px}.formula-card{padding:25px;border:1px solid var(--line);border-radius:20px;background:var(--panel);text-align:center}.formula-card .eq{font-family:Georgia,serif;font-size:1.25rem;margin:13px 0;color:var(--text)}.formula-card p{color:var(--muted);font-size:.84rem}
+.code-layout{display:grid;grid-template-columns:1fr 1fr;gap:17px;margin-top:38px}.terminal{border:1px solid var(--line);border-radius:22px;overflow:hidden;background:#0b0e13}.termbar{height:42px;display:flex;align-items:center;gap:7px;padding:0 14px;background:#151923;border-bottom:1px solid #252b37}.ball{width:9px;height:9px;border-radius:50%;background:#4a5362}.term-title{margin-left:6px;color:#7f8999;font-size:.72rem}pre{padding:22px;min-height:350px;color:#dce5d7;font-family:Consolas,monospace;font-size:.81rem;line-height:1.75;white-space:pre-wrap}.prompt{color:var(--lime)}.cmd{color:#f6f7fa}.out{color:#93a0b2}
+.explain{border:1px solid var(--line);border-radius:22px;background:var(--panel);padding:26px}.explain h3{font-size:1.5rem;margin-bottom:7px}.explain p{color:var(--muted)}.code{display:inline-block;margin:10px 0;padding:7px 10px;background:#090c11;border:1px solid #2e3542;border-radius:9px;color:var(--lime);font-family:Consolas,monospace}
+.command-list{display:grid;gap:10px;margin-top:34px}.cmdrow{display:grid;grid-template-columns:250px 1fr 1.1fr;gap:15px;padding:17px;border:1px solid var(--line);border-radius:15px;background:var(--panel);align-items:start}.cmdrow code{color:var(--lime);font-weight:900}.cmdrow p{color:var(--muted);font-size:.85rem}.tag{display:inline-block;margin-left:7px;padding:3px 6px;border-radius:6px;background:var(--panel2);font-size:.6rem;color:var(--muted);font-weight:900}
+.behaviors{display:grid;grid-template-columns:repeat(3,1fr);gap:14px;margin-top:36px}.behavior{padding:25px;border:1px solid var(--line);border-radius:22px;background:var(--panel);position:relative;overflow:hidden}.behavior .num{font-size:3.2rem;font-weight:950;color:var(--lime);line-height:1}.behavior h3{margin:8px 0}.behavior p{color:var(--muted);font-size:.87rem}.behavior .logic{margin-top:15px;padding:11px;border:1px dashed var(--line);border-radius:11px;color:#c9d0dc;font-size:.78rem}
+.params{display:grid;grid-template-columns:repeat(2,1fr);gap:12px;margin-top:35px}.param{padding:19px;border:1px solid var(--line);border-radius:16px;background:var(--panel)}.param code{color:var(--cyan);font-weight:900}.param p{color:var(--muted);font-size:.83rem;margin-top:5px}
+.tuning{margin-top:36px;padding:28px;border:1px solid var(--line);border-radius:25px;background:var(--panel)}.tunegrid{display:grid;grid-template-columns:1fr 1fr;gap:25px;align-items:center}.tune input{width:100%;accent-color:var(--lime);margin:12px 0}.tunevalue{font-size:2.2rem;font-weight:950;color:var(--lime)}.tuneviz{height:250px;border:1px solid var(--line);border-radius:19px;position:relative;background:linear-gradient(#ffffff07 1px,transparent 1px),linear-gradient(90deg,#ffffff07 1px,transparent 1px);background-size:28px 28px;overflow:hidden}.tuneviz .bot{position:absolute;left:50%;top:50%;width:45px;height:45px;border:3px solid var(--lime);border-radius:50%;transform:translate(-50%,-50%)}.tuneviz .safe{position:absolute;left:50%;top:50%;width:var(--safe,120px);height:var(--safe,120px);border:2px dashed var(--cyan);border-radius:50%;transform:translate(-50%,-50%)}.tuneviz .obs{position:absolute;left:calc(50% + 95px);top:50%;width:28px;height:28px;background:var(--pink);border-radius:8px;transform:translate(-50%,-50%)}
+.metrics{display:grid;grid-template-columns:repeat(3,1fr);gap:14px;margin-top:35px}.metric{padding:23px;border:1px solid var(--line);border-radius:20px;background:var(--panel)}.metric .big{font-size:2.2rem;font-weight:950;color:var(--lime)}.metric h3{margin:7px 0}.metric p{color:var(--muted);font-size:.85rem}
+.fault-grid{display:grid;grid-template-columns:repeat(2,1fr);gap:14px;margin-top:35px}.fault{padding:23px;border:1px solid var(--line);border-radius:20px;background:var(--panel)}.fault h3{margin-bottom:7px}.fault p{color:var(--muted);font-size:.88rem}.fault .symptom{color:var(--red);font-weight:900}.fault .fix{color:var(--lime);font-weight:900;margin-top:10px}
+.failure{display:grid;grid-template-columns:repeat(3,1fr);gap:14px;margin-top:35px}.fail{padding:23px;border:1px solid var(--line);border-radius:20px;background:var(--panel)}.fail h3{margin-bottom:7px}.fail p{color:var(--muted);font-size:.87rem}.fail .why{margin-top:10px;color:var(--orange);font-weight:900;font-size:.8rem}
+.quiz{margin-top:40px;padding:28px;border:1px solid var(--line);border-radius:25px;background:var(--panel)}.q{padding:19px 0;border-bottom:1px solid var(--line)}.q:last-child{border:0}.q p{font-weight:900;margin-bottom:11px}.opts{display:flex;gap:7px;flex-wrap:wrap}.opt{padding:8px 11px;border:1px solid var(--line);background:var(--panel2);border-radius:10px;color:var(--text);cursor:pointer}.opt.correct{border-color:var(--lime);color:var(--lime)}.opt.wrong{border-color:var(--red);color:var(--red)}.feedback{min-height:20px;margin-top:7px;color:var(--muted);font-size:.78rem}
+.record{margin-top:38px;padding:30px;border:1px solid var(--line);border-radius:25px;background:linear-gradient(135deg,var(--panel),var(--panel2))}.record-grid{display:grid;grid-template-columns:1fr 1fr;gap:25px;margin-top:22px}.record li{list-style:none;padding:10px 0;border-bottom:1px solid var(--line);color:#c6ceda}.record li:before{content:"✓";color:var(--lime);font-weight:950;margin-right:9px}
+.final{padding:42px;border:1px solid #394252;border-radius:30px;background:radial-gradient(circle at 80% 15%,#ff5bd714,transparent 30%),radial-gradient(circle at 15% 85%,#caff3814,transparent 30%),var(--panel)}
+footer{padding:55px 0 80px;border-top:1px solid var(--line);color:#7e899a}footer strong{color:var(--text)}
+.reveal{opacity:0;transform:translateY(18px);transition:.6s}.reveal.show{opacity:1;transform:none}.toast{position:fixed;right:18px;bottom:18px;padding:12px 15px;border:1px solid var(--line);background:var(--panel);border-radius:12px;opacity:0;transform:translateY(15px);transition:.25s;z-index:300}.toast.show{opacity:1;transform:none}
+@media(max-width:900px){.hero-grid,.code-layout,.grid2,.sector,.tunegrid,.surface{grid-template-columns:1fr}.timeline{grid-template-columns:1fr 1fr}.step:not(:last-child):after{display:none}.archflow{grid-template-columns:1fr}.archflow .arrow{display:none}.formula,.behaviors,.params,.metrics,.fault-grid,.failure{grid-template-columns:1fr}.cmdrow{grid-template-columns:1fr}.record-grid{grid-template-columns:1fr}.navlinks{display:none}}
+@media(max-width:600px){section{padding:75px 0}.hero{padding:55px 0 70px}h1{font-size:3.7rem}.scan{min-height:390px}.theme b{display:none}}
+</style>
+
+<style id="lab-site-nav">
+.lab-site-nav{position:fixed;left:50%;bottom:18px;transform:translateX(-50%);z-index:9999;display:flex;gap:7px;align-items:center;padding:7px;border:1px solid var(--line,#2c3543);border-radius:999px;background:rgba(10,12,17,.9);backdrop-filter:blur(16px);box-shadow:0 12px 40px #0007;font-size:.7rem}
+.lab-site-nav a{padding:8px 11px;border:1px solid var(--line,#2c3543);border-radius:999px;color:var(--text,#f5f7fb);font-weight:900;text-decoration:none}
+.lab-site-nav a:hover{border-color:var(--lime,#caff38);color:var(--lime,#caff38)}
+.lab-site-nav .home{background:var(--lime,#caff38);color:#090b05;border-color:var(--lime,#caff38)}
+@media(max-width:650px){.lab-site-nav{left:10px;right:10px;transform:none;justify-content:space-between}.lab-site-nav .label{display:none}}
+</style>
+</head>
+<body>
+<nav><div class="container nav">
+<div class="logo">EXP <i>05</i> · REACTIVE NAV</div>
+<div class="navlinks"><a href="#mission">Mission</a><a href="#scan">LiDAR</a><a href="#behaviors">Behaviors</a><a href="#params">Parameters</a><a href="#tuning">Tuning</a><a href="#faults">Failure</a><a href="#quiz">Viva</a></div>
+<div style="display:flex;gap:8px;align-items:center"><button class="theme" id="themeToggle"><span id="themeIcon">☀️</span><b id="themeLabel">LIGHT</b></button><a class="btn primary" href="#quiz">VIVA →</a></div>
+</div><div class="progress" id="progress"></div></nav>
+
+<header class="hero" id="mission"><div class="container hero-grid">
+<div class="reveal"><div class="kicker"><span class="dot"></span>26EARP302 · EXPERIMENT 05 · EXERCISE · 4 HOURS</div>
+<h1>See it.<br>Decide.<br><span class="grad">Move.</span></h1>
+<p>Welcome to reactive navigation. You will close the loop between the physical environment and the robot: convert raw LiDAR scans into sector-wise free-space distances, detect obstacles, trigger an emergency stop, stop-and-turn toward free space, and finally build a proportional wall-aware motion behaviour.</p>
+<div class="actions"><a class="btn primary" href="#scan">ENTER LiDAR MODE ↓</a><a class="btn" href="#behaviors">MEET THE CONTROLLER 🤖</a></div>
+<div class="meta"><span class="chip">📡 LaserScan</span><span class="chip">🧭 Sector extraction</span><span class="br chip">🛑 Emergency stop</span><span class="chip">↪️ Stop + turn</span><span class="chip">🎯 Proportional wall following</span><span class="chip">🧪 Controller tuning</span></div></div>
+<div class="scan reveal"><svg viewBox="0 0 600 520" preserveAspectRatio="none"><path class="arc" d="M150 405 A150 150 0 0 1 450 405"/><path class="arc" d="M95 405 A205 205 0 0 1 505 405"/><path class="beam" d="M300 400 L125 150"/><path class="beam" d="M300 400 L205 115"/><path class="beam" d="M300 400 L300 90"/><path class="beam" d="M300 400 L395 115"/><path class="beam" d="M300 400 L475 150"/><rect class="ob" x="280" y="180" width="40" height="35" rx="7"/></svg>
+<div class="scan-node s1">LiDAR<br><small>LaserScan</small></div><div class="scan-node s2">OBSTACLE<br><small>range → decision</small></div><div class="scan-node s3">CONTROLLER<br><small>v, ω</small></div><div class="scan-node s4">ROBOT<br><small>move → sense</small></div>
+<div class="scan-title"><strong>Sense → Decide</strong><span>CLOSE THE LOOP WITH THE REAL WORLD</span></div></div>
+</div></header>
+
+<section><div class="container"><div class="eyebrow">00 · THE MISSION</div><h2>This time, the environment<br><span class="grad">pushes back.</span></h2>
+<p class="lead">Experiments 1–4 built the foundation: hardware, Linux, ROS 2, sensors and odometry. Experiment 5 turns those ingredients into a closed-loop controller. The robot senses the world, computes a decision and changes its motion — repeatedly.</p>
+<div class="grid2"><div class="card reveal"><div class="icon">📡</div><h3>Turn scan data into geometry</h3><p>Convert a LaserScan message into sector-wise free-space distances with correct index-to-angle mapping and outlier rejection.</p></div>
+<div class="card reveal"><div class="icon">🛑</div><h3>Build a safety behaviour</h3><p>Implement an emergency-stop response when the sensed obstacle distance falls below the selected threshold.</p></div>
+<div class="card reveal"><div class="icon">↪️</div><h3>React intelligently</h3><p>Stop, identify a safer direction, turn toward free space, then resume controlled motion.</p></div>
+<div class="card reveal"><div class="icon">🎯</div><h3>Become proportional</h3><p>Use distance-to-wall information to continuously adjust motion rather than relying only on yes/no decisions.</p></div></div>
+<div class="callout"><b>Core idea:</b> reactive navigation is a feedback loop. Sense → interpret → decide → command → move → sense again. The controller never gets to “forget” the physical world.</div></div></section>
+
+<section id="scan"><div class="container"><div class="eyebrow">01 · LIDAR GEOMETRY</div><h2>Raw ranges are useless<br>until you know <span class="grad">where they point.</span></h2>
+<p class="lead">A planar LaserScan contains an array of range measurements. Each array index corresponds to an angle determined by the scan geometry. Your first engineering job is to map the array correctly before making navigation decisions.</p>
+<div class="sector"><div class="sector-map reveal"><div class="sector-label">FRONT FIELD OF VIEW · SECTORISED</div><div class="wall"></div><div class="robot"></div><i class="ray r1"></i><i class="ray r2"></i><i class="ray r3"></i><i class="ray r4"></i><i class="ray r5"></i></div>
+<div class="info"><h3>🧭 Sector extraction</h3><p>Instead of processing every beam as a separate navigation decision, divide the scan into meaningful directional sectors such as front, left and right according to your lab design.</p><ul><li>Read <code>angle_min</code> and <code>angle_increment</code>.</li><li>Map desired angular bounds to array indices.</li><li>Reject invalid measurements.</li><li>Compute a robust sector distance from the valid samples.</li><li>Feed the result to the controller.</li></ul><div class="callout" style="margin-top:18px"><b>Index mapping:</b> for index <code>i</code>, the corresponding beam angle is commonly related to <code>angle_min + i × angle_increment</code>. Always respect the actual message convention and sensor configuration.</div></div></div>
+<div class="formula">
+<div class="formula-card reveal"><div class="icon">📐</div><h3>Beam angle</h3><div class="eq">θ<sub>i</sub> = angle_min + i · angle_increment</div><p>Connect array position to physical direction.</p></div>
+<div class="formula-card reveal"><div class="icon">📏</div><h3>Free-space distance</h3><div class="eq">d<sub>sector</sub> = robust statistic(valid ranges)</div><p>The exact statistic should follow your controller design; do not blindly use an invalid sample.</p></div></div></div></section>
+
+<section><div class="container"><div class="eyebrow">02 · DATA CLEANING</div><h2>Before the robot reacts,<br><span class="grad">clean the signal.</span></h2>
+<p class="lead">Obstacle avoidance is safety-relevant. A single invalid or out-of-range value should not accidentally become a “wall detected!” command — and a real nearby obstacle should not be hidden by careless filtering.</p>
+<div class="timeline"><div class="step reveal"><b>READ</b><span>Receive LaserScan.</span></div><div class="step reveal"><b>MAP</b><span>Convert sector angles to indices.</span></div><div class="step reveal"><b>FILTER</b><span>Handle invalid/out-of-range values.</span></div><div class="step reveal"><b>SUMMARISE</b><span>Compute sector distances.</span></div><div class="step reveal"><b>DECIDE</b><span>Choose motion behaviour.</span></div></div>
+<div class="code-layout"><div class="terminal"><div class="termbar"><span class="ball"></span><span class="ball"></span><span class="ball"></span><span class="term-title">sector logic</span></div>
+<pre><span class="cmd">for i, r in enumerate(msg.ranges):</span>
+    <span class="cmd">angle = msg.angle_min</span>
+    <span class="cmd">      + i * msg.angle_increment</span>
+
+    <span class="cmd">if not valid(r):</span>
+        <span class="cmd">continue</span>
+
+    <span class="cmd">if angle_in_sector(angle):</span>
+        <span class="cmd">sector.append(r)</span>
+
+<span class="cmd">distance = summarize(sector)</span></pre></div>
+<div class="explain"><h3>What does “valid” mean?</h3><p>Your implementation should explicitly account for the sensor's validity conventions, including non-finite values and measurements outside the meaningful range described by the LaserScan message.</p><h3 style="margin-top:20px">Why reject outliers?</h3><p>Reactive control can be extremely sensitive to a single bad measurement. A robust sector estimate reduces accidental decisions while retaining awareness of genuine obstacles.</p><div class="callout" style="margin-top:18px"><b>Rule:</b> filtering is part of the controller design. Record what you rejected and why — especially during debugging.</div></div></div></div></section>
+
+<section id="behaviors"><div class="container"><div class="eyebrow">03 · THREE REACTIVE BEHAVIOURS</div><h2>From panic button<br>to <span class="grad">actual navigation.</span></h2>
+<p class="lead">The experiment progresses deliberately. Start with a safe binary response, then add directional choice, then add proportional control.</p>
+<div class="behaviors">
+<div class="behavior reveal"><div class="num">01</div><h3>🛑 Emergency stop</h3><p>If the relevant obstacle distance falls below the stop threshold, command the safe stop behaviour defined by the lab.</p><div class="logic">IF d ≤ d_stop → STOP</div></div>
+<div class="behavior reveal"><div class="num">02</div><h3>↪️ Stop + turn</h3><p>Stop when needed, compare free-space sectors, choose a safer turning direction, rotate and resume when the forward path is clear enough.</p><div class="logic">STOP → compare L/R → TURN → re-check</div></div>
+<div class="behavior reveal"><div class="num">03</div><h3>🎯 Proportional wall-aware</h3><p>Instead of waiting for a threshold crossing, continuously alter steering based on distance error while respecting speed limits.</p><div class="logic">error → gain → steering correction</div></div>
+</div>
+<div class="arch reveal"><div class="eyebrow">CONTROLLER PIPELINE</div><div class="archflow"><div class="archnode">LaserScan<br><small>ranges + angles</small></div><div class="arrow">→</div><div class="archnode">Sector extractor<br><small>free-space distances</small></div><div class="arrow">→</div><div class="archnode">Reactive controller<br><small>behaviour + parameters</small></div></div>
+<div class="archflow" style="margin-top:10px"><div class="archnode">ROS 2 velocity command<br><small>v, ω</small></div><div class="arrow">→</div><div class="archnode">Robot motion<br><small>physical environment</small></div><div class="arrow">→</div><div class="archnode">New scan<br><small>feedback</small></div></div></div></div></section>
+
+<section id="params"><div class="container"><div class="eyebrow">04 · PARAMETERS</div><h2>Hard-coded controller?<br><span class="grad">Nope.</span></h2>
+<p class="lead">The learning outcome requires thresholds and gains to be exposed as ROS 2 parameters and tuned experimentally. Parameters turn controller behaviour into something you can measure, compare and reproduce.</p>
+<div class="params">
+<div class="param reveal"><code>stop_distance</code><p>Distance below which the emergency-stop condition is triggered.</p></div>
+<div class="param reveal"><code>slowdown_distance</code><p>Distance at which the controller begins reducing forward speed before the stop threshold.</p></div>
+<div class="param reveal"><code>max_linear_velocity</code><p>Upper bound on commanded forward velocity for the experiment.</p></div>
+<div class="param reveal"><code>max_angular_velocity</code><p>Upper bound on commanded turning rate.</p></div>
+<div class="param reveal"><code>steering_gain</code><p>Gain relating wall/obstacle distance error to steering correction.</p></div>
+<div class="param reveal"><code>parameter_file</code><p>Configuration file holding initial values so experiments can be reproduced.</p></div>
+</div>
+<div class="code-layout"><div class="terminal"><div class="termbar"><span class="ball"></span><span class="ball"></span><span class="ball"></span><span class="term-title">ROS 2 parameter workflow</span></div>
+<pre><span class="prompt">$</span> <span class="cmd">ros2 param list /your_controller</span>
+
+<span class="prompt">$</span> <span class="cmd">ros2 param get /your_controller stop_distance</span>
+
+<span class="prompt">$</span> <span class="cmd">ros2 param set /your_controller stop_distance VALUE</span>
+
+<span class="prompt">$</span> <span class="cmd">ros2 param dump /your_controller</span>
+
+<span class="out"># Use your actual node name and approved
+# parameter values/configuration.</span></pre></div>
+<div class="explain"><h3>Why parameters?</h3><p>Suppose the robot brakes too late. You should be able to test the effect of changing <code>stop_distance</code> without editing the controller source.</p><p>Suppose wall following oscillates. You should be able to adjust the steering gain and evaluate the resulting behaviour experimentally.</p><div class="callout" style="margin-top:18px"><b>Scientific habit:</b> change one parameter deliberately, repeat the trial, record the outcome. Don't randomly turn ten knobs at once.</div></div></div></div></section>
+
+<section id="tuning"><div class="container"><div class="eyebrow">05 · INTERACTIVE TUNING INTUITION</div><h2>Too aggressive?<br>Too timid?<br><span class="grad">Tune it.</span></h2>
+<p class="lead">This mini visualisation is conceptual: use it to build intuition about the effect of steering gain. The real controller must be tuned using the physical robot, measured stopping distance, traverse time and observed failure modes.</p>
+<div class="tuning reveal"><div class="tunegrid"><div class="tune"><div class="tunevalue"><span id="gainVal">1.0</span>×</div><p style="color:var(--muted)">Illustrative steering gain</p><input id="gain" type="range" min=".1" max="3" value="1" step=".1"><div class="stat" style="padding:15px"><b id="gainText">Balanced response</b><span id="gainDesc">Moderate correction toward the desired wall/obstacle relationship.</span></div></div>
+<div class="tuneviz" id="tuneviz"><div class="safe"></div><div class="bot"></div><div class="obs"></div></div></div></div>
+<div class="callout"><b>Real tuning:</b> the specification asks you to characterise the controller against static walls, a corridor, a dead end, a moving obstacle and a thin braking-distance obstacle. Your observations matter more than a “perfect-looking” simulation.</div></div></section>
+
+<section><div class="container"><div class="eyebrow">06 · CONTROLLER LOGIC</div><h2>One loop.<br>Three <span class="grad">questions.</span></h2>
+<div class="arch reveal"><div class="archflow"><div class="archnode">Q1<br><small>How close is the obstacle?</small></div><div class="arrow">→</div><div class="archnode">Q2<br><small>Is forward motion safe?</small></div><div class="arrow">→</div><div class="archnode">Q3<br><small>Which way is safer?</small></div></div>
+<div class="archflow"><div class="archnode">STOP<br><small>if emergency threshold</small></div><div class="arrow">↔</div><div class="archnode">TURN / SLOW<br><small>if approaching obstacle</small></div><div class="arrow">↔</div><div class="archnode">CRUISE / STEER<br><small>if safe</small></div></div></div>
+<div class="formula">
+<div class="formula-card reveal"><div class="icon">🛑</div><h3>Stop decision</h3><div class="eq">d ≤ d<sub>stop</sub> → safe stop</div><p>Threshold-based safety behaviour.</p></div>
+<div class="formula-card reveal"><div class="icon">🐢</div><h3>Slow-down zone</h3><div class="eq">d<sub>stop</sub> &lt; d &lt; d<sub>slow</sub> → reduce v</div><p>Begin braking/caution before the hard stop where your controller design requires it.</p></div>
+<div class="formula-card reveal"><div class="icon">🎯</div><h3>Proportional steering</h3><div class="eq">ω<sub>cmd</sub> ∝ K · error</div><p>Gain converts a measured distance error into a steering response, subject to limits.</p></div>
+<div class="formula-card reveal"><div class="icon">⚙️</div><h3>Velocity limits</h3><div class="eq">|v| ≤ v<sub>max</sub>, |ω| ≤ ω<sub>max</sub></div><p>Prevent the controller from commanding beyond the selected operating limits.</p></div>
+</div></div></section>
+
+<section><div class="container"><div class="eyebrow">07 · ROS 2 DIAGNOSTICS</div><h2>When the robot behaves weird,<br><span class="grad">interrogate the graph.</span></h2>
+<p class="lead">Use the same diagnostic habits from Experiment 3, now applied to a closed-loop controller. Verify that the scan reaches the controller and that the controller's velocity command reaches the robot.</p>
+<div class="command-list">
+<div class="cmdrow"><code>ros2 node list</code><div><b>Is the controller alive?</b><span class="tag">GRAPH</span></div><p>Confirm the controller node is running.</p></div>
+<div class="cmdrow"><code>ros2 node info /node</code><div><b>What does it subscribe/publish?</b><span class="tag">GRAPH</span></div><p>Inspect the controller's interfaces.</p></div>
+<div class="cmdrow"><code>ros2 topic list</code><div><b>Are expected topics present?</b><span class="tag">GRAPH</span></div><p>Find the actual scan and velocity topic names in your lab setup.</p></div>
+<div class="cmdrow"><code>ros2 topic echo /scan</code><div><b>Is LiDAR data flowing?</b><span class="tag">INPUT</span></div><p>Inspect the incoming LaserScan independently.</p></div>
+<div class="cmdrow"><code>ros2 topic hz /scan</code><div><b>Is scan rate reasonable?</b><span class="tag">INPUT</span></div><p>Measure publication rate and relate it to control-loop timing.</p></div>
+<div class="cmdrow"><code>ros2 topic echo /cmd_vel</code><div><b>What is the controller commanding?</b><span class="tag">OUTPUT</span></div><p>Inspect linear/angular velocity commands. Use the actual configured topic and follow the laboratory safety protocol.</p></div>
+<div class="cmdrow"><code>ros2 param list /node</code><div><b>Which parameters exist?</b><span class="tag">TUNING</span></div><p>Confirm that thresholds and gains are actually exposed.</p></div>
+</div></div></section>
+
+<section id="faults"><div class="container"><div class="eyebrow">08 · FAILURE MODES</div><h2>“It oscillates” is not<br>a diagnosis.</h2>
+<p class="lead">The experiment explicitly asks you to measure stopping distance, traverse time and failure modes, and explain oscillation and livelock. Treat behaviour as evidence about the controller.</p>
+<div class="failure">
+<div class="fail reveal"><h3>🌀 Oscillation</h3><p>The robot repeatedly steers left/right instead of settling into a stable path.</p><div class="why">Possible clues: excessive gain, noisy/unstable sector estimate, poor geometry or insufficient damping/logic.</div></div>
+<div class="fail reveal"><h3>🔁 Livelock</h3><p>The robot keeps reacting and moving but fails to make meaningful progress toward a safe traversable state.</p><div class="why">Possible clues: repeated turn decisions, ambiguous free-space selection or controller logic that lacks progress/hysteresis.</div></div>
+<div class="fail reveal"><h3>💥 Late braking</h3><p>The robot reaches an obstacle before stopping at the desired distance.</p><div class="why">Possible clues: sensor latency, control period, mechanical braking distance, speed or threshold.</div></div>
+<div class="fail reveal"><h3>🧱 Wall crash</h3><p>The robot cannot maintain safe clearance while moving alongside a wall.</p><div class="why">Possible clues: sector selection, index mapping, steering gain, frame/geometry assumptions or speed.</div></div>
+<div class="fail reveal"><h3>🚪 Dead-end trap</h3><p>The robot enters a dead end and cannot choose a productive escape behaviour.</p><div class="why">This exposes the limits of purely local reactive decisions and motivates planning.</div></div>
+<div class="fail reveal"><h3>🚶 Moving obstacle</h3><p>A moving object changes the local environment faster than the controller can safely react.</p><div class="why">Compare sensing/control timing with obstacle motion; document the observed failure rather than hiding it.</div></div>
+</div>
+</div></section>
+
+<section><div class="container"><div class="eyebrow">09 · THE FIVE-PART CHARACTERISATION</div><h2>Don't just demo it.<br><span class="grad">stress-test it.</span></h2>
+<p class="lead">The second session asks you to characterise the controller experimentally across five scenarios. Each exposes a different aspect of the reactive strategy.</p>
+<div class="metrics">
+<div class="metric reveal"><div class="big">01</div><h3>Static wall</h3><p>Measure how the controller responds to a stable boundary and whether it maintains the intended clearance.</p></div>
+<div class="metric reveal"><div class="big">02</div><h3>Corridor</h3><p>Observe whether the robot remains stable between boundaries without oscillating excessively.</p></div>
+<div class="metric reveal"><div class="big">03</div><h3>Dead end</h3><p>Test whether local reactive logic can escape the geometry or becomes trapped.</p></div>
+<div class="metric reveal"><div class="big">04</div><h3>Moving obstacle</h3><p>Evaluate response when the sensed obstacle changes over time.</p></div>
+<div class="metric reveal"><div class="big">05</div><h3>Thin braking obstacle</h3><p>Stress the stopping behaviour using a thin obstacle near the measured braking-distance limit.</p></div>
+<div class="metric reveal"><div class="big">Σ</div><h3>Compare, don't cherry-pick</h3><p>Record success/failure, stopping distance, traverse time and failure mode consistently across repeated trials.</p></div>
+</div></div></section>
+
+<section><div class="container"><div class="eyebrow">10 · STOPPING DISTANCE</div><h2>The robot doesn't stop<br>the instant you say <span class="grad">“stop.”</span></h2>
+<p class="lead">The post-lab explicitly asks you to decompose measured stopping distance into sensor latency, control period and mechanical braking distance. This is one of the most important engineering insights in the experiment.</p>
+<div class="formula">
+<div class="formula-card reveal"><div class="icon">📡</div><h3>Sensor latency</h3><div class="eq">motion continues while sensing</div><p>The environment changes before the controller can react to newly sensed information.</p></div>
+<div class="formula-card reveal"><div class="icon">⏱️</div><h3>Control period</h3><div class="eq">sample → compute → command</div><p>The controller operates discretely; a decision is not continuous in time.</p></div>
+<div class="formula-card reveal"><div class="icon">🛞</div><h3>Mechanical braking</h3><div class="eq">robot still moves after command</div><p>Real actuators and wheels need finite time/distance to reduce motion.</p></div>
+<div class="formula-card reveal"><div class="icon">📏</div><h3>Total observed stop distance</h3><div class="eq">≈ sensing + control + mechanical effects</div><p>Use measured data and your laboratory's defined decomposition when reporting the result.</p></div>
+</div>
+<div class="callout"><b>Safety insight:</b> a threshold alone does not guarantee a safe stop. Speed, sensing delay, controller period and physical braking all matter.</div></div></section>
+
+<section><div class="container"><div class="eyebrow">11 · REACTIVE NAVIGATION'S LIMIT</div><h2>Sometimes the robot needs<br><span class="grad">a brain, not just reflexes.</span></h2>
+<p class="lead">A reactive controller responds to what it senses locally. That makes it simple and fast, but local decisions can fail in environments where the robot must remember where it has been or reason about a longer route.</p>
+<div class="grid2"><div class="card reveal"><div class="icon">⚡</div><h3>Why reactive control is great</h3><p>Simple, fast, local and easy to implement. Excellent for immediate obstacle avoidance and controller experiments.</p></div><div class="card reveal"><div class="icon">🧩</div><h3>Why it can fail</h3><p>Dead ends, loops, ambiguous free space and moving environments can expose the limitations of purely local rules.</p></div><div class="card reveal"><div class="icon">🐞</div><h3>Bug-type connection</h3><p>Simple Bug-style strategies use obstacle-boundary following plus goal-directed behaviour, but have known limitations. This experiment builds intuition for why planning matters.</p></div><div class="card reveal"><div class="icon">🗺️</div><h3>What comes next</h3><p>Once sensing and reactive control are understood, higher-level planning can decide where to go rather than only how to react to the nearest obstacle.</p></div></div></div></section>
+
+<section id="quiz"><div class="container"><div class="eyebrow">12 · MINI VIVA</div><h2>Can you explain the<br><span class="grad">controller?</span></h2>
+<div class="quiz">
+<div class="q"><p>1. Why can't you directly treat LaserScan index as an angle in degrees?</p><div class="opts"><button class="opt">Because ROS 2 has no arrays</button><button class="opt" data-correct="true">Because the physical angle comes from angle_min and angle_increment</button><button class="opt">Because LiDAR measures only time</button></div><div class="feedback"></div></div>
+<div class="q"><p>2. What is the first behaviour in the experiment sequence?</p><div class="opts"><button class="opt" data-correct="true">Emergency stop</button><button class="opt">Global path planning</button><button class="opt">SLAM</button></div><div class="feedback"></div></div>
+<div class="q"><p>3. Why expose stop distance and gains as ROS 2 parameters?</p><div class="opts"><button class="opt">To make the program slower</button><button class="opt">To remove the need for experiments</button><button class="opt" data-correct="true">To tune and evaluate controller behaviour without hard-coding every value</button></div><div class="feedback"></div></div>
+<div class="q"><p>4. What does proportional steering do?</p><div class="opts"><button class="opt">Always commands maximum speed</button><button class="opt" data-correct="true">Uses a distance error and gain to produce a steering correction, subject to limits</button><button class="opt">Turns off the LiDAR</button></div><div class="feedback"></div></div>
+<div class="q"><p>5. Why can a controller oscillate?</p><div class="opts"><button class="opt">Because ROS 2 cannot publish Twist</button><button class="opt" data-correct="true">The feedback response may over-correct or react to unstable/noisy measurements and geometry</button><button class="opt">Because every wall is moving</button></div><div class="feedback"></div></div>
+<div class="q"><p>6. Why measure stopping distance instead of only checking whether STOP was commanded?</p><div class="opts"><button class="opt">STOP commands have no physical meaning</button><button class="opt" data-correct="true">The robot continues moving because sensing, computation and mechanical braking take time</button><button class="opt">LiDAR cannot measure distance</button></div><div class="feedback"></div></div>
+</div></div></section>
+
+<section><div class="container"><div class="eyebrow">13 · POST-LAB EVIDENCE</div><h2>Turn robot behaviour<br>into <span class="grad">engineering data.</span></h2>
+<div class="record"><div class="record-grid"><div><h3>📊 Tabulate</h3><ul style="margin-top:12px"><li>Success / failure rate</li><li>Mean stopping distance</li><li>Standard deviation over repeated trials</li><li>Traverse time</li><li>Failure mode</li></ul></div><div><h3>🧠 Explain</h3><ul style="margin-top:12px"><li>Sensor latency contribution</li><li>Control-period contribution</li><li>Mechanical braking contribution</li><li>Why oscillation occurred, if observed</li><li>Why livelock occurred, if observed</li></ul></div></div></div>
+<div class="callout"><b>Final challenge:</b> construct and document a floor plan on which your reactive controller must fail. Then explain why planning is required. A strong engineer doesn't hide failure — they design the experiment that exposes the boundary of the algorithm.</div></div></section>
+
+<section><div class="container"><div class="final reveal"><div class="eyebrow">14 · MISSION COMPLETE</div><h2>You taught a robot<br>to <span class="grad">react.</span></h2><p class="lead">You transformed LaserScan data into directional free-space information, implemented safety and reactive behaviours, exposed controller parameters, tuned them experimentally, measured stopping behaviour and learned why local reactive control can oscillate, livelock or fail in challenging environments. You have crossed the line from sensing the world to acting on it.</p><div class="actions" style="margin-top:25px"><a class="btn primary" href="#mission">↺ REPLAY EXP 05</a><a class="btn" href="#quiz">TAKE VIVA AGAIN</a></div></div></div></section>
+
+<footer><div class="container"><strong>Department of Automation & Robotics</strong><br>ROS 2 Mobile Robotics Laboratory · 26EARP302 · Experiment 05<br><br>Student-first interactive tutorial. Exact LaserScan topic, robot velocity topic, parameter names/values, sector definitions, speed limits, obstacle setup and safety procedures must follow the actual laboratory platform and instructor instructions.</div></footer>
+<div class="toast" id="toast"></div>
+<script>
+const themeToggle=document.getElementById("themeToggle"),themeIcon=document.getElementById("themeIcon"),themeLabel=document.getElementById("themeLabel");
+function applyTheme(t){document.body.classList.toggle("light",t==="light");themeIcon.textContent=t==="light"?"🌙":"☀️";themeLabel.textContent=t==="light"?"DARK":"LIGHT";localStorage.setItem("exp05-theme",t)}
+applyTheme(localStorage.getItem("exp05-theme")||"dark");
+themeToggle.onclick=()=>{const t=document.body.classList.contains("light")?"dark":"light";applyTheme(t);toast(t==="light"?"Light mode activated ☀️":"Dark mode activated 🌙")};
+
+const gain=document.getElementById("gain"),gainVal=document.getElementById("gainVal"),gainText=document.getElementById("gainText"),gainDesc=document.getElementById("gainDesc"),tuneviz=document.getElementById("tuneviz");
+function updateGain(){let g=+gain.value;gainVal.textContent=g.toFixed(1);let size=80+g*55;tuneviz.style.setProperty("--safe",size+"px");if(g<.7){gainText.textContent="Too timid";gainDesc.textContent="Weak correction can make the robot respond slowly and drift farther from the desired clearance."}else if(g<=1.7){gainText.textContent="Balanced response";gainDesc.textContent="Moderate correction — a useful starting intuition before physical tuning."}else{gainText.textContent="Aggressive response";gainDesc.textContent="Strong correction can react quickly but may increase oscillation if the rest of the loop is not well tuned."}}
+gain.oninput=updateGain;updateGain();
+
+document.querySelectorAll(".opt").forEach(b=>b.onclick=()=>{const q=b.closest(".q"),fb=q.querySelector(".feedback");q.querySelectorAll(".opt").forEach(x=>x.classList.remove("correct","wrong"));if(b.dataset.correct==="true"){b.classList.add("correct");fb.textContent="Correct ✓ That's the engineering idea."}else{b.classList.add("wrong");fb.textContent="Not quite. Go back to the sensing → decision → actuation loop."}});
+const observer=new IntersectionObserver(es=>es.forEach(e=>{if(e.isIntersecting)e.target.classList.add("show")}),{threshold:.1});document.querySelectorAll(".reveal").forEach(e=>observer.observe(e));
+function toast(s){const t=document.getElementById("toast");t.textContent=s;t.classList.add("show");setTimeout(()=>t.classList.remove("show"),1900)}
+window.addEventListener("scroll",()=>{const h=document.documentElement.scrollHeight-innerHeight;document.getElementById("progress").style.width=(scrollY/h*100)+"%"});
+</script>
+
+<div class="lab-site-nav"><a href="exp04.html">← <span class="label">EXP 04</span></a><a class="home" href="index.html">⌂ <span class="label">LAB HOME</span></a><a href="exp06.html"><span class="label">EXP 06</span> →</a></div>
+</body>
+</html>

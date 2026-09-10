@@ -1,0 +1,255 @@
+<!doctype html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width,initial-scale=1">
+<title>EXP 02 — ROS 2: From Command to Robot Motion</title>
+<style>
+:root{--bg:#07080c;--panel:#11151d;--panel2:#171c26;--line:#2b3240;--text:#f5f7fb;--muted:#aeb7c6;--lime:#caff38;--cyan:#55e8ff;--pink:#ff5bd7;--orange:#ffad58;--red:#ff657e;--max:1220px}
+body.light{--bg:#f5f7fb;--panel:#fff;--panel2:#f0f3f7;--line:#d7dde7;--text:#111620;--muted:#5f6878}
+*{box-sizing:border-box;margin:0;padding:0}html{scroll-behavior:smooth}
+body{font-family:Inter,system-ui,-apple-system,"Segoe UI",sans-serif;color:var(--text);line-height:1.58;background:radial-gradient(circle at 85% 4%,#caff3814,transparent 25%),radial-gradient(circle at 10% 25%,#55e8ff12,transparent 24%),var(--bg);overflow-x:hidden}
+body.light{background:radial-gradient(circle at 85% 4%,#7ca01416,transparent 25%),radial-gradient(circle at 10% 25%,#0091b412,transparent 24%),var(--bg)}
+a{text-decoration:none;color:inherit}button{font:inherit}.container{width:min(var(--max),92%);margin:auto}
+nav{position:sticky;top:0;z-index:100;background:#07080cd6;backdrop-filter:blur(18px);border-bottom:1px solid var(--line)}body.light nav{background:#f5f7fbd9}
+.nav{height:66px;display:flex;align-items:center;justify-content:space-between;gap:14px}.logo{font-weight:950;letter-spacing:-.04em}.logo i{font-style:normal;color:var(--lime)}
+.navlinks{display:flex;gap:17px;font-size:.79rem;color:var(--muted)}.navlinks a:hover{color:var(--lime)}
+.btn,.theme{border:1px solid var(--line);background:var(--panel);color:var(--text);padding:10px 15px;border-radius:999px;font-weight:900;cursor:pointer;transition:.2s}.btn:hover,.theme:hover{transform:translateY(-2px);border-color:var(--lime)}.btn.primary{background:var(--lime);color:#090b05;border-color:var(--lime)}
+.theme{padding:7px 10px;font-size:.72rem}.theme span{display:inline-grid;place-items:center;width:25px;height:25px;border-radius:50%;background:var(--panel2);margin-right:6px}
+.progress{height:2px;background:linear-gradient(90deg,var(--lime),var(--cyan),var(--pink));width:0}
+.hero{min-height:calc(100vh - 68px);padding:80px 0 95px;display:flex;align-items:center}.hero-grid{display:grid;grid-template-columns:1.05fr .95fr;gap:55px;align-items:center}
+.kicker{display:inline-flex;gap:8px;align-items:center;padding:7px 11px;border:1px solid var(--line);border-radius:999px;background:var(--panel);font-size:.73rem;font-weight:900;color:var(--muted);margin-bottom:20px}.dot{width:8px;height:8px;border-radius:50%;background:var(--lime);box-shadow:0 0 18px var(--lime)}
+h1{font-size:clamp(3.4rem,7vw,7rem);line-height:.87;letter-spacing:-.075em}.grad{background:linear-gradient(105deg,var(--lime),var(--cyan),var(--pink));-webkit-background-clip:text;background-clip:text;color:transparent}
+.hero p{max-width:730px;color:var(--muted);font-size:1.08rem;margin:25px 0}.actions{display:flex;gap:9px;flex-wrap:wrap}.meta{display:flex;gap:9px;flex-wrap:wrap;margin-top:25px}.chip{padding:8px 10px;border:1px solid var(--line);background:var(--panel);border-radius:11px;font-size:.75rem;color:var(--muted)}
+.graph{min-height:520px;border:1px solid var(--line);border-radius:34px;background:linear-gradient(#ffffff09 1px,transparent 1px),linear-gradient(90deg,#ffffff09 1px,transparent 1px);background-size:35px 35px;position:relative;overflow:hidden}
+body.light .graph{background:linear-gradient(#14202d0d 1px,transparent 1px),linear-gradient(90deg,#14202d0d 1px,transparent 1px);background-size:35px 35px}
+.graph svg{position:absolute;inset:0;width:100%;height:100%}.gline{stroke:var(--cyan);stroke-width:2;stroke-dasharray:8 7;animation:dash 3s linear infinite}.gline2{stroke:var(--lime);stroke-width:2;stroke-dasharray:8 7;animation:dash 2.3s linear infinite reverse}@keyframes dash{to{stroke-dashoffset:-100}}
+.gnode{position:absolute;padding:13px 15px;border:1px solid var(--line);background:var(--panel);border-radius:16px;font-size:.75rem;font-weight:900;box-shadow:0 12px 35px #0006;text-align:center}.g1{left:8%;top:17%;color:var(--cyan)}.g2{left:39%;top:8%;color:var(--lime)}.g3{right:7%;top:24%;color:var(--pink)}.g4{left:29%;bottom:18%;color:var(--orange)}.g5{right:11%;bottom:12%;color:var(--cyan)}.graph-title{position:absolute;left:50%;top:50%;transform:translate(-50%,-50%);text-align:center}.graph-title strong{display:block;font-size:3rem;letter-spacing:-.06em}.graph-title span{color:var(--muted);font-size:.75rem}
+section{padding:100px 0}.eyebrow{font-size:.73rem;letter-spacing:.16em;color:var(--lime);font-weight:950;text-transform:uppercase;margin-bottom:10px}h2{font-size:clamp(2.5rem,5vw,4.7rem);line-height:.93;letter-spacing:-.065em;margin-bottom:17px}.lead{max-width:820px;color:var(--muted)}
+.grid2{display:grid;grid-template-columns:1fr 1fr;gap:15px;margin-top:36px}.card{padding:27px;border:1px solid var(--line);border-radius:22px;background:#ffffff04}body.light .card{background:#fff}.icon{font-size:2rem;margin-bottom:10px}.card h3{font-size:1.3rem;margin-bottom:8px}.card p{color:var(--muted)}
+.callout{margin-top:32px;padding:23px 26px;border-left:4px solid var(--lime);border-radius:0 18px 18px 0;background:var(--panel2);color:#cdd4df}.callout b{color:var(--lime)}
+.timeline{display:grid;grid-template-columns:repeat(5,1fr);gap:9px;margin-top:40px}.step{padding:20px 15px;border:1px solid var(--line);border-radius:17px;background:var(--panel);position:relative}.step:not(:last-child):after{content:"→";position:absolute;right:-16px;top:40%;color:#596274;z-index:2}.step b{display:block;margin-bottom:5px}.step span{color:var(--muted);font-size:.82rem}
+.arch{margin-top:40px;padding:30px;border:1px solid var(--line);border-radius:26px;background:var(--panel)}.archflow{display:grid;grid-template-columns:1fr auto 1fr auto 1fr;gap:10px;align-items:center;margin-top:24px}.archnode{text-align:center;padding:18px 10px;border:1px solid var(--line);border-radius:15px;background:var(--panel2);font-size:.78rem;font-weight:900}.arrow{text-align:center;color:#667082;font-size:1.3rem}
+.code-layout{display:grid;grid-template-columns:1fr 1fr;gap:17px;margin-top:38px}.terminal{border:1px solid var(--line);border-radius:22px;overflow:hidden;background:#0b0e13}.termbar{height:42px;display:flex;align-items:center;gap:7px;padding:0 14px;background:#151923;border-bottom:1px solid #252b37}.ball{width:9px;height:9px;border-radius:50%;background:#4a5362}.term-title{margin-left:6px;color:#7f8999;font-size:.72rem}pre{padding:22px;min-height:350px;color:#dce5d7;font-family:Consolas,monospace;font-size:.82rem;line-height:1.75;white-space:pre-wrap}.prompt{color:var(--lime)}.cmd{color:#f6f7fa}.out{color:#93a0b2}
+.explain{border:1px solid var(--line);border-radius:22px;background:var(--panel);padding:26px}.explain h3{font-size:1.5rem;margin-bottom:7px}.explain p{color:var(--muted)}.code{display:inline-block;margin:12px 0;padding:7px 10px;background:#090c11;border:1px solid #2e3542;border-radius:9px;color:var(--lime);font-family:Consolas,monospace}.tabs{display:flex;gap:7px;flex-wrap:wrap;margin-top:18px}.tab{padding:8px 10px;border:1px solid var(--line);background:var(--panel2);color:var(--muted);border-radius:10px;font-weight:850;font-size:.74rem;cursor:pointer}.tab.active{color:var(--lime);border-color:var(--lime)}
+.command-list{display:grid;gap:10px;margin-top:34px}.cmdrow{display:grid;grid-template-columns:205px 1fr 1.1fr;gap:15px;padding:17px;border:1px solid var(--line);border-radius:15px;background:var(--panel);align-items:start}.cmdrow code{color:var(--lime);font-weight:900}.cmdrow p{color:var(--muted);font-size:.86rem}.tag{display:inline-block;margin-left:7px;padding:3px 6px;border-radius:6px;background:var(--panel2);font-size:.61rem;color:var(--muted);font-weight:900}
+.topic-grid{display:grid;grid-template-columns:repeat(2,1fr);gap:14px;margin-top:35px}.topic{padding:22px;border:1px solid var(--line);border-radius:20px;background:var(--panel)}.topic code{color:var(--cyan);font-weight:900}.topic h3{margin:8px 0 5px}.topic p{color:var(--muted);font-size:.88rem}
+.rviz{margin-top:38px;display:grid;grid-template-columns:1fr 1fr;gap:17px}.screen{min-height:360px;border:1px solid var(--line);border-radius:25px;background:#0c1016;position:relative;overflow:hidden}.screen:before{content:"RViz2";position:absolute;left:16px;top:13px;color:#798596;font-weight:900;font-size:.75rem}.gridlines{position:absolute;inset:12%;background:linear-gradient(#ffffff08 1px,transparent 1px),linear-gradient(90deg,#ffffff08 1px,transparent 1px);background-size:30px 30px}.robotdot{position:absolute;left:48%;top:55%;width:18px;height:18px;background:var(--lime);border-radius:50%;box-shadow:0 0 20px var(--lime)}.laser{position:absolute;left:49%;top:55%;height:2px;width:160px;transform-origin:left;background:linear-gradient(90deg,var(--cyan),transparent);transform:rotate(-20deg)}.axes{position:absolute;left:48%;top:55%;width:80px;height:80px}.axes:before{content:"x";position:absolute;right:0;top:36px;color:var(--red)}.axes:after{content:"y";position:absolute;left:38px;top:0;color:var(--lime)}
+.qos{display:grid;grid-template-columns:1fr 1fr;gap:14px;margin-top:32px}.bad{border-color:#542b36!important;background:#1b1015!important}.good{border-color:#31521e!important;background:#101a11!important}
+.missions{display:grid;grid-template-columns:repeat(3,1fr);gap:14px;margin-top:35px}.mission{padding:25px;border:1px solid var(--line);border-radius:20px;background:var(--panel)}.mission h3{margin-bottom:7px}.mission p{color:var(--muted);font-size:.89rem}.mission code{color:var(--cyan)}
+.quiz{margin-top:40px;padding:28px;border:1px solid var(--line);border-radius:25px;background:var(--panel)}.q{padding:19px 0;border-bottom:1px solid var(--line)}.q:last-child{border:0}.q p{font-weight:900;margin-bottom:11px}.opts{display:flex;gap:7px;flex-wrap:wrap}.opt{padding:8px 11px;border:1px solid var(--line);background:var(--panel2);border-radius:10px;color:var(--text);cursor:pointer}.opt.correct{border-color:var(--lime);color:var(--lime)}.opt.wrong{border-color:var(--red);color:var(--red)}.feedback{min-height:20px;margin-top:7px;color:var(--muted);font-size:.78rem}
+.record{margin-top:38px;padding:30px;border:1px solid var(--line);border-radius:25px;background:linear-gradient(135deg,var(--panel),var(--panel2))}.record-grid{display:grid;grid-template-columns:1fr 1fr;gap:25px;margin-top:22px}.record li{list-style:none;padding:10px 0;border-bottom:1px solid var(--line);color:#c6ceda}.record li:before{content:"✓";color:var(--lime);font-weight:950;margin-right:9px}
+.final{padding:42px;border:1px solid #394252;border-radius:30px;background:radial-gradient(circle at 80% 15%,#ff5bd714,transparent 30%),radial-gradient(circle at 15% 85%,#caff3814,transparent 30%),var(--panel)}
+footer{padding:55px 0 80px;border-top:1px solid var(--line);color:#7e899a}footer strong{color:var(--text)}
+.reveal{opacity:0;transform:translateY(18px);transition:.6s}.reveal.show{opacity:1;transform:none}.toast{position:fixed;right:18px;bottom:18px;padding:12px 15px;border:1px solid var(--line);background:var(--panel);border-radius:12px;opacity:0;transform:translateY(15px);transition:.25s;z-index:300}.toast.show{opacity:1;transform:none}
+@media(max-width:900px){.hero-grid,.code-layout,.rviz,.record-grid,.grid2{grid-template-columns:1fr}.timeline{grid-template-columns:1fr 1fr}.step:not(:last-child):after{display:none}.archflow{grid-template-columns:1fr}.archflow .arrow{display:none}.missions,.topic-grid,.qos{grid-template-columns:1fr}.cmdrow{grid-template-columns:1fr}.navlinks{display:none}}
+@media(max-width:600px){section{padding:75px 0}.hero{padding:55px 0 70px}h1{font-size:3.8rem}.graph{min-height:390px}.theme b{display:none}}
+</style>
+
+<style id="lab-site-nav">
+.lab-site-nav{position:fixed;left:50%;bottom:18px;transform:translateX(-50%);z-index:9999;display:flex;gap:7px;align-items:center;padding:7px;border:1px solid var(--line,#2c3543);border-radius:999px;background:rgba(10,12,17,.9);backdrop-filter:blur(16px);box-shadow:0 12px 40px #0007;font-size:.7rem}
+.lab-site-nav a{padding:8px 11px;border:1px solid var(--line,#2c3543);border-radius:999px;color:var(--text,#f5f7fb);font-weight:900;text-decoration:none}
+.lab-site-nav a:hover{border-color:var(--lime,#caff38);color:var(--lime,#caff38)}
+.lab-site-nav .home{background:var(--lime,#caff38);color:#090b05;border-color:var(--lime,#caff38)}
+@media(max-width:650px){.lab-site-nav{left:10px;right:10px;transform:none;justify-content:space-between}.lab-site-nav .label{display:none}}
+</style>
+</head>
+<body>
+<nav><div class="container nav">
+<div class="logo">EXP <i>02</i> · ROS 2 BOOTCAMP</div>
+<div class="navlinks"><a href="#mission">Mission</a><a href="#ros">ROS 2</a><a href="#workspace">Workspace</a><a href="#commands">Commands</a><a href="#robot">Robot</a><a href="#rviz">RViz2</a><a href="#bag">Bag</a></div>
+<div style="display:flex;gap:8px;align-items:center"><button class="theme" id="themeToggle"><span id="themeIcon">☀️</span><b id="themeLabel">LIGHT</b></button><a class="btn primary" href="#quiz">VIVA →</a></div>
+</div><div class="progress" id="progress"></div></nav>
+
+<header class="hero" id="mission"><div class="container hero-grid">
+<div class="reveal"><div class="kicker"><span class="dot"></span>26EARP302 · EXPERIMENT 02 · DEMONSTRATION · 4 HOURS</div>
+<h1>Welcome to<br><span class="grad">ROS 2.</span></h1>
+<p>The robot has hardware. Now you give that hardware a software communication system. In this experiment you build your first ROS 2 workspace, package and nodes, watch programs communicate over topics, connect the graph to the physical robot, visualise sensor data in RViz2, inspect the running graph and record a reference bag file.</p>
+<div class="actions"><a class="btn primary" href="#ros">START THE ROS 2 MISSION ↓</a><a class="btn" href="#commands">OPEN COMMAND DECK ⌘</a></div>
+<div class="meta"><span class="chip">🧠 Nodes + Topics + Messages</span><span class="chip">🛠 colcon + launch</span><span class="chip">🤖 /cmd_vel + /odom</span><span class="chip">👁 RViz2 + TF2</span><span class="chip">🎥 rosbag</span></div></div>
+<div class="graph reveal"><svg viewBox="0 0 600 520" preserveAspectRatio="none"><path class="gline" d="M120 125 C260 55,310 105,475 160 C510 175,510 250,430 280"/><path class="gline2" d="M145 380 C240 290,310 340,470 285"/><path class="gline" d="M280 120 C260 220,225 280,155 380"/></svg>
+<div class="gnode g1">NODE A<br><small>publisher</small></div><div class="gnode g2">TOPIC<br><small>/chatter</small></div><div class="gnode g3">NODE B<br><small>subscriber</small></div><div class="gnode g4">/cmd_vel<br><small>robot command</small></div><div class="gnode g5">RViz2<br><small>visualisation</small></div>
+<div class="graph-title"><strong>ROS²</strong><span>THE ROBOT'S DIGITAL NERVOUS SYSTEM</span></div></div>
+</div></header>
+
+<section><div class="container"><div class="eyebrow">00 · WHAT THE OFFICIAL EXPERIMENT SAYS</div><h2>ROS 2 is not<br>“another syllabus topic.”</h2>
+<p class="lead">The experiment introduces ROS 2 as the tool required to solve a robot problem. You start with two independent programs communicating over a topic, then attach the same ideas to the physical robot: teleoperate it over <code>/cmd_vel</code>, observe the resulting <code>/odom</code>, and visualise sensors in RViz2.</p>
+<div class="grid2"><div class="card reveal"><div class="icon">🕸️</div><h3>Build the computation graph</h3><p>Understand nodes, topics, messages, publishers and subscribers — the basic vocabulary of ROS 2 communication.</p></div>
+<div class="card reveal"><div class="icon">📦</div><h3>Create your first package</h3><p>Build a ROS 2 workspace and package using colcon, then execute nodes through a launch file.</p></div>
+<div class="card reveal"><div class="icon">🎮</div><h3>Command the real robot</h3><p>Publish velocity commands on <code>/cmd_vel</code> and verify the reciprocal odometry stream on <code>/odom</code>.</p></div>
+<div class="card reveal"><div class="icon">👁️</div><h3>See what the robot sees</h3><p>Visualise encoder, IMU, LiDAR and RealSense data in RViz2 and identify the coordinate frame associated with each.</p></div></div>
+<div class="callout reveal"><b>Core idea:</b> ROS 2 lets separate software components communicate. In robotics, that communication becomes powerful because the components can be connected to real sensors, controllers and actuators.</div></div></section>
+
+<section id="ros"><div class="container"><div class="eyebrow">01 · THE ROS 2 MENTAL MODEL</div><h2>Think of ROS 2 as<br><span class="grad">a digital nervous system.</span></h2>
+<p class="lead">A robot is made of many jobs. ROS 2 gives those jobs a structured way to discover each other and exchange information.</p>
+<div class="timeline"><div class="step reveal"><b>NODE</b><span>A program/component doing a job.</span></div><div class="step reveal"><b>PUBLISHER</b><span>A node that sends data.</span></div><div class="step reveal"><b>TOPIC</b><span>A named communication channel.</span></div><div class="step reveal"><b>MESSAGE</b><span>The typed data travelling through it.</span></div><div class="step reveal"><b>SUBSCRIBER</b><span>A node receiving the data.</span></div></div>
+<div class="arch reveal"><div class="eyebrow">THE COMMUNICATION CHAIN</div><div class="archflow"><div class="archnode">Publisher<br><small>“I have data!”</small></div><div class="arrow">→</div><div class="archnode">Topic<br><small>/sensor_data</small></div><div class="arrow">→</div><div class="archnode">Subscriber<br><small>“I need data!”</small></div></div><p style="margin-top:20px;color:var(--muted);font-size:.88rem">The publisher and subscriber do not need to call each other directly. They communicate through a named topic using a defined message type.</p></div></div></section>
+
+<section id="workspace"><div class="container"><div class="eyebrow">02 · BUILD YOUR FIRST ROS 2 WORKSPACE</div><h2>Workspace → package → node<br>→ <span class="grad">launch.</span></h2>
+<p class="lead">The exact package name, Python executable structure and robot-specific paths depend on the laboratory setup. The workflow below explains the concepts and standard command patterns.</p>
+<div class="code-layout"><div class="terminal"><div class="termbar"><span class="ball"></span><span class="ball"></span><span class="ball"></span><span class="term-title">student@robot:~</span></div>
+<pre><span class="prompt">$</span> <span class="cmd">mkdir -p ~/ros2_ws/src</span>
+<span class="prompt">$</span> <span class="cmd">cd ~/ros2_ws</span>
+<span class="prompt">$</span> <span class="cmd">colcon build</span>
+<span class="out">Starting >>> ...
+Finished <<< ...
+Summary: ...</span>
+<span class="prompt">$</span> <span class="cmd">source install/setup.bash</span>
+<span class="prompt">$</span> <span class="cmd">cd src</span>
+<span class="prompt">$</span> <span class="cmd">ros2 pkg create --build-type ament_python my_first_pkg</span>
+<span class="prompt">$</span> <span class="cmd">cd ~/ros2_ws</span>
+<span class="prompt">$</span> <span class="cmd">colcon build --symlink-install</span>
+<span class="prompt">$</span> <span class="cmd">source install/setup.bash</span></pre></div>
+<div class="explain"><div class="eyebrow">WHY EACH STEP EXISTS</div><h3>1. Make the workspace</h3><p><code>~/ros2_ws</code> is a convenient workspace directory. The <code>src</code> directory is where your source packages live.</p>
+<h3 style="margin-top:18px">2. Build with colcon</h3><p><code>colcon build</code> processes packages in the workspace and creates build/install/log areas.</p>
+<h3 style="margin-top:18px">3. Source the overlay</h3><p><code>source install/setup.bash</code> updates the current shell environment so your built workspace becomes discoverable.</p>
+<h3 style="margin-top:18px">4. Create a package</h3><p><code>ros2 pkg create</code> generates the package skeleton. The <code>ament_python</code> build type is appropriate for a Python ROS 2 package.</p>
+<h3 style="margin-top:18px">5. Rebuild + source</h3><p>After adding/changing code, rebuild as required and source the resulting environment in the shell where you want to run the package.</p></div></div>
+<div class="callout"><b>Overlay concept:</b> ROS 2 can combine an existing underlay with your own workspace overlay. If your shell has not sourced the right setup file, ROS 2 may not discover packages you just built.</div></div></section>
+
+<section id="commands"><div class="container"><div class="eyebrow">03 · ROS 2 COMMAND DECK</div><h2>Don't memorize.<br><span class="grad">Understand.</span></h2>
+<p class="lead">Click a command to see the student-friendly explanation. These are command patterns; use your laboratory's exact package, topic, node and device names.</p>
+<div class="code-layout"><div class="terminal"><div class="termbar"><span class="ball"></span><span class="ball"></span><span class="ball"></span><span class="term-title">ROS 2 CLI</span></div>
+<pre><span class="prompt">$</span> <span class="cmd">ros2 node list</span>
+<span class="out">/teleop
+/robot_state_publisher
+/...</span>
+<span class="prompt">$</span> <span class="cmd">ros2 topic list</span>
+<span class="out">/cmd_vel
+/odom
+/scan
+/imu
+/...</span>
+<span class="prompt">$</span> <span class="cmd">ros2 topic echo /odom</span>
+<span class="out">pose:
+  pose:
+    position: ...
+twist:
+  twist:
+    linear: ...</span></pre></div>
+<div class="explain"><div class="eyebrow">INTERACTIVE EXPLAINER</div><h3 id="ctitle">ros2 node list</h3><div class="code" id="ccode">ros2 node list</div><p id="cdesc">Lists the ROS 2 nodes currently visible in the running graph.</p>
+<div class="callout" id="ctip" style="margin-top:18px"><b>Use it when:</b> you want a quick answer to “What software components are alive right now?”</div><div class="tabs" id="tabs"></div></div></div>
+<div class="command-list">
+<div class="cmdrow"><code>ros2 --help</code><div><b>Discover the CLI</b><span class="tag">START HERE</span></div><p>Shows available top-level ROS 2 command groups and help information. Great when you forget syntax.</p></div>
+<div class="cmdrow"><code>ros2 node list</code><div><b>List active nodes</b><span class="tag">CORE</span></div><p>Shows node names visible in the current ROS 2 graph.</p></div>
+<div class="cmdrow"><code>ros2 node info NODE</code><div><b>Inspect one node</b><span class="tag">CORE</span></div><p>Shows publishers, subscribers, services, clients and other interfaces associated with a node.</p></div>
+<div class="cmdrow"><code>ros2 topic list</code><div><b>List topics</b><span class="tag">CORE</span></div><p>Shows topic names currently visible. Use it to discover what data channels exist.</p></div>
+<div class="cmdrow"><code>ros2 topic info /topic</code><div><b>Inspect a topic</b><span class="tag">CORE</span></div><p>Shows information such as message type and publisher/subscriber counts for a topic.</p></div>
+<div class="cmdrow"><code>ros2 topic type /topic</code><div><b>Find the message type</b><span class="tag">CORE</span></div><p>Reports the interface type used by the topic, such as a geometry or sensor message.</p></div>
+<div class="cmdrow"><code>ros2 topic echo /topic</code><div><b>Read live messages</b><span class="tag">CORE</span></div><p>Subscribes from the command line and prints incoming messages. Use Ctrl+C to stop.</p></div>
+<div class="cmdrow"><code>ros2 topic hz /topic</code><div><b>Measure publication rate</b></div><p>Estimates how frequently messages are being published. Useful when diagnosing a missing/slow stream.</p></div>
+<div class="cmdrow"><code>ros2 topic pub ...</code><div><b>Publish a message</b><span class="tag">CORE</span></div><p>Publishes data from the CLI. The exact syntax depends on the topic's message type. Use cautiously when the topic controls a physical robot.</p></div>
+<div class="cmdrow"><code>ros2 interface show TYPE</code><div><b>Inspect message definition</b></div><p>Shows the fields contained in a ROS 2 interface type.</p></div>
+<div class="cmdrow"><code>ros2 pkg list</code><div><b>List packages</b></div><p>Shows packages discoverable in the sourced ROS environment.</p></div>
+<div class="cmdrow"><code>ros2 pkg executables</code><div><b>Find executables</b></div><p>Shows executables exposed by ROS 2 packages.</p></div>
+<div class="cmdrow"><code>ros2 run PKG EXEC</code><div><b>Run one executable</b><span class="tag">CORE</span></div><p>Starts a particular executable from a package.</p></div>
+<div class="cmdrow"><code>ros2 launch PKG FILE.py</code><div><b>Launch a system</b><span class="tag">CORE</span></div><p>Starts multiple configured ROS components together using a launch file.</p></div>
+<div class="cmdrow"><code>ros2 param list</code><div><b>List parameters</b></div><p>Shows parameters exposed by nodes in the running system.</p></div>
+<div class="cmdrow"><code>ros2 param get NODE PARAM</code><div><b>Read a parameter</b></div><p>Retrieves the current value of a node parameter.</p></div>
+<div class="cmdrow"><code>ros2 doctor</code><div><b>Environment diagnostics</b></div><p>Provides diagnostic information useful when the ROS 2 environment is behaving unexpectedly.</p></div>
+<div class="cmdrow"><code>rqt_graph</code><div><b>Graph visualisation</b></div><p>Displays ROS communication relationships graphically when the relevant tool is installed.</p></div>
+<div class="cmdrow"><code>rviz2</code><div><b>Open RViz2</b><span class="tag">CORE</span></div><p>Starts the 3D visualisation tool used to inspect robot state, sensors, frames and maps.</p></div>
+<div class="cmdrow"><code>ros2 bag record ...</code><div><b>Record ROS data</b><span class="tag">CORE</span></div><p>Records selected ROS topics to a bag for later replay/analysis. The lab plan asks you to record a reference bag file.</p></div>
+</div>
+<div class="callout"><b>Physical-robot warning:</b> <code>ros2 topic pub</code> can become an actuator command when used with a motion topic such as <code>/cmd_vel</code>. Never experiment with motion commands outside the laboratory safety envelope.</div></div></section>
+
+<section><div class="container"><div class="eyebrow">04 · MESSAGE TYPES</div><h2>A topic has a name.<br>But a message has a <span class="grad">shape.</span></h2>
+<p class="lead">The experiment specifically asks you to review the message definitions used by the robot's command, odometry and sensor streams.</p>
+<div class="topic-grid"><div class="topic reveal"><code>geometry_msgs/Twist</code><h3>Velocity command</h3><p>Represents velocity components. In this lab it is associated with <code>/cmd_vel</code>, which is used to command robot motion.</p></div>
+<div class="topic reveal"><code>nav_msgs/Odometry</code><h3>Estimated motion</h3><p>Contains odometry information including pose and twist, associated with the robot's estimated movement.</p></div>
+<div class="topic reveal"><code>sensor_msgs/LaserScan</code><h3>LiDAR scan</h3><p>Represents planar laser range measurements with angular/range information.</p></div>
+<div class="topic reveal"><code>sensor_msgs/Imu</code><h3>Inertial data</h3><p>Contains inertial measurements such as orientation-related information and angular/linear acceleration fields as provided by the sensor driver.</p></div></div>
+<div class="callout"><b>Debugging trick:</b> When a topic “exists” but you don't understand it, use <code>ros2 topic type /topic</code>, then <code>ros2 interface show TYPE</code>, then <code>ros2 topic echo /topic</code>.</div></div></section>
+
+<section id="robot"><div class="container"><div class="eyebrow">05 · COMMAND → ROBOT MOTION</div><h2>Now the graph<br>touches <span class="grad">reality.</span></h2><p class="lead">This is the moment where ROS 2 stops being a diagram and becomes a robotics system.</p>
+<div class="arch reveal"><div class="eyebrow">THE /CMD_VEL LOOP</div><div class="archflow"><div class="archnode">Teleop / command node<br><small>publishes Twist</small></div><div class="arrow">→</div><div class="archnode"><code>/cmd_vel</code><br><small>velocity topic</small></div><div class="arrow">→</div><div class="archnode">Robot controller<br><small>actuation</small></div></div>
+<div class="archflow" style="margin-top:10px"><div class="archnode">Wheel motion<br><small>physical world</small></div><div class="arrow">→</div><div class="archnode">Encoders / odometry<br><small>measurement</small></div><div class="arrow">→</div><div class="archnode"><code>/odom</code><br><small>ROS 2 stream</small></div></div></div>
+<div class="missions"><div class="mission reveal"><h3>🎮 Mission 1 — Discover</h3><p>After the approved robot bring-up, inspect the graph. Identify the node responsible for teleoperation and inspect the command topic.</p><p class="code">ros2 node list</p><p class="code">ros2 topic list</p></div>
+<div class="mission reveal"><h3>🔎 Mission 2 — Verify</h3><p>Inspect the command and odometry topics. Confirm their types and observe messages without changing the robot's state.</p><p class="code">ros2 topic info /cmd_vel</p><p class="code">ros2 topic echo /odom</p></div>
+<div class="mission reveal"><h3>🧠 Mission 3 — Explain</h3><p>Trace one command from your input through ROS 2 to physical wheel motion, then trace the resulting measurement back through the graph.</p><p class="code">node → topic → controller → robot → sensor → topic</p></div></div>
+<div class="callout"><b>Important:</b> The lab plan warns that stopping the teleoperation node does not necessarily stop the robot. Your safety protocol therefore matters independently of the software command source.</div></div></section>
+
+<section id="rviz"><div class="container"><div class="eyebrow">06 · RVIZ2 — SEE THE ROBOT'S DIGITAL WORLD</div><h2>Numbers are useful.<br><span class="grad">Seeing them is powerful.</span></h2><p class="lead">RViz2 turns streams of robot data into visual representations. The experiment asks you to visualise LiDAR, IMU, odometry and RGB-D data and identify the coordinate frame of each.</p>
+<div class="rviz"><div class="screen reveal"><div class="gridlines"></div><div class="robotdot"></div><div class="laser"></div><div class="axes"></div></div>
+<div class="card reveal"><div class="icon">👁️</div><h3>What to look for in RViz2</h3><p>Do not just open RViz and say “it works.” Identify what each display represents, what topic supplies it, and which coordinate frame it is attached to.</p><div class="callout" style="margin-top:18px"><b>Ask yourself:</b><br>What am I seeing? Which topic provides it? Which frame is it expressed in? Does the visualisation make physical sense?</div></div></div>
+<div class="grid2"><div class="card reveal"><b>📡 LiDAR</b><p>Observe the planar scan and relate the geometry in RViz2 to the physical surroundings.</p></div><div class="card reveal"><b>🧭 IMU</b><p>Explore inertial information and understand that its interpretation depends on coordinate frames and sensor conventions.</p></div><div class="card reveal"><b>🛞 Odometry</b><p>Observe the estimated robot pose/trajectory and relate it to the robot's movement.</p></div><div class="card reveal"><b>👁 RGB-D</b><p>Explore depth information and understand that it represents a 3D sensing modality rather than a planar laser scan.</p></div></div></div></section>
+
+<section><div class="container"><div class="eyebrow">07 · TF2 + COORDINATE FRAMES</div><h2>Robotics has a<br><span class="grad">coordinate-frame problem.</span></h2><p class="lead">The experiment asks you to identify the coordinate frame of each visualised sensor. TF2 provides the framework for describing relationships between frames.</p>
+<div class="grid2"><div class="card reveal"><div class="icon">📍</div><h3>Why frames exist</h3><p>A LiDAR measurement is naturally associated with the LiDAR's physical frame. Robot motion and world/map representations may use other frames. To combine measurements correctly, their spatial relationships must be known.</p></div>
+<div class="card reveal"><div class="icon">🔗</div><h3>What TF2 provides</h3><p>TF2 maintains and communicates transformations between coordinate frames so software can transform information from one frame into another.</p></div></div>
+<div class="arch reveal"><div class="eyebrow">MENTAL MODEL</div><div class="archflow"><div class="archnode">Sensor frame<br><small>“where I measure”</small></div><div class="arrow">→</div><div class="archnode">TF relationship<br><small>“how frames relate”</small></div><div class="arrow">→</div><div class="archnode">Robot/world frame<br><small>“where I interpret it”</small></div></div></div>
+<div class="callout"><b>Don't memorise frame names blindly.</b> Your task is to understand why a measurement has a frame and why a visualiser needs that information to place the data correctly.</div></div></section>
+
+<section><div class="container"><div class="eyebrow">08 · DDS + DISCOVERY</div><h2>How did that node<br><span class="grad">find that node?</span></h2><p class="lead">The pre-lab activity asks you to study DDS-based discovery. At a conceptual level, ROS 2 uses DDS middleware to support discovery and communication between distributed ROS 2 entities.</p>
+<div class="grid2"><div class="card reveal"><div class="icon">📣</div><h3>Discovery</h3><p>ROS 2 systems can discover relevant participants and communication endpoints rather than requiring every node to be manually wired to every other node.</p></div><div class="card reveal"><div class="icon">🌐</div><h3>Distributed robotics</h3><p>Nodes can be separated across processes and, depending on the configured environment/network, across machines. This is one reason ROS 2 is useful for complex robotic systems.</p></div></div>
+<div class="qos"><div class="card bad reveal"><b>When things go wrong 😵</b><p style="margin-top:7px">A node may exist but the expected data may not appear because the relevant communication path/configuration is not what you expected.</p></div><div class="card good reveal"><b>Engineer response 😎</b><p style="margin-top:7px">Inspect the graph systematically: nodes → topics → types → publishers/subscribers → message flow → frames → application behaviour.</p></div></div></div></section>
+
+<section id="bag"><div class="container"><div class="eyebrow">09 · ROS 2 BAG — RECORD REALITY</div><h2>What if you could<br><span class="grad">replay the robot?</span></h2><p class="lead">The session closes with recording a reference bag file. A bag captures selected ROS 2 data streams so they can be analysed later without requiring the physical robot to repeat the exact motion immediately.</p>
+<div class="code-layout"><div class="terminal"><div class="termbar"><span class="ball"></span><span class="ball"></span><span class="ball"></span><span class="term-title">ros2 bag</span></div>
+<pre><span class="prompt">$</span> <span class="cmd">ros2 bag record /odom /scan /imu</span>
+<span class="out">[INFO] Listening for topics...
+[INFO] Recording...
+[INFO] Press Ctrl-C to stop.</span>
+<span class="prompt">$</span> <span class="cmd">ros2 bag info BAG_DIRECTORY</span>
+<span class="out">Files: ...
+Duration: ...
+Topics: ...</span>
+<span class="prompt">$</span> <span class="cmd">ros2 bag play BAG_DIRECTORY</span>
+<span class="out">[INFO] Playback started...</span></pre></div>
+<div class="explain"><div class="eyebrow">WHY THIS MATTERS</div><h3>Record once. Analyse many times.</h3><p>A bag can preserve a reference run for later inspection. That becomes valuable in subsequent experiments involving sensor analysis, odometry, fusion and navigation.</p><div class="callout"><b>Think like a researcher:</b> a recorded dataset is evidence. Preserve the conditions and document what was recorded so someone else can understand what the data represents.</div></div></div>
+<div class="callout"><b>Command caution:</b> The exact topic set for the laboratory's reference bag should follow your instructor's procedure. Recording “everything” is not automatically better; record the streams required for the intended analysis.</div></div></section>
+
+<section><div class="container"><div class="eyebrow">10 · TROUBLESHOOTING MODE</div><h2>When ROS says<br>“nothing is happening.”</h2><p class="lead">Do not randomly restart everything. Diagnose from the graph outward.</p>
+<div class="missions"><div class="mission reveal"><h3>🔴 Symptom: no node</h3><p>Check whether the expected process is running.</p><p class="code">ros2 node list</p><p>Then inspect how the system was launched.</p></div><div class="mission reveal"><h3>🟠 Symptom: topic missing</h3><p>Check visible topics and verify that the relevant driver/node is running.</p><p class="code">ros2 topic list</p></div><div class="mission reveal"><h3>🟡 Symptom: topic exists, no data</h3><p>Inspect type and topic information, then observe it.</p><p class="code">ros2 topic info /topic</p><p class="code">ros2 topic echo /topic</p></div><div class="mission reveal"><h3>🟢 Symptom: data exists, RViz wrong</h3><p>Check the display configuration and coordinate frame relationships.</p><p>Think TF2 + frame + topic + display.</p></div><div class="mission reveal"><h3>🔵 Symptom: package not found</h3><p>Check whether the workspace was built and sourced in the current shell.</p><p class="code">colcon build</p><p class="code">source install/setup.bash</p></div><div class="mission reveal"><h3>🟣 Symptom: behaviour surprises you</h3><p>Stop physical motion safely first. Then inspect nodes, topics and commands. Safety comes before debugging.</p></div></div></div></section>
+
+<section id="quiz"><div class="container"><div class="eyebrow">11 · MINI VIVA</div><h2>Can you explain ROS 2<br><span class="grad">without opening the terminal?</span></h2><p class="lead">Try these before your instructor asks.</p>
+<div class="quiz">
+<div class="q"><p>1. What is the difference between a node and a topic?</p><div class="opts"><button class="opt">Node = channel, topic = program</button><button class="opt" data-correct="true">Node = software component, topic = named communication channel</button><button class="opt">They are the same thing</button></div><div class="feedback"></div></div>
+<div class="q"><p>2. Which command lists currently visible ROS 2 topics?</p><div class="opts"><button class="opt">ros2 node list</button><button class="opt" data-correct="true">ros2 topic list</button><button class="opt">ros2 topic echo</button></div><div class="feedback"></div></div>
+<div class="q"><p>3. What does <code>source install/setup.bash</code> do in your workspace workflow?</p><div class="opts"><button class="opt">Deletes the workspace</button><button class="opt">Starts RViz</button><button class="opt" data-correct="true">Updates the current shell environment so the built workspace is discoverable</button></div><div class="feedback"></div></div>
+<div class="q"><p>4. What does <code>/cmd_vel</code> represent in this experiment?</p><div class="opts"><button class="opt">A LiDAR scan</button><button class="opt" data-correct="true">A velocity-command topic used to command robot motion</button><button class="opt">A coordinate frame</button></div><div class="feedback"></div></div>
+<div class="q"><p>5. Why do coordinate frames matter in RViz2?</p><div class="opts"><button class="opt">They make the terminal faster</button><button class="opt">They rename topics</button><button class="opt" data-correct="true">They define how spatial measurements are positioned/interpreted relative to other frames</button></div><div class="feedback"></div></div>
+<div class="q"><p>6. What should you do before experimenting with a motion command?</p><div class="opts"><button class="opt">Run it at full speed</button><button class="opt">Ignore the safety procedure</button><button class="opt" data-correct="true">Follow the laboratory safety envelope and understand the command's physical effect</button></div><div class="feedback"></div></div>
+</div></div></section>
+
+<section><div class="container"><div class="eyebrow">12 · POST-LAB DELIVERABLES</div><h2>Don't leave with<br>“it worked.” Leave with <span class="grad">evidence.</span></h2>
+<div class="record"><div class="record-grid"><div><h3>📋 Your record should capture</h3><ul style="margin-top:12px"><li>Observed topic list</li><li>Observed node graph</li><li>Observed TF tree / frame relationships</li><li>Key sensor/topic mappings</li><li>Reference bag recording details</li></ul></div><div><h3>🧠 Your explanation should cover</h3><ul style="margin-top:12px"><li>Nodes, topics, messages, publishers and subscribers</li><li>How colcon/workspaces fit together</li><li>How /cmd_vel leads to physical motion</li><li>How /odom provides reciprocal information</li><li>Why stopping teleoperation is not itself a safety guarantee</li></ul></div></div></div></div></section>
+
+<section><div class="container"><div class="final reveal"><div class="eyebrow">13 · MISSION COMPLETE</div><h2>You have entered<br>the <span class="grad">ROS 2 world.</span></h2><p class="lead">You started with a physical robot. Now you can see its software graph, understand how programs communicate, inspect data streams, connect commands to motion, visualise sensors and preserve a reference run. The next experiments will make you build more of the intelligence yourself.</p><div class="actions" style="margin-top:25px"><a class="btn primary" href="#mission">↺ REPLAY EXP 02</a><a class="btn" href="#quiz">TAKE THE VIVA AGAIN</a></div></div></div></section>
+
+<footer><div class="container"><strong>Department of Automation & Robotics</strong><br>ROS 2 Mobile Robotics Laboratory · 26EARP302 · Experiment 02<br><br>Student-first interactive tutorial. Platform-specific package names, hostnames, robot launch files, topic names and safety procedures must follow the laboratory's actual configuration and instructor instructions.</div></footer>
+<div class="toast" id="toast"></div>
+
+<script>
+const themeToggle=document.getElementById("themeToggle"),themeIcon=document.getElementById("themeIcon"),themeLabel=document.getElementById("themeLabel");
+function applyTheme(t){document.body.classList.toggle("light",t==="light");themeIcon.textContent=t==="light"?"🌙":"☀️";themeLabel.textContent=t==="light"?"DARK":"LIGHT";localStorage.setItem("exp02-theme",t)}
+applyTheme(localStorage.getItem("exp02-theme")||"dark");
+themeToggle.onclick=()=>{const t=document.body.classList.contains("light")?"dark":"light";applyTheme(t);toast(t==="light"?"Light mode activated ☀️":"Dark mode activated 🌙")};
+
+const data={
+"node list":["ros2 node list","ros2 node list","Lists the nodes currently visible in the ROS 2 graph.","you want to know which software components are alive."],
+"node info":["ros2 node info /node_name","ros2 node info /node_name","Inspects a node and shows its communication interfaces.","you have found an important node and want to see its connections."],
+"topic list":["ros2 topic list","ros2 topic list","Lists topic names currently visible in the graph.","you want a quick map of the robot's data channels."],
+"topic info":["ros2 topic info /topic","ros2 topic info /topic","Shows information about a topic, including its message type and endpoint counts.","a topic exists but you need to understand its connections."],
+"topic type":["ros2 topic type /topic","ros2 topic type /topic","Reports the interface/message type carried by the topic.","you need to know the shape/type of a topic before interpreting it."],
+"topic echo":["ros2 topic echo /topic","ros2 topic echo /topic","Subscribes from the command line and prints incoming messages.","you need to prove whether data is actually flowing."],
+"topic hz":["ros2 topic hz /topic","ros2 topic hz /topic","Estimates how frequently a topic is publishing.","you suspect a sensor stream is slow or missing."],
+"pkg list":["ros2 pkg list","ros2 pkg list","Lists packages discoverable in the current ROS 2 environment.","you need to verify whether a package is visible to the sourced shell."],
+"run":["ros2 run PKG EXEC","ros2 run PKG EXEC","Runs a specific executable from a package.","you want to start one executable directly."],
+"launch":["ros2 launch PKG FILE.py","ros2 launch PKG FILE.py","Starts a configured group of ROS 2 processes using a launch file.","you want to bring up a multi-node system consistently."],
+"interface":["ros2 interface show TYPE","ros2 interface show TYPE","Displays the fields in a ROS 2 interface/message definition.","a topic type is known but its internal fields are unclear."],
+"rviz":["rviz2","rviz2","Starts RViz2, the 3D visualisation tool.","you want to connect data streams to physical spatial meaning."],
+"bag":["ros2 bag record /topic1 /topic2","ros2 bag record /topic1 /topic2","Records selected ROS 2 topics into a bag dataset.","you want to preserve a reference run for later analysis."]
+};
+const tabs=document.getElementById("tabs");
+Object.entries(data).forEach(([key,v],i)=>{const b=document.createElement("button");b.className="tab"+(i===0?" active":"");b.textContent=key;b.onclick=()=>{document.querySelectorAll(".tab").forEach(x=>x.classList.remove("active"));b.classList.add("active");document.getElementById("ctitle").textContent=v[0];document.getElementById("ccode").textContent=v[1];document.getElementById("cdesc").textContent=v[2];document.getElementById("ctip").innerHTML="<b>Use it when:</b> "+v[3]};tabs.appendChild(b)});
+
+document.querySelectorAll(".opt").forEach(b=>b.onclick=()=>{const q=b.closest(".q"),fb=q.querySelector(".feedback");q.querySelectorAll(".opt").forEach(x=>x.classList.remove("correct","wrong"));if(b.dataset.correct==="true"){b.classList.add("correct");fb.textContent="Correct ✓ You understand the concept."}else{b.classList.add("wrong");fb.textContent="Not quite. Think about what the command/concept is actually responsible for."}});
+const observer=new IntersectionObserver(es=>es.forEach(e=>{if(e.isIntersecting)e.target.classList.add("show")}),{threshold:.1});document.querySelectorAll(".reveal").forEach(e=>observer.observe(e));
+function toast(s){const t=document.getElementById("toast");t.textContent=s;t.classList.add("show");setTimeout(()=>t.classList.remove("show"),1900)}
+window.addEventListener("scroll",()=>{const h=document.documentElement.scrollHeight-innerHeight;document.getElementById("progress").style.width=(scrollY/h*100)+"%"});
+</script>
+
+<div class="lab-site-nav"><a href="exp01.html">← <span class="label">EXP 01</span></a><a class="home" href="index.html">⌂ <span class="label">LAB HOME</span></a><a href="exp03.html"><span class="label">EXP 03</span> →</a></div>
+</body>
+</html>

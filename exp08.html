@@ -1,0 +1,464 @@
+<!doctype html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width,initial-scale=1">
+<title>EXP 08 — Comparative Evaluation of LiDAR and RGB-D Ranging Performance</title>
+<style>
+:root{
+ --bg:#07090d;--panel:#11161f;--panel2:#181e29;--line:#2c3543;--text:#f5f7fb;--muted:#aeb8c8;
+ --lime:#caff38;--cyan:#55e8ff;--pink:#ff5bd7;--orange:#ffb45c;--red:#ff687d;
+}
+body.light{--bg:#f5f7fb;--panel:#fff;--panel2:#eef2f7;--line:#d6dde8;--text:#111722;--muted:#5f6979}
+*{box-sizing:border-box;margin:0;padding:0}
+html{scroll-behavior:smooth}
+body{
+ font-family:Inter,system-ui,-apple-system,"Segoe UI",sans-serif;color:var(--text);background:
+ radial-gradient(circle at 85% 5%,#caff3813,transparent 25%),
+ radial-gradient(circle at 12% 22%,#55e8ff12,transparent 25%),var(--bg);
+ line-height:1.58;overflow-x:hidden
+}
+body.light{background:radial-gradient(circle at 85% 5%,#89ad1815,transparent 25%),radial-gradient(circle at 12% 22%,#009bb314,transparent 25%),var(--bg)}
+button{font:inherit}a{color:inherit;text-decoration:none}
+.container{width:min(1220px,92%);margin:auto}
+nav{position:sticky;top:0;z-index:100;background:#07090ddd;backdrop-filter:blur(18px);border-bottom:1px solid var(--line)}
+body.light nav{background:#f5f7fbdd}
+.nav{height:66px;display:flex;align-items:center;justify-content:space-between;gap:12px}
+.logo{font-weight:950;letter-spacing:-.04em}.logo i{font-style:normal;color:var(--lime)}
+.navlinks{display:flex;gap:13px;color:var(--muted);font-size:.7rem}.navlinks a:hover{color:var(--lime)}
+.btn,.theme,.mini,.option{
+ border:1px solid var(--line);background:var(--panel);color:var(--text);border-radius:999px;
+ padding:10px 15px;font-weight:900;cursor:pointer;transition:.2s
+}
+.btn:hover,.theme:hover,.mini:hover,.option:hover{transform:translateY(-2px);border-color:var(--lime)}
+.btn.primary{background:var(--lime);color:#090b05;border-color:var(--lime)}
+.theme{padding:7px 10px;font-size:.7rem}.theme span{display:inline-grid;place-items:center;width:25px;height:25px;border-radius:50%;background:var(--panel2);margin-right:5px}
+.progress{height:2px;width:0;background:linear-gradient(90deg,var(--lime),var(--cyan),var(--pink))}
+.hero{min-height:calc(100vh - 68px);display:flex;align-items:center;padding:70px 0 90px}
+.hero-grid{display:grid;grid-template-columns:1.02fr .98fr;gap:48px;align-items:center}
+.kicker{display:inline-flex;gap:8px;align-items:center;padding:7px 11px;border:1px solid var(--line);border-radius:999px;background:var(--panel);font-size:.7rem;font-weight:900;color:var(--muted);margin-bottom:20px}
+.dot{width:8px;height:8px;border-radius:50%;background:var(--lime);box-shadow:0 0 18px var(--lime)}
+h1{font-size:clamp(3rem,6.1vw,6.2rem);line-height:.86;letter-spacing:-.078em}
+.grad{background:linear-gradient(105deg,var(--lime),var(--cyan),var(--pink));-webkit-background-clip:text;background-clip:text;color:transparent}
+.hero p{font-size:1.04rem;color:var(--muted);max-width:790px;margin:25px 0}
+.actions{display:flex;gap:9px;flex-wrap:wrap}.meta{display:flex;gap:8px;flex-wrap:wrap;margin-top:24px}
+.chip{padding:8px 10px;border:1px solid var(--line);background:var(--panel);border-radius:11px;font-size:.72rem;color:var(--muted)}
+.hero-art{min-height:520px;border:1px solid var(--line);border-radius:34px;position:relative;overflow:hidden;
+ background:linear-gradient(#ffffff08 1px,transparent 1px),linear-gradient(90deg,#ffffff08 1px,transparent 1px);
+ background-size:35px 35px}
+body.light .hero-art{background:linear-gradient(#1522350d 1px,transparent 1px),linear-gradient(90deg,#1522350d 1px,transparent 1px);background-size:35px 35px}
+.hero-art svg{position:absolute;inset:0;width:100%;height:100%}
+.scan{stroke:var(--cyan);stroke-width:2;opacity:.28}.beam{stroke:var(--cyan);stroke-width:3}.lidar{fill:none;stroke:var(--lime);stroke-width:4}
+.depth{fill:none;stroke:var(--pink);stroke-width:4;stroke-dasharray:8 7}
+.obj{fill:#caff3822;stroke:var(--lime);stroke-width:3}.measure{stroke:var(--orange);stroke-width:3;stroke-dasharray:6 5}
+@keyframes sweep{from{transform:rotate(-30deg)}to{transform:rotate(30deg)}}.sweep{transform-origin:180px 320px;animation:sweep 2.6s ease-in-out infinite alternate}
+.artlabel{position:absolute;padding:10px 12px;border:1px solid var(--line);background:var(--panel);border-radius:13px;font-size:.68rem;font-weight:900;box-shadow:0 12px 35px #0005}
+.l1{left:6%;top:8%;color:var(--cyan)}.l2{right:6%;top:13%;color:var(--pink)}.l3{left:6%;bottom:12%;color:var(--orange)}.l4{right:6%;bottom:10%;color:var(--lime)}
+.arttitle{position:absolute;left:50%;top:55%;transform:translate(-50%,-50%);text-align:center}.arttitle strong{font-size:2.3rem;display:block;letter-spacing:-.07em}.arttitle span{font-size:.66rem;color:var(--muted);white-space:nowrap}
+section{padding:100px 0}.eyebrow{font-size:.7rem;letter-spacing:.16em;color:var(--lime);font-weight:950;text-transform:uppercase;margin-bottom:10px}
+h2{font-size:clamp(2.45rem,5vw,4.6rem);line-height:.93;letter-spacing:-.065em;margin-bottom:17px}.lead{max-width:930px;color:var(--muted)}
+.grid2{display:grid;grid-template-columns:1fr 1fr;gap:15px;margin-top:35px}
+.card{padding:27px;border:1px solid var(--line);border-radius:22px;background:#ffffff04}.light .card{background:#fff}
+.icon{font-size:2rem;margin-bottom:9px}.card h3{font-size:1.3rem;margin-bottom:7px}.card p{color:var(--muted)}
+.callout{margin-top:30px;padding:22px 25px;border-left:4px solid var(--lime);border-radius:0 18px 18px 0;background:var(--panel2);color:#cbd4df}
+.callout b{color:var(--lime)}
+.compare{display:grid;grid-template-columns:1fr 1fr;gap:16px;margin-top:38px}
+.sensor{border:1px solid var(--line);border-radius:26px;background:var(--panel);padding:27px;overflow:hidden;position:relative}
+.sensor.lidar{border-top:3px solid var(--cyan)}.sensor.rgbd{border-top:3px solid var(--pink)}
+.sensor h3{font-size:1.8rem;letter-spacing:-.04em}.sensor .sub{color:var(--muted);font-size:.8rem}
+.sensor ul{margin:15px 0 0 18px;color:var(--muted);font-size:.88rem}.sensor li{margin:7px 0}
+.badge{display:inline-block;padding:5px 8px;border-radius:8px;background:var(--panel2);font-size:.63rem;font-weight:900;margin-bottom:10px}
+.lidar .badge{color:var(--cyan)}.rgbd .badge{color:var(--pink)}
+.flow{display:grid;grid-template-columns:repeat(5,1fr);gap:8px;margin-top:38px;align-items:center}.flow .node{padding:18px 10px;text-align:center;border:1px solid var(--line);border-radius:16px;background:var(--panel);font-size:.76rem;font-weight:900}.flow .arr{text-align:center;color:#6b7585}
+.matrix{margin-top:38px;overflow:auto;border:1px solid var(--line);border-radius:20px}
+table{width:100%;border-collapse:collapse;min-width:780px}th,td{padding:15px 14px;border-bottom:1px solid var(--line);text-align:left;font-size:.8rem}th{color:var(--lime);background:var(--panel2);font-size:.7rem;text-transform:uppercase;letter-spacing:.06em}td{color:var(--muted)}td strong{color:var(--text)}
+.testgrid{display:grid;grid-template-columns:repeat(3,1fr);gap:14px;margin-top:35px}
+.test{padding:24px;border:1px solid var(--line);border-radius:21px;background:var(--panel)}.test .num{font-size:2.5rem;font-weight:950;color:var(--lime);line-height:1}.test h3{margin:9px 0 7px}.test p,.test li{font-size:.84rem;color:var(--muted)}.test ul{margin:9px 0 0 18px}
+.measure-grid{display:grid;grid-template-columns:1fr 1fr;gap:18px;margin-top:38px}.measure-card{padding:27px;border:1px solid var(--line);border-radius:23px;background:var(--panel)}.measure-card h3{font-size:1.35rem;margin-bottom:8px}.measure-card p{color:var(--muted);font-size:.87rem}
+.eq{margin-top:15px;padding:16px;background:var(--panel2);border-radius:14px;text-align:center;font-family:Georgia,serif;font-size:1.15rem}
+.interactive{margin-top:38px;padding:29px;border:1px solid var(--line);border-radius:27px;background:var(--panel)}
+.controls{display:grid;grid-template-columns:1fr 1fr;gap:25px;align-items:center}.slider label{display:flex;justify-content:space-between;font-weight:900}.slider input{width:100%;accent-color:var(--lime);margin:15px 0}.v{color:var(--lime);font-size:1.5rem;font-weight:950}
+.sensorviz{height:320px;border:1px solid var(--line);border-radius:20px;overflow:hidden;position:relative;background:linear-gradient(#ffffff07 1px,transparent 1px),linear-gradient(90deg,#ffffff07 1px,transparent 1px);background-size:30px 30px}
+.sensorviz svg{width:100%;height:100%}.rangebeam{stroke:var(--cyan);stroke-width:4}.depthbeam{stroke:var(--pink);stroke-width:4;stroke-dasharray:7 6}.target{fill:#caff3822;stroke:var(--lime);stroke-width:3}
+.readouts{display:grid;grid-template-columns:1fr 1fr;gap:9px;margin-top:12px}.read{padding:12px;border:1px solid var(--line);border-radius:12px;background:var(--panel2);font-size:.75rem;color:var(--muted)}.read b{display:block;color:var(--text);font-size:1rem}
+.stats{display:grid;grid-template-columns:repeat(4,1fr);gap:12px;margin-top:35px}.stat{padding:22px;border:1px solid var(--line);border-radius:18px;background:var(--panel)}.stat .big{font-size:1.8rem;font-weight:950;color:var(--cyan)}.stat h3{margin:5px 0}.stat p{font-size:.79rem;color:var(--muted)}
+.chartbox{margin-top:35px;padding:26px;border:1px solid var(--line);border-radius:24px;background:var(--panel)}canvas{width:100%;height:340px;display:block}.chart-buttons{display:flex;gap:8px;flex-wrap:wrap;margin-top:13px}
+.mini{border-radius:10px;padding:8px 11px;font-size:.74rem}.mini.active{border-color:var(--lime);color:var(--lime)}
+.physics{display:grid;grid-template-columns:repeat(3,1fr);gap:14px;margin-top:35px}.phys{padding:23px;border:1px solid var(--line);border-radius:20px;background:var(--panel)}.phys h3{margin-bottom:7px}.phys p{color:var(--muted);font-size:.84rem}.phys .why{color:var(--orange);font-size:.76rem;font-weight:900;margin-top:9px}
+.failure{display:grid;grid-template-columns:repeat(3,1fr);gap:14px;margin-top:35px}.fail{padding:23px;border:1px solid var(--line);border-radius:20px;background:var(--panel)}.fail h3{margin-bottom:7px}.fail p{color:var(--muted);font-size:.84rem}.fail .why{margin-top:9px;color:var(--pink);font-size:.77rem;font-weight:900}
+.appmatrix{margin-top:38px;display:grid;grid-template-columns:repeat(3,1fr);gap:14px}.app{padding:24px;border:1px solid var(--line);border-radius:21px;background:var(--panel)}.app h3{margin-bottom:7px}.app p{color:var(--muted);font-size:.83rem}.recommend{margin-top:10px;font-size:.75rem;font-weight:950;color:var(--lime)}
+.quiz{margin-top:38px;padding:28px;border:1px solid var(--line);border-radius:25px;background:var(--panel)}.q{padding:19px 0;border-bottom:1px solid var(--line)}.q:last-child{border:0}.q p{font-weight:900;margin-bottom:10px}.opts{display:flex;gap:7px;flex-wrap:wrap}.option{border-radius:10px;padding:8px 11px;background:var(--panel2);font-size:.77rem}.option.correct{border-color:var(--lime);color:var(--lime)}.option.wrong{border-color:var(--red);color:var(--red)}.feedback{min-height:20px;color:var(--muted);font-size:.77rem;margin-top:7px}
+.checklist{margin-top:35px;display:grid;grid-template-columns:1fr 1fr;gap:15px}.check{padding:23px;border:1px solid var(--line);border-radius:19px;background:var(--panel);color:var(--muted)}.check b{color:var(--text)}.check span{color:var(--lime);font-size:1.2rem;margin-right:8px}
+.final{padding:43px;border:1px solid #394252;border-radius:30px;background:radial-gradient(circle at 80% 15%,#ff5bd714,transparent 30%),radial-gradient(circle at 15% 85%,#caff3814,transparent 30%),var(--panel)}
+footer{padding:55px 0 80px;border-top:1px solid var(--line);color:#7e899a}footer strong{color:var(--text)}
+.reveal{opacity:0;transform:translateY(18px);transition:.6s}.reveal.show{opacity:1;transform:none}
+.toast{position:fixed;right:18px;bottom:18px;padding:12px 15px;border:1px solid var(--line);background:var(--panel);border-radius:12px;opacity:0;transform:translateY(15px);transition:.25s;z-index:300}.toast.show{opacity:1;transform:none}
+@media(max-width:900px){
+ .hero-grid,.compare,.grid2,.measure-grid,.controls{grid-template-columns:1fr}
+ .flow{grid-template-columns:1fr}.flow .arr{display:none}
+ .testgrid,.physics,.failure,.appmatrix,.stats{grid-template-columns:1fr}
+ .checklist{grid-template-columns:1fr}.navlinks{display:none}
+}
+@media(max-width:600px){section{padding:75px 0}.hero{padding:55px 0 70px}h1{font-size:3.7rem}.hero-art{min-height:390px}.theme b{display:none}}
+</style>
+
+<style id="lab-site-nav">
+.lab-site-nav{position:fixed;left:50%;bottom:18px;transform:translateX(-50%);z-index:9999;display:flex;gap:7px;align-items:center;padding:7px;border:1px solid var(--line,#2c3543);border-radius:999px;background:rgba(10,12,17,.9);backdrop-filter:blur(16px);box-shadow:0 12px 40px #0007;font-size:.7rem}
+.lab-site-nav a{padding:8px 11px;border:1px solid var(--line,#2c3543);border-radius:999px;color:var(--text,#f5f7fb);font-weight:900;text-decoration:none}
+.lab-site-nav a:hover{border-color:var(--lime,#caff38);color:var(--lime,#caff38)}
+.lab-site-nav .home{background:var(--lime,#caff38);color:#090b05;border-color:var(--lime,#caff38)}
+@media(max-width:650px){.lab-site-nav{left:10px;right:10px;transform:none;justify-content:space-between}.lab-site-nav .label{display:none}}
+</style>
+</head>
+<body>
+<nav>
+<div class="container nav">
+<div class="logo">EXP <i>08</i> · RANGE LAB</div>
+<div class="navlinks"><a href="#mission">Mission</a><a href="#sensors">Sensors</a><a href="#matrix">Test Matrix</a><a href="#metrics">Metrics</a><a href="#physics">Physics</a><a href="#applications">Applications</a><a href="#quiz">Viva</a></div>
+<div style="display:flex;gap:8px;align-items:center"><button class="theme" id="theme"><span id="ti">☀️</span><b id="tl">LIGHT</b></button><a class="btn primary" href="#quiz">VIVA →</a></div>
+</div><div class="progress" id="progress"></div>
+</nav>
+
+<header class="hero" id="mission">
+<div class="container hero-grid">
+<div class="reveal">
+<div class="kicker"><span class="dot"></span>26EARP302 · EXPERIMENT 08 · STRUCTURED ENQUIRY · 9 SESSIONS · 18 HOURS</div>
+<h1>Which sensor<br>should the robot<br><span class="grad">trust?</span></h1>
+<p>Two sensors look at the same world. Your job is not to declare a winner before collecting evidence. You will design a justified test matrix, compare LiDAR and RGB-D measurements, quantify bias and dispersion, explain failures using sensing physics, and defend which sensor belongs in which robotic application.</p>
+<div class="actions"><a class="btn primary" href="#matrix">DESIGN THE TEST ↓</a><a class="btn" href="#sensors">MEET THE SENSORS 📡</a></div>
+<div class="meta"><span class="chip">📡 LiDAR</span><span class="chip">📷 RGB-D</span><span class="chip">📏 Distance</span><span class="chip">📦 Object size</span><span class="chip">🧱 Surface</span><span class="chip">📐 Incidence angle</span><span class="chip">💡 Illumination</span><span class="chip">📊 RMSE</span><span class="chip">🎯 Availability</span></div>
+</div>
+<div class="hero-art reveal">
+<svg viewBox="0 0 600 520">
+<g class="sweep"><line x1="180" y1="320" x2="500" y2="150" class="beam"/><line x1="180" y1="320" x2="500" y2="240" class="beam"/><line x1="180" y1="320" x2="500" y2="330" class="beam"/></g>
+<circle cx="180" cy="320" r="43" class="lidar"/>
+<path d="M450 135 L535 135 L535 270 L450 270 Z" class="obj"/>
+<line x1="180" y1="320" x2="490" y2="202" class="measure"/>
+<line x1="410" y1="405" x2="520" y2="350" class="depth"/>
+<rect x="410" y="330" width="110" height="75" rx="12" class="obj"/>
+<circle cx="180" cy="320" r="5" fill="var(--lime)"/>
+</svg>
+<div class="artlabel l1">LiDAR<br><small>range return</small></div>
+<div class="artlabel l2">RGB-D<br><small>depth estimate</small></div>
+<div class="artlabel l3">CONTROLLED<br><small>known reference distance</small></div>
+<div class="artlabel l4">COMPARE<br><small>bias · dispersion · RMSE</small></div>
+<div class="arttitle"><strong>Same object.<br>Different physics.</strong><span>MEASURE → EXPLAIN → SELECT</span></div>
+</div>
+</div>
+</header>
+
+<section>
+<div class="container">
+<div class="eyebrow">00 · THE MISSION</div>
+<h2>Welcome to the<br><span class="grad">sensor showdown.</span></h2>
+<p class="lead">Experiment 08 builds directly on the sensing work from the earlier experiments. But this time the question is comparative: <b>under what conditions does each ranging sensor perform well, degrade, or become unavailable?</b></p>
+<div class="grid2">
+<div class="card reveal"><div class="icon">🧪</div><h3>You design the test matrix</h3><p>The experiment gives the factors — distance, object size, surface finish, incidence angle, illumination and scan-plane/height relationship. Your group must justify the levels chosen.</p></div>
+<div class="card reveal"><div class="icon">📏</div><h3>You need known references</h3><p>Objects of known size, material and orientation are placed at tape-measured reference distances so measured performance can be compared with a reference.</p></div>
+<div class="card reveal"><div class="icon">📊</div><h3>You quantify performance</h3><p>Compute and compare bias, standard deviation, RMSE, relative error and availability from measured data.</p></div>
+<div class="card reveal"><div class="icon">🧠</div><h3>You explain failures</h3><p>A good engineer does not stop at “sensor failed”. You connect each failure to the underlying sensing physics and then decide whether the sensor is suitable for the application.</p></div>
+</div>
+<div class="callout"><b>The mindset shift:</b> there is no universal “best sensor”. A sensor is good or bad <i>for a condition and application</i>. Your evidence must justify the selection.</div>
+</div>
+</section>
+
+<section id="sensors">
+<div class="container">
+<div class="eyebrow">01 · KNOW YOUR COMPETITORS</div>
+<h2>LiDAR vs RGB-D.<br><span class="grad">Same question. Different physics.</span></h2>
+<p class="lead">The pre-lab asks you to review the physical principles of laser time-of-flight ranging and stereo depth estimation. Keep that physics in mind throughout the experiment: it is the bridge between the measurement and the explanation.</p>
+<div class="compare">
+<div class="sensor lidar reveal"><span class="badge">SENSOR A</span><h3>📡 LiDAR</h3><div class="sub">Laser-based ranging</div><ul><li>Produces range measurements from laser returns.</li><li>In the experiment, evaluate its behaviour as object distance and geometry change.</li><li>Pay attention to surface finish, incidence angle and the relationship between the target and the scan plane.</li><li>Use measured bias, dispersion and availability rather than intuition to judge performance.</li></ul></div>
+<div class="sensor rgbd reveal"><span class="badge">SENSOR B</span><h3>📷 RGB-D</h3><div class="sub">RGB image + depth estimate</div><ul><li>Produces depth information associated with image observations.</li><li>Evaluate its response to object distance, object size, surface finish and illumination.</li><li>Pay attention to depth availability and error/bias under changed visual conditions.</li><li>Use the same reference objects and distances wherever the test matrix makes comparison meaningful.</li></ul></div>
+</div>
+<div class="flow">
+<div class="node">Known object<br>+ reference distance</div><div class="arr">→</div>
+<div class="node">LiDAR + RGB-D<br>observe simultaneously</div><div class="arr">→</div>
+<div class="node">Compute error<br>statistics</div>
+</div>
+</div>
+</section>
+
+<section id="matrix">
+<div class="container">
+<div class="eyebrow">02 · TEST MATRIX</div>
+<h2>Don't collect random data.<br>Build a <span class="grad">test matrix.</span></h2>
+<p class="lead">The experiment explicitly asks for a justified fractional test matrix. You do not need every possible combination of every factor; you need a defensible set of levels that exposes the important performance differences.</p>
+<div class="matrix reveal">
+<table>
+<thead><tr><th>Factor</th><th>What changes?</th><th>Why it matters</th><th>What to record</th></tr></thead>
+<tbody>
+<tr><td><strong>Distance</strong></td><td>Reference range to target</td><td>Reveals how error behaves across range</td><td>Reference distance + sensor estimate</td></tr>
+<tr><td><strong>Object size</strong></td><td>Target dimensions</td><td>Tests whether the sensor can robustly observe the target</td><td>Size + estimate + availability</td></tr>
+<tr><td><strong>Surface finish</strong></td><td>Material/reflectance condition</td><td>Exposes material-dependent sensing behaviour</td><td>Material + error + failures</td></tr>
+<tr><td><strong>Incidence angle</strong></td><td>Target orientation relative to sensing direction</td><td>Changes how the sensor receives/observes the target</td><td>Angle + error + availability</td></tr>
+<tr><td><strong>Illumination</strong></td><td>Lighting condition</td><td>Especially relevant when depth estimation depends on visual information</td><td>Condition + error + valid observations</td></tr>
+<tr><td><strong>Scan-plane / sensor height</strong></td><td>Relative geometry of sensor and target</td><td>Determines whether the sensing geometry actually intersects the target</td><td>Height/geometry + result</td></tr>
+</tbody>
+</table>
+</div>
+<div class="callout"><b>Design rule:</b> justify why each selected level exists. A test matrix is not “many experiments”; it is a compact argument about which conditions are necessary to answer the question.</div>
+<div class="testgrid">
+<div class="test reveal"><div class="num">01</div><h3>📏 Distance sweep</h3><p>Change reference distance while keeping other factors controlled as far as practical.</p></div>
+<div class="test reveal"><div class="num">02</div><h3>📦 Object-size sweep</h3><p>Compare targets of different known sizes and observe both error and availability.</p></div>
+<div class="test reveal"><div class="num">03</div><h3>🧱 Surface sweep</h3><p>Change surface finish/material and explain differences using sensing physics.</p></div>
+<div class="test reveal"><div class="num">04</div><h3>📐 Angle sweep</h3><p>Change incidence angle and investigate how measurement quality responds.</p></div>
+<div class="test reveal"><div class="num">05</div><h3>💡 Illumination</h3><p>Repeat selected tests under the specified lighting conditions.</p></div>
+<div class="test reveal"><div class="num">06</div><h3>📡 Scan-plane geometry</h3><p>Study target height relative to the scan plane and document missed detections.</p></div>
+</div>
+</div>
+</section>
+
+<section>
+<div class="container">
+<div class="eyebrow">03 · THE MEASUREMENT LOOP</div>
+<h2>One cell of the matrix.<br>Run it <span class="grad">properly.</span></h2>
+<div class="measure-grid">
+<div class="measure-card reveal"><div class="icon">1️⃣</div><h3>Place the reference</h3><p>Use an object with known size, material and orientation. Position it at the tape-measured reference distance defined by your matrix.</p></div>
+<div class="measure-card reveal"><div class="icon">2️⃣</div><h3>Acquire simultaneously</h3><p>Observe the same condition using the RPLIDAR and RealSense camera, following the approved laboratory setup.</p></div>
+<div class="measure-card reveal"><div class="icon">3️⃣</div><h3>Repeat</h3><p>The post-lab requires a minimum of twenty samples per cell. Preserve the raw samples so the statistics describe actual variation.</p></div>
+<div class="measure-card reveal"><div class="icon">4️⃣</div><h3>Analyse</h3><p>Compute bias, standard deviation, RMSE, relative error and availability. Then compare the sensors condition-by-condition.</p></div>
+</div>
+<div class="eq">
+error = measured value − reference value &nbsp;&nbsp; | &nbsp;&nbsp;
+relative error = error / reference value
+</div>
+<div class="callout"><b>Do not throw away “bad” samples automatically.</b> A failure or invalid return is part of sensor performance. Record it, quantify availability, and explain why it happened.</div>
+</div>
+</section>
+
+<section id="metrics">
+<div class="container">
+<div class="eyebrow">04 · PERFORMANCE METRICS</div>
+<h2>Turn raw measurements<br>into <span class="grad">evidence.</span></h2>
+<p class="lead">The learning outcome explicitly requires bias, standard deviation, RMSE, relative error and availability. These answer different questions and should not be collapsed into one score.</p>
+<div class="stats">
+<div class="stat reveal"><div class="big">μ error</div><h3>Bias</h3><p>Shows the average signed tendency of the measurement to be above or below the reference.</p></div>
+<div class="stat reveal"><div class="big">σ</div><h3>Standard deviation</h3><p>Describes spread/dispersion across repeated observations.</p></div>
+<div class="stat reveal"><div class="big">RMSE</div><h3>Root mean square error</h3><p>Combines the magnitude of errors and is sensitive to larger deviations.</p></div>
+<div class="stat reveal"><div class="big">%</div><h3>Availability</h3><p>Describes how often a usable measurement is actually available under the tested condition.</p></div>
+</div>
+<div class="formula" style="display:grid;grid-template-columns:repeat(3,1fr);gap:13px;margin-top:18px">
+<div class="measure-card"><h3>Bias</h3><div class="eq">bias = mean(e)</div></div>
+<div class="measure-card"><h3>RMSE</h3><div class="eq">RMSE = √mean(e²)</div></div>
+<div class="measure-card"><h3>Availability</h3><div class="eq">usable / total × 100%</div></div>
+</div>
+<div class="chartbox reveal">
+<h3>Interactive: why RMSE ≠ bias</h3>
+<p style="color:var(--muted);margin-top:5px">The illustrative plots below show that two sensors can have similar average bias but very different error spread. Switch datasets.</p>
+<canvas id="chart" width="1000" height="680"></canvas>
+<div class="chart-buttons"><button class="mini active" data-set="stable">Small spread</button><button class="mini" data-set="scattered">Large spread</button><button class="mini" data-set="biased">Systematic bias</button></div>
+<div id="chartText" class="callout" style="margin-top:13px">Small spread around the reference can produce low dispersion and low RMSE even if the mean error is close to zero.</div>
+</div>
+</div>
+</section>
+
+<section>
+<div class="container">
+<div class="eyebrow">05 · INTERACTIVE RANGE INTUITION</div>
+<h2>What happens when<br>the <span class="grad">target moves?</span></h2>
+<p class="lead">This sandbox is conceptual. It is not a substitute for your physical calibration campaign. Move the reference distance and observe how the illustrative measurements change. Your real experiment must generate the actual values.</p>
+<div class="interactive reveal">
+<div class="controls">
+<div class="slider">
+<label><span>Reference distance</span><span id="dval" class="v">1.00 m</span></label>
+<input id="distance" type="range" min=".2" max="5" step=".05" value="1">
+<label style="margin-top:15px"><span>Incidence angle</span><span id="aval" class="v">0°</span></label>
+<input id="angle" type="range" min="0" max="80" step="1" value="0">
+<div class="callout" style="margin-top:15px"><b>Concept:</b> changing geometry can alter the measurement quality. The exact behaviour must be measured for the actual RPLIDAR and RealSense used in your laboratory.</div>
+</div>
+<div>
+<div class="sensorviz"><svg viewBox="0 0 600 320">
+<circle cx="90" cy="160" r="30" class="lidar"/>
+<rect id="target" x="450" y="110" width="70" height="100" rx="12" class="target"/>
+<line id="lb" x1="120" y1="160" x2="450" y2="160" class="rangebeam"/>
+<line id="db" x1="120" y1="160" x2="450" y2="160" class="depthbeam"/>
+<text x="70" y="215" fill="var(--muted)" font-size="14">sensor</text>
+<text id="tv" x="440" y="100" fill="var(--muted)" font-size="14">target</text>
+</svg></div>
+<div class="readouts"><div class="read"><b id="lidarRead">1.00 m</b>Illustrative LiDAR estimate</div><div class="read"><b id="rgbRead">1.00 m</b>Illustrative RGB-D estimate</div></div>
+</div>
+</div>
+</div>
+</div>
+</section>
+
+<section id="physics">
+<div class="container">
+<div class="eyebrow">06 · EXPLAIN THE FAILURE</div>
+<h2>Don't say “it failed.”<br>Say <span class="grad">why.</span></h2>
+<p class="lead">One of the strongest parts of this experiment is the requirement to explain each observed failure in terms of underlying sensing physics. A failure is evidence when you can connect it to a condition.</p>
+<div class="physics">
+<div class="phys reveal"><h3>🧱 Surface finish</h3><p>Change the material/surface finish and observe whether the error or availability changes.</p><div class="why">Question: what changed at the sensor-target interaction?</div></div>
+<div class="phys reveal"><h3>📐 Incidence angle</h3><p>Rotate the target and see whether the measured range or availability changes.</p><div class="why">Question: how does target orientation affect the sensed return/observation?</div></div>
+<div class="phys reveal"><h3>💡 Illumination</h3><p>Compare the specified lighting conditions, especially when evaluating RGB-D depth.</p><div class="why">Question: did visual sensing conditions change measurement availability or error?</div></div>
+<div class="phys reveal"><h3>📦 Object size</h3><p>Use known target sizes and determine whether both sensors consistently observe the target.</p><div class="why">Question: is the sensed region actually large enough for reliable observation?</div></div>
+<div class="phys reveal"><h3>📡 Scan-plane height</h3><p>Move the target relative to the LiDAR scan plane and document missed or partial observations.</p><div class="why">Question: is the sensing geometry intersecting the object?</div></div>
+<div class="phys reveal"><h3>📏 Distance</h3><p>Perform the distance sweep and examine whether error and availability remain stable.</p><div class="why">Question: does performance depend on range?</div></div>
+</div>
+<div class="callout"><b>Physics-first rule:</b> “The value was wrong” is an observation. “The value was wrong because condition X changed the sensing geometry/observation process” is an engineering explanation.</div>
+</div>
+</section>
+
+<section>
+<div class="container">
+<div class="eyebrow">07 · FAILURE IS DATA</div>
+<h2>Availability matters<br>as much as <span class="grad">accuracy.</span></h2>
+<div class="failure">
+<div class="fail reveal"><h3>❌ Invalid / missing return</h3><p>The sensor does not provide a usable range for a condition.</p><div class="why">Record it. Do not silently remove it.</div></div>
+<div class="fail reveal"><h3>📉 High dispersion</h3><p>Measurements are available but vary substantially across repeated samples.</p><div class="why">Standard deviation exposes this behaviour.</div></div>
+<div class="fail reveal"><h3>↗️ Systematic bias</h3><p>Measurements consistently sit above or below the reference.</p><div class="why">Mean signed error exposes directional bias.</div></div>
+<div class="fail reveal"><h3>💥 Large outliers</h3><p>Occasional measurements are far from the reference.</p><div class="why">RMSE is sensitive to large deviations.</div></div>
+<div class="fail reveal"><h3>📐 Geometry-dependent failure</h3><p>Performance changes strongly with target angle or height.</p><div class="why">Use the physical geometry to explain the pattern.</div></div>
+<div class="fail reveal"><h3>💡 Condition-dependent failure</h3><p>Performance changes with illumination or surface condition.</p><div class="why">Compare conditions instead of averaging them together.</div></div>
+</div>
+</div>
+</section>
+
+<section>
+<div class="container">
+<div class="eyebrow">08 · THE 20-SAMPLE RULE</div>
+<h2>One cell = <span class="grad">evidence.</span></h2>
+<p class="lead">The post-lab deliverable requires a completed results matrix with a minimum of twenty samples per cell. This makes each matrix cell a small repeated experiment rather than a single anecdotal observation.</p>
+<div class="flow" style="grid-template-columns:repeat(7,1fr)">
+<div class="node">Matrix cell</div><div class="arr">→</div><div class="node">20+ samples</div><div class="arr">→</div><div class="node">Clean + preserve invalids</div><div class="arr">→</div><div class="node">Statistics</div>
+</div>
+<div class="grid2">
+<div class="card reveal"><div class="icon">🧾</div><h3>Record the raw data</h3><p>Keep the sample-level measurements, not only the final average. You need the distribution to calculate dispersion and RMSE.</p></div>
+<div class="card reveal"><div class="icon">🚫</div><h3>Record unavailable samples</h3><p>Availability is itself a performance metric. An unavailable measurement should not magically become an accurate zero-error measurement.</p></div>
+</div>
+</div>
+</section>
+
+<section id="applications">
+<div class="container">
+<div class="eyebrow">09 · SENSOR SELECTION</div>
+<h2>Stop asking “which is better?”<br>Ask <span class="grad">“better for what?”</span></h2>
+<p class="lead">The engineering deliverable is a one-page sensor selection guide covering emergency stop, pallet-edge detection, low-obstacle detection, glass-walled corridors and warehouse mapping. Your selection must be based on measured evidence.</p>
+<div class="appmatrix">
+<div class="app reveal"><h3>🛑 Emergency stop</h3><p>Prioritise dependable detection and appropriate availability in the actual operating geometry.</p><div class="recommend">Use your measured evidence → defend the choice.</div></div>
+<div class="app reveal"><h3>📦 Pallet-edge detection</h3><p>Consider target geometry, object size, scan-plane relationship and observed availability.</p><div class="recommend">Ask: does the sensor reliably see the edge?</div></div>
+<div class="app reveal"><h3>⬇️ Low-obstacle detection</h3><p>Pay special attention to sensing-plane geometry and whether the target lies within the observable region.</p><div class="recommend">Geometry can dominate the decision.</div></div>
+<div class="app reveal"><h3>🪟 Glass-walled corridors</h3><p>Use the surface/material results and observed failure conditions rather than assuming both sensors behave alike.</p><div class="recommend">Explain the physics behind the evidence.</div></div>
+<div class="app reveal"><h3>🏭 Warehouse mapping</h3><p>Consider range performance, availability, repeatability and the environmental conditions of the application.</p><div class="recommend">Select based on the measured matrix.</div></div>
+<div class="app reveal"><h3>🧠 Hybrid thinking</h3><p>The experiment can reveal complementary strengths. The correct engineering recommendation need not be “one sensor always wins”.</p><div class="recommend">Evidence can justify conditional selection.</div></div>
+</div>
+<div class="callout"><b>Defend, don't declare.</b> Your selection guide should point from application requirement → measured condition → metric → observed failure/strength → sensor choice.</div>
+</div>
+</section>
+
+<section>
+<div class="container">
+<div class="eyebrow">10 · HOW TO WRITE THE COMPARISON</div>
+<h2>Build an argument<br>from the <span class="grad">matrix.</span></h2>
+<div class="measure-grid">
+<div class="measure-card reveal"><h3>Step 1 · State the condition</h3><p>“At this reference distance, target size, surface, angle, illumination and scan-plane condition…”</p></div>
+<div class="measure-card reveal"><h3>Step 2 · Show the metric</h3><p>Report bias, standard deviation, RMSE, relative error and availability as appropriate.</p></div>
+<div class="measure-card reveal"><h3>Step 3 · Compare sensors</h3><p>State which sensor performed better under that specific condition and by what evidence.</p></div>
+<div class="measure-card reveal"><h3>Step 4 · Explain physically</h3><p>Connect the observed difference or failure to the relevant sensing principle and geometry.</p></div>
+</div>
+<div class="callout"><b>Strong sentence:</b> “Under condition X, sensor A showed lower RMSE and higher availability than sensor B; the difference is consistent with the observed sensing-physics behaviour under that condition.” Then show the numbers.</div>
+</div>
+</section>
+
+<section id="quiz">
+<div class="container">
+<div class="eyebrow">11 · MINI VIVA</div>
+<h2>Can you defend<br>your <span class="grad">sensor choice?</span></h2>
+<div class="quiz">
+<div class="q"><p>1. Why use a tape-measured reference distance?</p><div class="opts"><button class="option">Because tape measures are compulsory in ROS</button><button class="option" data-correct="true">To provide an independent reference for comparing sensor measurements</button><button class="option">To increase the number of samples</button></div><div class="feedback"></div></div>
+<div class="q"><p>2. Why is availability a separate metric from RMSE?</p><div class="opts"><button class="option">RMSE already counts missing values as zero</button><button class="option" data-correct="true">A sensor can be accurate when it returns a value but unavailable under some conditions</button><button class="option">Availability measures robot speed</button></div><div class="feedback"></div></div>
+<div class="q"><p>3. What does bias tell you?</p><div class="opts"><button class="option">Only the number of failed samples</button><button class="option" data-correct="true">The average signed tendency of the measurement error</button><button class="option">The physical size of the object</button></div><div class="feedback"></div></div>
+<div class="q"><p>4. Why is RMSE not enough by itself?</p><div class="opts"><button class="option">RMSE is not a statistic</button><button class="option" data-correct="true">It does not by itself reveal availability, directional bias or the physical cause of failures</button><button class="option">RMSE only applies to LiDAR</button></div><div class="feedback"></div></div>
+<div class="q"><p>5. Why vary incidence angle?</p><div class="opts"><button class="option">To make the target look different</button><button class="option" data-correct="true">To investigate geometry-dependent sensing behaviour</button><button class="option">Because angle has no effect</button></div><div class="feedback"></div></div>
+<div class="q"><p>6. What is the strongest basis for selecting a sensor?</p><div class="opts"><button class="option">Which sensor is more expensive</button><button class="option">Which sensor has the coolest specification sheet</button><button class="option" data-correct="true">Measured evidence under conditions relevant to the stated application</button></div><div class="feedback"></div></div>
+</div>
+</div>
+</section>
+
+<section>
+<div class="container">
+<div class="eyebrow">12 · POST-LAB CHECKLIST</div>
+<h2>Before you submit,<br>check the <span class="grad">evidence.</span></h2>
+<div class="checklist">
+<div class="check"><span>✓</span><b>Results matrix:</b> minimum twenty samples per cell recorded.</div>
+<div class="check"><span>✓</span><b>Metrics:</b> bias, standard deviation, RMSE, relative error and availability computed.</div>
+<div class="check"><span>✓</span><b>Sensor guide:</b> one-page selection guide for the five stated applications.</div>
+<div class="check"><span>✓</span><b>Failure analysis:</b> each important failure linked to underlying sensing physics.</div>
+<div class="check"><span>✓</span><b>Conditions:</b> distance, object size, surface, incidence angle, illumination and scan-plane/height factors addressed according to the approved matrix.</div>
+<div class="check"><span>✓</span><b>Defence:</b> recommendations are supported by measured evidence rather than generic sensor claims.</div>
+</div>
+<div class="callout"><b>Final question:</b> Under what conditions should each sensor be trusted — and under what conditions should it not be trusted?</div>
+</div>
+</section>
+
+<section>
+<div class="container">
+<div class="final reveal">
+<div class="eyebrow">13 · MISSION COMPLETE</div>
+<h2>You didn't find<br>a winner.<br>You found the <span class="grad">conditions.</span></h2>
+<p class="lead">Experiment 08 is about engineering judgement. A sensor specification is not the same thing as measured performance. You design the matrix, collect repeated evidence, quantify bias and dispersion, measure availability, explain failures using physics, and then select a sensor for a real robotic application.</p>
+<div class="actions" style="margin-top:25px"><a class="btn primary" href="#mission">↺ REPLAY EXP 08</a><a class="btn" href="#quiz">TAKE VIVA AGAIN</a></div>
+</div>
+</div>
+</section>
+
+<footer><div class="container"><strong>Department of Automation & Robotics</strong><br>ROS 2 Mobile Robotics Laboratory · 26EARP302 · Experiment 08<br><br>Student-first interactive tutorial. Exact sensor topics, reference distances, object dimensions, material set, angle levels, illumination conditions, scan-plane heights, sample-recording procedure and statistical reporting conventions should follow the approved laboratory plan.</div></footer>
+<div class="toast" id="toast"></div>
+
+<script>
+const theme=document.getElementById("theme"),ti=document.getElementById("ti"),tl=document.getElementById("tl");
+function setTheme(t){document.body.classList.toggle("light",t==="light");ti.textContent=t==="light"?"🌙":"☀️";tl.textContent=t==="light"?"DARK":"LIGHT";localStorage.setItem("exp08-theme",t)}
+setTheme(localStorage.getItem("exp08-theme")||"dark");
+theme.onclick=()=>{let t=document.body.classList.contains("light")?"dark":"light";setTheme(t);toast(t==="light"?"Light mode activated ☀️":"Dark mode activated 🌙")};
+
+const distance=document.getElementById("distance"),angle=document.getElementById("angle");
+function updateSandbox(){
+ let d=+distance.value,a=+angle.value;
+ document.getElementById("dval").textContent=d.toFixed(2)+" m";
+ document.getElementById("aval").textContent=a+"°";
+ let px=120+Math.min(370,d/5*370), skew=Math.sin(a*Math.PI/180)*55;
+ document.getElementById("target").setAttribute("x",Math.min(510,px));
+ document.getElementById("lb").setAttribute("x2",Math.min(510,px));
+ document.getElementById("db").setAttribute("x2",Math.min(510,px)+skew);
+ document.getElementById("db").setAttribute("y2",160-skew*.35);
+ document.getElementById("tv").setAttribute("x",Math.min(475,px-10));
+ let lidar=d*(1+0.004*Math.sin(a*Math.PI/180)),rgb=d*(1+0.012*Math.sin(a*Math.PI/180)+0.003);
+ document.getElementById("lidarRead").textContent=lidar.toFixed(3)+" m";
+ document.getElementById("rgbRead").textContent=rgb.toFixed(3)+" m";
+}
+distance.oninput=updateSandbox;angle.oninput=updateSandbox;updateSandbox();
+
+const canvas=document.getElementById("chart"),ctx=canvas.getContext("2d");
+const sets={
+ stable:{vals:[-.02,.01,-.01,.02,0,.01,-.015,.01,-.01,.015],text:"Small spread around the reference produces low dispersion and a low RMSE. Notice that this still does not tell you availability or the physical reason for performance."},
+ scattered:{vals:[-.16,.11,-.08,.21,-.13,.15,-.22,.09,-.17,.19],text:"Large spread can produce a substantially larger RMSE even if positive and negative errors partly cancel, leaving the mean bias relatively small."},
+ biased:{vals:[.11,.13,.10,.15,.12,.14,.09,.16,.12,.13],text:"Errors consistently on one side of zero reveal systematic bias. A near-zero RMSE is impossible here even though dispersion is small."}
+};
+let dataset="stable";
+function draw(){
+ let w=canvas.clientWidth*2,h=680;canvas.width=w;canvas.height=h;ctx.clearRect(0,0,w,h);
+ const cs=getComputedStyle(document.body),line=cs.getPropertyValue("--line"),mut=cs.getPropertyValue("--muted"),cyan=cs.getPropertyValue("--cyan"),pink=cs.getPropertyValue("--pink");
+ ctx.strokeStyle=line;ctx.lineWidth=2;ctx.beginPath();ctx.moveTo(60,h/2);ctx.lineTo(w-40,h/2);ctx.stroke();
+ ctx.fillStyle=mut;ctx.font="26px system-ui";ctx.fillText("zero error",65,h/2-16);ctx.fillText("sample number →",w-245,h/2+42);
+ ctx.strokeStyle=cyan;ctx.lineWidth=4;ctx.beginPath();
+ sets[dataset].vals.forEach((v,i)=>{let x=80+i*(w-150)/9,y=h/2-v*850;i?ctx.lineTo(x,y):ctx.moveTo(x,y)});ctx.stroke();
+ sets[dataset].vals.forEach((v,i)=>{let x=80+i*(w-150)/9,y=h/2-v*850;ctx.fillStyle=pink;ctx.beginPath();ctx.arc(x,y,8,0,Math.PI*2);ctx.fill()});
+}
+document.querySelectorAll(".mini").forEach(b=>b.onclick=()=>{document.querySelectorAll(".mini").forEach(x=>x.classList.remove("active"));b.classList.add("active");dataset=b.dataset.set;document.getElementById("chartText").textContent=sets[dataset].text;draw()});
+window.addEventListener("resize",draw);draw();
+
+document.querySelectorAll(".option").forEach(b=>b.onclick=()=>{
+ let q=b.closest(".q"),fb=q.querySelector(".feedback");q.querySelectorAll(".option").forEach(x=>x.classList.remove("correct","wrong"));
+ if(b.dataset.correct==="true"){b.classList.add("correct");fb.textContent="Correct ✓ Now connect that principle to your measured evidence."}
+ else{b.classList.add("wrong");fb.textContent="Not quite. Revisit the measurement, metrics and physics sections."}
+});
+const obs=new IntersectionObserver(es=>es.forEach(e=>{if(e.isIntersecting)e.target.classList.add("show")}),{threshold:.1});
+document.querySelectorAll(".reveal").forEach(e=>obs.observe(e));
+window.addEventListener("scroll",()=>{let h=document.documentElement.scrollHeight-innerHeight;document.getElementById("progress").style.width=(scrollY/h*100)+"%"});
+function toast(s){let t=document.getElementById("toast");t.textContent=s;t.classList.add("show");setTimeout(()=>t.classList.remove("show"),1800)}
+</script>
+
+<div class="lab-site-nav"><a href="exp07.html">← <span class="label">EXP 07</span></a><a class="home" href="index.html">⌂ <span class="label">LAB HOME</span></a><a href="exp09.html"><span class="label">EXP 09</span> →</a></div>
+</body>
+</html>

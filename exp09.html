@@ -1,0 +1,392 @@
+<!doctype html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width,initial-scale=1">
+<title>EXP 09 — Sensor Fusion & Localisation for Robot Pose Estimation</title>
+<style>
+:root{--bg:#07090d;--panel:#11161f;--panel2:#181e29;--line:#2c3543;--text:#f5f7fb;--muted:#aeb8c8;--lime:#caff38;--cyan:#55e8ff;--pink:#ff5bd7;--orange:#ffb45c;--red:#ff687d}
+body.light{--bg:#f5f7fb;--panel:#fff;--panel2:#eef2f7;--line:#d6dde8;--text:#111722;--muted:#5f6979}
+*{box-sizing:border-box;margin:0;padding:0}html{scroll-behavior:smooth}
+body{font-family:Inter,system-ui,-apple-system,"Segoe UI",sans-serif;color:var(--text);line-height:1.58;background:radial-gradient(circle at 85% 4%,#caff3813,transparent 25%),radial-gradient(circle at 10% 25%,#55e8ff12,transparent 25%),var(--bg);overflow-x:hidden}
+body.light{background:radial-gradient(circle at 85% 4%,#89ad1815,transparent 25%),radial-gradient(circle at 10% 25%,#009bb314,transparent 25%),var(--bg)}
+a{color:inherit;text-decoration:none}button{font:inherit}.container{width:min(1220px,92%);margin:auto}
+nav{position:sticky;top:0;z-index:100;background:#07090ddd;backdrop-filter:blur(18px);border-bottom:1px solid var(--line)}body.light nav{background:#f5f7fbdd}
+.nav{height:66px;display:flex;align-items:center;justify-content:space-between;gap:12px}.logo{font-weight:950;letter-spacing:-.04em}.logo i{font-style:normal;color:var(--lime)}
+.navlinks{display:flex;gap:12px;color:var(--muted);font-size:.68rem}.navlinks a:hover{color:var(--lime)}
+.btn,.theme,.mini,.option{border:1px solid var(--line);background:var(--panel);color:var(--text);border-radius:999px;padding:10px 15px;font-weight:900;cursor:pointer;transition:.2s}
+.btn:hover,.theme:hover,.mini:hover,.option:hover{transform:translateY(-2px);border-color:var(--lime)}.btn.primary{background:var(--lime);color:#090b05;border-color:var(--lime)}
+.theme{padding:7px 10px;font-size:.7rem}.theme span{display:inline-grid;place-items:center;width:25px;height:25px;border-radius:50%;background:var(--panel2);margin-right:5px}
+.progress{height:2px;width:0;background:linear-gradient(90deg,var(--lime),var(--cyan),var(--pink))}
+.hero{min-height:calc(100vh - 68px);display:flex;align-items:center;padding:70px 0 90px}.hero-grid{display:grid;grid-template-columns:1.02fr .98fr;gap:48px;align-items:center}
+.kicker{display:inline-flex;gap:8px;align-items:center;padding:7px 11px;border:1px solid var(--line);border-radius:999px;background:var(--panel);font-size:.7rem;font-weight:900;color:var(--muted);margin-bottom:20px}.dot{width:8px;height:8px;border-radius:50%;background:var(--lime);box-shadow:0 0 18px var(--lime)}
+h1{font-size:clamp(3rem,6.1vw,6.2rem);line-height:.86;letter-spacing:-.078em}.grad{background:linear-gradient(105deg,var(--lime),var(--cyan),var(--pink));-webkit-background-clip:text;background-clip:text;color:transparent}
+.hero p{font-size:1.04rem;color:var(--muted);max-width:790px;margin:25px 0}.actions{display:flex;gap:9px;flex-wrap:wrap}.meta{display:flex;gap:8px;flex-wrap:wrap;margin-top:24px}
+.chip{padding:8px 10px;border:1px solid var(--line);background:var(--panel);border-radius:11px;font-size:.72rem;color:var(--muted)}
+.hero-art{min-height:520px;border:1px solid var(--line);border-radius:34px;position:relative;overflow:hidden;background:linear-gradient(#ffffff08 1px,transparent 1px),linear-gradient(90deg,#ffffff08 1px,transparent 1px);background-size:35px 35px}
+body.light .hero-art{background:linear-gradient(#1522350d 1px,transparent 1px),linear-gradient(90deg,#1522350d 1px,transparent 1px);background-size:35px 35px}
+.hero-art svg{position:absolute;inset:0;width:100%;height:100%}.pathA{fill:none;stroke:var(--cyan);stroke-width:4;stroke-dasharray:9 8}.pathB{fill:none;stroke:var(--pink);stroke-width:4}.fused{fill:none;stroke:var(--lime);stroke-width:5}.unc{fill:none;stroke:var(--lime);stroke-width:2;stroke-dasharray:4 5;opacity:.6}
+@keyframes pulse{0%,100%{r:9;opacity:.7}50%{r:14;opacity:1}}.pose{fill:var(--lime);animation:pulse 1.6s infinite}
+.artlabel{position:absolute;padding:10px 12px;border:1px solid var(--line);background:var(--panel);border-radius:13px;font-size:.68rem;font-weight:900;box-shadow:0 12px 35px #0005}
+.l1{left:6%;top:8%;color:var(--cyan)}.l2{right:6%;top:12%;color:var(--pink)}.l3{left:6%;bottom:12%;color:var(--lime)}.l4{right:6%;bottom:10%;color:var(--orange)}
+.arttitle{position:absolute;left:50%;top:54%;transform:translate(-50%,-50%);text-align:center}.arttitle strong{font-size:2.25rem;display:block;letter-spacing:-.07em}.arttitle span{font-size:.65rem;color:var(--muted);white-space:nowrap}
+section{padding:100px 0}.eyebrow{font-size:.7rem;letter-spacing:.16em;color:var(--lime);font-weight:950;text-transform:uppercase;margin-bottom:10px}
+h2{font-size:clamp(2.45rem,5vw,4.6rem);line-height:.93;letter-spacing:-.065em;margin-bottom:17px}.lead{max-width:930px;color:var(--muted)}
+.grid2{display:grid;grid-template-columns:1fr 1fr;gap:15px;margin-top:35px}.card{padding:27px;border:1px solid var(--line);border-radius:22px;background:#ffffff04}.icon{font-size:2rem;margin-bottom:9px}.card h3{font-size:1.3rem;margin-bottom:7px}.card p{color:var(--muted)}
+.callout{margin-top:30px;padding:22px 25px;border-left:4px solid var(--lime);border-radius:0 18px 18px 0;background:var(--panel2);color:#cbd4df}.callout b{color:var(--lime)}
+.flow{display:grid;grid-template-columns:1fr auto 1fr auto 1fr auto 1fr;gap:8px;align-items:center;margin-top:38px}.node{padding:19px 10px;text-align:center;border:1px solid var(--line);border-radius:16px;background:var(--panel);font-size:.75rem;font-weight:900}.arr{text-align:center;color:#6b7585;font-size:1.25rem}
+.compare{display:grid;grid-template-columns:repeat(3,1fr);gap:14px;margin-top:38px}.sensor{padding:25px;border:1px solid var(--line);border-radius:22px;background:var(--panel)}.sensor h3{font-size:1.45rem}.sensor p,.sensor li{color:var(--muted);font-size:.85rem}.sensor ul{margin:11px 0 0 18px}.sensor li{margin:5px 0}.tag{display:inline-block;padding:5px 8px;background:var(--panel2);border-radius:8px;font-size:.62rem;color:var(--cyan);font-weight:950;margin-bottom:9px}
+.arch{margin-top:38px;padding:28px;border:1px solid var(--line);border-radius:25px;background:var(--panel)}.archgrid{display:grid;grid-template-columns:repeat(5,1fr);gap:9px;margin-top:23px}.archnode{padding:18px 10px;text-align:center;border:1px solid var(--line);border-radius:15px;background:var(--panel2);font-size:.74rem;font-weight:900}
+.matrix{margin-top:35px;overflow:auto;border:1px solid var(--line);border-radius:20px}table{width:100%;border-collapse:collapse;min-width:850px}th,td{padding:14px;border-bottom:1px solid var(--line);text-align:left;font-size:.79rem}th{background:var(--panel2);color:var(--lime);font-size:.68rem;text-transform:uppercase}td{color:var(--muted)}td strong{color:var(--text)}
+.codegrid{display:grid;grid-template-columns:1fr 1fr;gap:16px;margin-top:36px}.terminal{border:1px solid var(--line);border-radius:21px;overflow:hidden;background:#0b0e13}.termbar{height:40px;padding:0 13px;display:flex;align-items:center;gap:6px;background:#151923;border-bottom:1px solid #252b37}.ball{width:9px;height:9px;border-radius:50%;background:#566071}.term-title{margin-left:5px;color:#7e8999;font-size:.7rem}pre{padding:20px;min-height:300px;color:#dce5d7;font:12.5px/1.7 Consolas,monospace;white-space:pre-wrap}.prompt{color:var(--lime)}.cmd{color:#f6f7fa}.out{color:#95a0b0}
+.cmdlist{display:grid;gap:9px;margin-top:31px}.cmdrow{display:grid;grid-template-columns:260px 1fr 1.2fr;gap:15px;padding:16px;border:1px solid var(--line);border-radius:14px;background:var(--panel)}.cmdrow code{color:var(--lime);font-weight:900}.cmdrow p{color:var(--muted);font-size:.82rem}
+.testgrid{display:grid;grid-template-columns:repeat(3,1fr);gap:14px;margin-top:35px}.test{padding:24px;border:1px solid var(--line);border-radius:21px;background:var(--panel)}.test .num{font-size:2.5rem;font-weight:950;color:var(--lime);line-height:1}.test h3{margin:9px 0 7px}.test p,.test li{color:var(--muted);font-size:.83rem}.test ul{margin:9px 0 0 18px}
+.interactive{margin-top:38px;padding:29px;border:1px solid var(--line);border-radius:27px;background:var(--panel)}.controls{display:grid;grid-template-columns:1fr 1fr;gap:25px;align-items:center}.slider label{display:flex;justify-content:space-between;font-weight:900}.slider input{width:100%;accent-color:var(--lime);margin:15px 0}.v{color:var(--lime);font-size:1.5rem;font-weight:950}
+.fusionviz{height:330px;border:1px solid var(--line);border-radius:20px;overflow:hidden;background:linear-gradient(#ffffff07 1px,transparent 1px),linear-gradient(90deg,#ffffff07 1px,transparent 1px);background-size:30px 30px}.fusionviz svg{width:100%;height:100%}.legend{display:flex;gap:14px;flex-wrap:wrap;margin-top:11px;color:var(--muted);font-size:.7rem}.lg{display:flex;gap:6px;align-items:center}.sw{width:20px;height:3px;background:var(--cyan)}.sw.p{background:var(--pink)}.sw.f{background:var(--lime)}
+.metricgrid{display:grid;grid-template-columns:repeat(4,1fr);gap:12px;margin-top:35px}.metric{padding:22px;border:1px solid var(--line);border-radius:18px;background:var(--panel)}.metric .big{font-size:1.65rem;font-weight:950;color:var(--cyan)}.metric h3{margin:5px 0}.metric p{color:var(--muted);font-size:.79rem}
+.model{display:grid;grid-template-columns:1fr 1fr;gap:16px;margin-top:35px}.modelcard{padding:27px;border:1px solid var(--line);border-radius:23px;background:var(--panel)}.modelcard h3{font-size:1.4rem;margin-bottom:8px}.modelcard p{color:var(--muted);font-size:.87rem}.eq{padding:16px;margin-top:15px;border-radius:14px;background:var(--panel2);text-align:center;font:1.12rem Georgia,serif}
+.chartbox{margin-top:35px;padding:26px;border:1px solid var(--line);border-radius:24px;background:var(--panel)}canvas{width:100%;height:340px;display:block}.buttons{display:flex;gap:8px;flex-wrap:wrap;margin-top:12px}.mini{border-radius:10px;padding:8px 11px;font-size:.73rem}.mini.active{border-color:var(--lime);color:var(--lime)}
+.physics{display:grid;grid-template-columns:repeat(3,1fr);gap:14px;margin-top:35px}.phys{padding:23px;border:1px solid var(--line);border-radius:20px;background:var(--panel)}.phys h3{margin-bottom:7px}.phys p{color:var(--muted);font-size:.84rem}.why{margin-top:9px;color:var(--orange);font-size:.76rem;font-weight:900}
+.limits{display:grid;grid-template-columns:repeat(3,1fr);gap:14px;margin-top:35px}.lim{padding:23px;border:1px solid var(--line);border-radius:20px;background:var(--panel)}.lim h3{margin-bottom:7px}.lim p{color:var(--muted);font-size:.84rem}
+.quiz{margin-top:38px;padding:28px;border:1px solid var(--line);border-radius:25px;background:var(--panel)}.q{padding:19px 0;border-bottom:1px solid var(--line)}.q:last-child{border:0}.q p{font-weight:900;margin-bottom:10px}.opts{display:flex;gap:7px;flex-wrap:wrap}.option{border-radius:10px;padding:8px 11px;background:var(--panel2);font-size:.77rem}.option.correct{border-color:var(--lime);color:var(--lime)}.option.wrong{border-color:var(--red);color:var(--red)}.feedback{min-height:20px;color:var(--muted);font-size:.77rem;margin-top:7px}
+.checklist{display:grid;grid-template-columns:1fr 1fr;gap:14px;margin-top:35px}.check{padding:22px;border:1px solid var(--line);border-radius:18px;background:var(--panel);color:var(--muted)}.check span{color:var(--lime);font-size:1.2rem;margin-right:8px}.check b{color:var(--text)}
+.final{padding:43px;border:1px solid #394252;border-radius:30px;background:radial-gradient(circle at 80% 15%,#ff5bd714,transparent 30%),radial-gradient(circle at 15% 85%,#caff3814,transparent 30%),var(--panel)}
+footer{padding:55px 0 80px;border-top:1px solid var(--line);color:#7e899a}footer strong{color:var(--text)}
+.reveal{opacity:0;transform:translateY(18px);transition:.6s}.reveal.show{opacity:1;transform:none}.toast{position:fixed;right:18px;bottom:18px;padding:12px 15px;border:1px solid var(--line);background:var(--panel);border-radius:12px;opacity:0;transform:translateY(15px);transition:.25s;z-index:300}.toast.show{opacity:1;transform:none}
+@media(max-width:900px){.hero-grid,.grid2,.compare,.codegrid,.controls,.model{grid-template-columns:1fr}.flow,.archgrid{grid-template-columns:1fr}.arr{display:none}.testgrid,.physics,.limits,.metricgrid{grid-template-columns:1fr}.cmdrow{grid-template-columns:1fr}.checklist{grid-template-columns:1fr}.navlinks{display:none}}
+@media(max-width:600px){section{padding:75px 0}.hero{padding:55px 0 70px}h1{font-size:3.7rem}.hero-art{min-height:390px}.theme b{display:none}}
+</style>
+
+<style id="lab-site-nav">
+.lab-site-nav{position:fixed;left:50%;bottom:18px;transform:translateX(-50%);z-index:9999;display:flex;gap:7px;align-items:center;padding:7px;border:1px solid var(--line,#2c3543);border-radius:999px;background:rgba(10,12,17,.9);backdrop-filter:blur(16px);box-shadow:0 12px 40px #0007;font-size:.7rem}
+.lab-site-nav a{padding:8px 11px;border:1px solid var(--line,#2c3543);border-radius:999px;color:var(--text,#f5f7fb);font-weight:900;text-decoration:none}
+.lab-site-nav a:hover{border-color:var(--lime,#caff38);color:var(--lime,#caff38)}
+.lab-site-nav .home{background:var(--lime,#caff38);color:#090b05;border-color:var(--lime,#caff38)}
+@media(max-width:650px){.lab-site-nav{left:10px;right:10px;transform:none;justify-content:space-between}.lab-site-nav .label{display:none}}
+</style>
+</head>
+<body>
+<nav>
+<div class="container nav">
+<div class="logo">EXP <i>09</i> · FUSION LAB</div>
+<div class="navlinks"><a href="#mission">Mission</a><a href="#architecture">Fusion</a><a href="#tests">Tests</a><a href="#ekf">EKF</a><a href="#sweep">Sweep</a><a href="#frames">TF</a><a href="#quiz">Viva</a></div>
+<div style="display:flex;gap:8px;align-items:center"><button class="theme" id="theme"><span id="ti">☀️</span><b id="tl">LIGHT</b></button><a class="btn primary" href="#quiz">VIVA →</a></div>
+</div><div class="progress" id="progress"></div>
+</nav>
+
+<header class="hero" id="mission">
+<div class="container hero-grid">
+<div class="reveal">
+<div class="kicker"><span class="dot"></span>26EARP302 · EXPERIMENT 09 · STRUCTURED ENQUIRY · 9 SESSIONS · 18 HOURS</div>
+<h1>Can two<br>imperfect sensors<br>make a <span class="grad">better pose?</span></h1>
+<p>Encoder-only. IMU-only. Fused orientation. Three estimates. One independent reference. Your group must determine experimentally whether combining imperfect proprioceptive sensors produces a better pose estimate — and, just as importantly, what fusion still cannot fix.</p>
+<div class="actions"><a class="btn primary" href="#tests">START THE INVESTIGATION ↓</a><a class="btn" href="#architecture">SEE THE FUSION GRAPH 🧩</a></div>
+<div class="meta"><span class="chip">🛞 Encoder</span><span class="chip">🧭 IMU</span><span class="chip">🧩 Fusion</span><span class="chip">📏 Reference</span><span class="chip">⏸️ Static hold</span><span class="chip">↪️ Single turn</span><span class="chip">🔄 Cumulative rotation</span><span class="chip">🛞 Slip</span><span class="chip">🧮 EKF</span><span class="chip">🌳 TF</span></div>
+</div>
+<div class="hero-art reveal">
+<svg viewBox="0 0 600 520">
+<path class="pathA" d="M80 400 C170 395 220 330 290 300 C350 275 405 290 485 215"/>
+<path class="pathB" d="M80 400 C170 405 225 345 292 320 C360 294 420 275 485 215"/>
+<path class="fused" d="M80 400 C170 400 222 337 291 310 C355 285 414 282 485 215"/>
+<circle class="unc" cx="291" cy="310" r="35"/><circle class="unc" cx="355" cy="285" r="29"/>
+<circle class="pose" cx="485" cy="215" r="10"/>
+</svg>
+<div class="artlabel l1">ENCODER<br><small>distance estimate</small></div>
+<div class="artlabel l2">IMU<br><small>orientation evidence</small></div>
+<div class="artlabel l3">FUSED ESTIMATE<br><small>weighted combination</small></div>
+<div class="artlabel l4">REFERENCE<br><small>independent truth</small></div>
+<div class="arttitle"><strong>Three estimates.<br>One question.</strong><span>MEASURE → WEIGHT → FUSE → VERIFY</span></div>
+</div>
+</div>
+</header>
+
+<section>
+<div class="container">
+<div class="eyebrow">00 · THE MISSION</div>
+<h2>Fusion is not<br><span class="grad">magic.</span></h2>
+<p class="lead">Experiment 09 asks a deceptively simple question: <b>does combining imperfect sensors produce a better pose estimate?</b> You will compare encoder-only, IMU-only and fused orientation estimates against an independent reference, sweep a fusion parameter rather than assuming it, and evaluate short-term and long-term behaviour.</p>
+<div class="grid2">
+<div class="card reveal"><div class="icon">🛞</div><h3>Encoder-only</h3><p>Wheel/encoder information provides motion evidence, but accumulated dead-reckoning error can grow with travel and slip.</p></div>
+<div class="card reveal"><div class="icon">🧭</div><h3>IMU-only</h3><p>Inertial information provides orientation-related evidence, but its own bias and noise characteristics matter.</p></div>
+<div class="card reveal"><div class="icon">🧩</div><h3>Fused estimate</h3><p>Fusion combines complementary information using a weighting/filtering mechanism. Your experiment determines how the weighting affects the result.</p></div>
+<div class="card reveal"><div class="icon">🎯</div><h3>Independent reference</h3><p>The fused result must be evaluated against an independent physical reference rather than judged by whether the software looks smooth.</p></div>
+</div>
+<div class="callout"><b>The key mindset:</b> fusion is useful because sensors have complementary imperfections. But fusion does not create information that none of the sensors can observe.</div>
+</div>
+</section>
+
+<section id="architecture">
+<div class="container">
+<div class="eyebrow">01 · SENSOR FUSION</div>
+<h2>From imperfect signals<br>to a <span class="grad">pose estimate.</span></h2>
+<p class="lead">The experiment introduces the principle of combining encoder and inertial information. Think of the sensors as two imperfect witnesses describing the same motion from different perspectives.</p>
+<div class="compare">
+<div class="sensor reveal"><span class="tag">SOURCE 01</span><h3>🛞 Encoders</h3><p>Proprioceptive wheel-motion evidence.</p><ul><li>Strong connection to travelled wheel motion</li><li>Useful for translational motion estimation</li><li>Can accumulate systematic error</li><li>Slip can break the assumed wheel-ground relationship</li></ul></div>
+<div class="sensor reveal"><span class="tag">SOURCE 02</span><h3>🧭 IMU</h3><p>Inertial orientation/motion evidence.</p><ul><li>Provides complementary inertial information</li><li>Useful for orientation estimation</li><li>Contains noise and bias</li><li>Long-term behaviour depends on sensor characteristics and fusion design</li></ul></div>
+<div class="sensor reveal"><span class="tag">OUTPUT</span><h3>🧩 Fusion</h3><p>A weighted estimate produced from complementary information.</p><ul><li>Combines sensor evidence</li><li>Weighting matters</li><li>Can improve some error modes</li><li>Cannot eliminate unobservable position drift by itself</li></ul></div>
+</div>
+<div class="flow">
+<div class="node">ENCODER<br>measurement</div><div class="arr">+</div><div class="node">IMU<br>measurement</div><div class="arr">→</div><div class="node">FILTER /<br>FUSION</div><div class="arr">→</div><div class="node">ROBOT<br>POSE ESTIMATE</div>
+</div>
+<div class="arch reveal" id="ekf">
+<div class="eyebrow">THE FILTER IDEA</div>
+<h3 style="font-size:1.8rem">Extended Kalman Filter — concept, not black box.</h3>
+<p style="color:var(--muted);margin-top:8px">The pre-lab asks you to review complementary filtering and the structure of the discrete extended Kalman filter. At a conceptual level, the filter predicts a state from a motion model and then uses measurements to correct that prediction.</p>
+<div class="archgrid">
+<div class="archnode">STATE<br><small>pose / motion</small></div><div class="archnode">PREDICT<br><small>motion model</small></div><div class="archnode">MEASURE<br><small>sensor evidence</small></div><div class="archnode">UPDATE<br><small>weighted correction</small></div><div class="archnode">FUSED STATE<br><small>new estimate</small></div>
+</div>
+<div class="callout"><b>Important:</b> the filter's weighting is not a mystical “accuracy slider”. It represents how the fusion system balances competing information and uncertainty. This is why Experiment 09 requires an experimental parameter sweep.</div>
+</div>
+</div>
+</section>
+
+<section id="tests">
+<div class="container">
+<div class="eyebrow">02 · EXPERIMENTAL CAMPAIGN</div>
+<h2>Four tests.<br>One <span class="grad">investigation.</span></h2>
+<p class="lead">The allocated laboratory sessions specify static-hold and single-turn tests first, followed by cumulative-rotation and induced-slip tests. Together they probe short-term stability, rotational behaviour and what happens when the assumptions behind dead reckoning are violated.</p>
+<div class="testgrid">
+<div class="test reveal"><div class="num">01</div><h3>⏸️ Static hold</h3><p>Keep the robot stationary and observe estimator behaviour over time.</p><ul><li>Look for bias/drift</li><li>Compare estimator noise</li><li>Observe orientation stability</li><li>Use the reference consistently</li></ul></div>
+<div class="test reveal"><div class="num">02</div><h3>↪️ Single turn</h3><p>Perform a controlled single-turn test and compare orientation estimates.</p><ul><li>Compare encoder-only</li><li>Compare IMU-only</li><li>Compare fused orientation</li><li>Measure error against reference</li></ul></div>
+<div class="test reveal"><div class="num">03</div><h3>🔄 Cumulative rotation</h3><p>Repeat rotational motion to expose long-term error accumulation.</p><ul><li>Track error growth</li><li>Compare short vs long term</li><li>Inspect estimator stability</li><li>Report dispersion</li></ul></div>
+<div class="test reveal"><div class="num">04</div><h3>🛞 Induced slip</h3><p>Introduce controlled slip as specified by the laboratory procedure.</p><ul><li>Observe assumption violation</li><li>Compare all estimators</li><li>Identify what fusion can/cannot correct</li><li>Defend the conclusion</li></ul></div>
+<div class="test reveal"><div class="num">05</div><h3>🎯 Reference check</h3><p>Every estimator needs comparison with the selected independent reference.</p><ul><li>Position</li><li>Heading</li><li>Bias</li><li>Dispersion</li></ul></div>
+<div class="test reveal"><div class="num">06</div><h3>⚖️ Parameter sweep</h3><p>Do not assume one fusion weighting is automatically optimal.</p><ul><li>Select a justified sweep</li><li>Run comparable trials</li><li>Compare error metrics</li><li>Identify the useful region</li></ul></div>
+</div>
+<div class="callout"><b>Design principle:</b> keep the comparison fair. If the motion, reference, trial procedure or measurement convention changes between estimators, you are no longer comparing the estimators cleanly.</div>
+</div>
+</section>
+
+<section>
+<div class="container">
+<div class="eyebrow">03 · THE DATA STORY</div>
+<h2>Measure more than<br><span class="grad">“looks good.”</span></h2>
+<div class="metricgrid">
+<div class="metric reveal"><div class="big">Bias</div><h3>Systematic tendency</h3><p>Does an estimator consistently sit above or below the reference?</p></div>
+<div class="metric reveal"><div class="big">Noise</div><h3>Short-term variation</h3><p>How much does the estimate fluctuate during a controlled condition?</p></div>
+<div class="metric reveal"><div class="big">Drift</div><h3>Long-term growth</h3><p>Does error accumulate with time, rotation or motion?</p></div>
+<div class="metric reveal"><div class="big">Error</div><h3>Reference difference</h3><p>How far is the estimate from the independent reference?</p></div>
+</div>
+<div class="model">
+<div class="modelcard reveal"><h3>Short-term accuracy</h3><p>Static hold and single-turn tests help expose immediate estimator behaviour and orientation error without requiring a long trajectory.</p><div class="eq">e(t) = estimate(t) − reference(t)</div></div>
+<div class="modelcard reveal"><h3>Long-term accuracy</h3><p>Cumulative rotation and induced-slip tests expose error mechanisms that may be small initially but become significant as motion accumulates.</p><div class="eq">error growth → evidence about the estimator</div></div>
+</div>
+<div class="callout"><b>Report dispersion.</b> A single mean error can hide a noisy estimator. Conversely, a low-noise estimator can still have a systematic bias. Your results table should preserve both aspects.</div>
+</div>
+</section>
+
+<section id="sweep">
+<div class="container">
+<div class="eyebrow">04 · INTERACTIVE FUSION PARAMETER SWEEP</div>
+<h2>What happens when<br>the <span class="grad">weighting moves?</span></h2>
+<p class="lead">This is a conceptual sandbox, not a substitute for the physical fusion-parameter sweep. Move the control from encoder-dominant toward IMU-dominant weighting and watch how the illustrative fused orientation shifts between the two imperfect estimates.</p>
+<div class="interactive reveal">
+<div class="controls">
+<div class="slider">
+<label><span>Fusion weighting</span><span id="weightVal" class="v">50 / 50</span></label>
+<input id="weight" type="range" min="0" max="100" value="50">
+<div class="callout" style="margin-top:15px"><b>Interpretation:</b> this visualization treats the slider as an illustrative balance between encoder and IMU orientation evidence. Your real filter has a specific parameterization and should be swept according to the approved implementation.</div>
+<div style="margin-top:18px;color:var(--muted);font-size:.82rem">Encoder influence: <b id="encInfluence" style="color:var(--cyan)">50%</b><br>IMU influence: <b id="imuInfluence" style="color:var(--pink)">50%</b></div>
+</div>
+<div>
+<div class="fusionviz"><svg viewBox="0 0 600 330">
+<path id="encPath" class="pathA" d="M60 270 C170 260 250 230 330 205 C410 180 475 135 540 85"/>
+<path id="imuPath" class="pathB" d="M60 270 C160 280 245 250 320 220 C405 180 470 170 540 120"/>
+<path id="fusedPath" class="fused" d="M60 270 C165 270 248 240 325 212 C405 180 472 152 540 103"/>
+<circle cx="540" cy="85" r="6" fill="var(--cyan)"/><circle cx="540" cy="120" r="6" fill="var(--pink)"/><circle id="fusedDot" cx="540" cy="103" r="9" class="pose"/>
+</svg></div>
+<div class="legend"><span class="lg"><i class="sw"></i>Encoder-only</span><span class="lg"><i class="sw p"></i>IMU-only</span><span class="lg"><i class="sw f"></i>Fused estimate</span></div>
+</div>
+</div>
+</div>
+</div>
+</section>
+
+<section>
+<div class="container">
+<div class="eyebrow">05 · WHY FUSION CAN HELP</div>
+<h2>Complementary errors<br>can be <span class="grad">useful.</span></h2>
+<div class="physics">
+<div class="phys reveal"><h3>🛞 Encoder drift</h3><p>Wheel-based dead reckoning can accumulate error as motion is integrated over time.</p><div class="why">Fusion can use complementary inertial information to improve orientation estimation.</div></div>
+<div class="phys reveal"><h3>🧭 IMU bias/noise</h3><p>Inertial measurements are not perfect and can contain bias and noise.</p><div class="why">Fusion can constrain the estimate using other motion evidence.</div></div>
+<div class="phys reveal"><h3>🧩 Weighted compromise</h3><p>The fused estimate depends on how information and uncertainty are represented in the filter.</p><div class="why">That is why the weighting must be investigated experimentally.</div></div>
+<div class="phys reveal"><h3>⏱️ Short vs long term</h3><p>An estimator that looks excellent over a short interval may behave differently over repeated motion.</p><div class="why">Use both short-term and cumulative tests.</div></div>
+<div class="phys reveal"><h3>🛞 Slip</h3><p>Slip violates the simple relationship between wheel rotation and actual body motion.</p><div class="why">Ask whether the available sensors contain enough information to correct the violated assumption.</div></div>
+<div class="phys reveal"><h3>🎯 Reference</h3><p>Fusion quality must be evaluated against an independent physical reference.</p><div class="why">Smoothness is not accuracy.</div></div>
+</div>
+</div>
+</section>
+
+<section>
+<div class="container">
+<div class="eyebrow">06 · ROS 2 IMPLEMENTATION TOOLKIT</div>
+<h2>Build the fusion node.<br>Then <span class="grad">interrogate it.</span></h2>
+<p class="lead">The experiment requires student implementation of the fusion, followed by configuration and transform-tree verification. The exact topic names and package structure should follow the laboratory implementation.</p>
+<div class="codegrid">
+<div class="terminal reveal"><div class="termbar"><span class="ball"></span><span class="ball"></span><span class="ball"></span><span class="term-title">ROS 2 · inspect the graph</span></div><pre><span class="prompt">$</span> <span class="cmd">ros2 node list</span>
+<span class="prompt">$</span> <span class="cmd">ros2 topic list</span>
+<span class="prompt">$</span> <span class="cmd">ros2 topic info /odom</span>
+<span class="prompt">$</span> <span class="cmd">ros2 topic echo /odom</span>
+
+<span class="out"># Use the actual topic names from
+# your laboratory graph.</span></pre></div>
+<div class="terminal reveal"><div class="termbar"><span class="ball"></span><span class="ball"></span><span class="ball"></span><span class="term-title">ROS 2 · inspect transforms</span></div><pre><span class="prompt">$</span> <span class="cmd">ros2 topic list | grep tf</span>
+<span class="prompt">$</span> <span class="cmd">ros2 topic echo /tf</span>
+<span class="prompt">$</span> <span class="cmd">ros2 topic echo /tf_static</span>
+
+<span class="out"># Verify the expected transform
+# relationships and REP-105 frame
+# convention used by your setup.</span></pre></div>
+</div>
+<div class="cmdlist">
+<div class="cmdrow"><code>ros2 node list</code><div><b>Find running nodes</b></div><p>Confirm the fusion node, sensor drivers and relevant localisation nodes are actually running.</p></div>
+<div class="cmdrow"><code>ros2 topic list</code><div><b>Discover sensor streams</b></div><p>Identify encoder/odometry, IMU and fusion output topics in the actual graph.</p></div>
+<div class="cmdrow"><code>ros2 topic echo &lt;topic&gt;</code><div><b>Inspect messages</b></div><p>Check the values, timestamps and fields being used by the experiment.</p></div>
+<div class="cmdrow"><code>ros2 topic info &lt;topic&gt;</code><div><b>Inspect connections</b></div><p>Verify publishers, subscribers and message type before diagnosing a missing result.</p></div>
+<div class="cmdrow"><code>ros2 topic hz &lt;topic&gt;</code><div><b>Inspect publication rate</b></div><p>Useful when checking whether a sensor or estimator is publishing as expected.</p></div>
+<div class="cmdrow"><code>ros2 run tf2_tools view_frames</code><div><b>Generate TF view</b></div><p>Use the available TF tooling in your environment to inspect the transform tree.</p></div>
+</div>
+<div class="callout"><b>Do not blindly copy commands.</b> Topic names, node names and launch configurations are platform-specific. Discover the actual graph first, then use the exact names in your experiment.</div>
+</div>
+</section>
+
+<section id="frames">
+<div class="container">
+<div class="eyebrow">07 · FRAMES + LOCALISATION</div>
+<h2>Pose is meaningless<br>without a <span class="grad">frame.</span></h2>
+<p class="lead">The pre-lab explicitly asks you to study the map, odom, base_footprint and base_link frames, and the reason two world-fixed frames are maintained. This is not a naming exercise: frame conventions determine what a pose actually means.</p>
+<div class="arch reveal">
+<div class="eyebrow">FRAME CONCEPT</div>
+<div class="archgrid">
+<div class="archnode">map<br><small>world reference</small></div><div class="archnode">odom<br><small>continuous local frame</small></div><div class="archnode">base_footprint<br><small>ground projection</small></div><div class="archnode">base_link<br><small>robot body</small></div><div class="archnode">sensor frames<br><small>device coordinates</small></div>
+</div>
+<div class="callout"><b>Why two world-fixed frames?</b> In ROS localisation architecture, the conceptual distinction allows a globally corrected pose and a locally continuous odometry estimate to serve different purposes. Your experiment asks you to understand this structure rather than simply memorise frame names.</div>
+</div>
+<div class="grid2">
+<div class="card reveal"><div class="icon">🌍</div><h3>map</h3><p>Think of the map frame as the globally meaningful reference in a localisation system.</p></div>
+<div class="card reveal"><div class="icon">🧭</div><h3>odom</h3><p>Think of odometry as a locally continuous frame whose estimate may drift over time.</p></div>
+<div class="card reveal"><div class="icon">🤖</div><h3>base_link</h3><p>The robot body frame used to describe the robot's pose and motion relative to the body.</p></div>
+<div class="card reveal"><div class="icon">🦶</div><h3>base_footprint</h3><p>A ground-projected representation useful for planar mobile-robot localisation conventions.</p></div>
+</div>
+</div>
+</section>
+
+<section>
+<div class="container">
+<div class="eyebrow">08 · WHAT FUSION CANNOT ACHIEVE</div>
+<h2>This is the part<br>people <span class="grad">miss.</span></h2>
+<p class="lead">The post-lab explicitly asks students to state why fusion of proprioceptive sensors bounds orientation error but not position error. The distinction is fundamental.</p>
+<div class="limits">
+<div class="lim reveal"><h3>🧭 Orientation</h3><p>Combining complementary orientation-related evidence can constrain heading/orientation error more effectively than relying on one imperfect source alone.</p></div>
+<div class="lim reveal"><h3>📍 Position</h3><p>If all available information is still fundamentally based on integrated proprioceptive motion, position error can remain unbounded through accumulated model mismatch and slip.</p></div>
+<div class="lim reveal"><h3>🌍 Missing external reference</h3><p>To correct global position drift, the system needs information that actually observes position relative to the world — not merely another sensor that integrates the same motion.</p></div>
+</div>
+<div class="callout"><b>The key idea:</b> sensor fusion can reduce uncertainty when sensors provide complementary information. It cannot manufacture an absolute position reference from purely proprioceptive measurements.</div>
+</div>
+</section>
+
+<section>
+<div class="container">
+<div class="eyebrow">09 · SLIP: THE ASSUMPTION BREAKER</div>
+<h2>What happens when<br>the wheels <span class="grad">lie?</span></h2>
+<p class="lead">Induced-slip tests are included specifically to challenge the motion assumptions behind encoder-based odometry. The interesting question is not simply whether error increases — it is whether the fusion architecture has enough independent information to recognise and compensate for the violated assumption.</p>
+<div class="grid2">
+<div class="card reveal"><div class="icon">🛞</div><h3>Encoder story</h3><p>The encoder can report wheel rotation even when the wheel-ground relationship does not produce the expected body motion.</p></div>
+<div class="card reveal"><div class="icon">🧭</div><h3>IMU story</h3><p>The inertial measurement provides a different source of motion/orientation evidence, but it also has its own imperfections.</p></div>
+<div class="card reveal"><div class="icon">🧩</div><h3>Fusion story</h3><p>The fused estimate can benefit from complementary evidence, but its success depends on what the available measurements actually observe.</p></div>
+<div class="card reveal"><div class="icon">🎯</div><h3>Experimental story</h3><p>Compare all estimators against the same reference. Quantify what changed under induced slip instead of relying on visual intuition.</p></div>
+</div>
+</div>
+</section>
+
+<section>
+<div class="container">
+<div class="eyebrow">10 · COMMON TRAPS</div>
+<h2>Don't let a smooth<br>line fool <span class="grad">you.</span></h2>
+<div class="physics">
+<div class="phys reveal"><h3>🎨 Smooth ≠ accurate</h3><p>A smooth fused curve can still have systematic error relative to the physical reference.</p><div class="why">Always compare with the reference.</div></div>
+<div class="phys reveal"><h3>⚖️ One weighting</h3><p>Choosing a fusion parameter because it “looks right” is not experimental evidence.</p><div class="why">Sweep it and measure.</div></div>
+<div class="phys reveal"><h3>🛞 Ignore slip</h3><p>Encoder odometry can fail when wheel rotation no longer represents body motion.</p><div class="why">The slip test exists for this reason.</div></div>
+<div class="phys reveal"><h3>⏱️ Only short tests</h3><p>A good single-turn result does not guarantee good long-term cumulative behaviour.</p><div class="why">Use cumulative rotation.</div></div>
+<div class="phys reveal"><h3>🌳 Ignore TF</h3><p>A correct numerical estimate attached to the wrong frame is still the wrong interpretation.</p><div class="why">Verify the TF tree.</div></div>
+<div class="phys reveal"><h3>📍 Expect magic position</h3><p>Combining proprioceptive sensors does not automatically create global position observability.</p><div class="why">State the limitation explicitly.</div></div>
+</div>
+</div>
+</section>
+
+<section id="quiz">
+<div class="container">
+<div class="eyebrow">11 · MINI VIVA</div>
+<h2>Can you defend<br>your <span class="grad">fusion result?</span></h2>
+<div class="quiz">
+<div class="q"><p>1. Why compare encoder-only, IMU-only and fused estimates?</p><div class="opts"><button class="option">To make three graphs</button><button class="option" data-correct="true">To determine experimentally whether combining complementary imperfect information improves the estimate</button><button class="option">Because fusion always wins</button></div><div class="feedback"></div></div>
+<div class="q"><p>2. Why sweep the fusion parameter?</p><div class="opts"><button class="option">Because parameters are decorative</button><button class="option" data-correct="true">Because estimator performance depends on how competing sensor information is weighted</button><button class="option">To change the robot's wheel radius</button></div><div class="feedback"></div></div>
+<div class="q"><p>3. Why is an independent reference necessary?</p><div class="opts"><button class="option">To make ROS 2 slower</button><button class="option" data-correct="true">To evaluate the estimators against something other than another estimator</button><button class="option">Because IMU data cannot be plotted</button></div><div class="feedback"></div></div>
+<div class="q"><p>4. What does induced slip test?</p><div class="opts"><button class="option">Only the battery</button><button class="option" data-correct="true">What happens when the assumed relationship between wheel motion and body motion is violated</button><button class="option">Whether TF names are correct</button></div><div class="feedback"></div></div>
+<div class="q"><p>5. Why can proprioceptive fusion improve orientation but not guarantee bounded position error?</p><div class="opts"><button class="option">Position does not exist</button><button class="option" data-correct="true">The sensors can provide complementary orientation evidence while integrated motion can still accumulate position error without an external position reference</button><button class="option">ROS 2 blocks position</button></div><div class="feedback"></div></div>
+<div class="q"><p>6. Why do map and odom play different conceptual roles?</p><div class="opts"><button class="option">They are duplicate names</button><button class="option" data-correct="true">They distinguish globally meaningful localisation from locally continuous odometry behaviour</button><button class="option">One is for Python and one for C++</button></div><div class="feedback"></div></div>
+</div>
+</div>
+</section>
+
+<section>
+<div class="container">
+<div class="eyebrow">12 · POST-LAB</div>
+<h2>Make the conclusion<br><span class="grad">conditional.</span></h2>
+<div class="checklist">
+<div class="check"><span>✓</span><b>Comparative results:</b> encoder-only, IMU-only and fused estimators compared across all tests.</div>
+<div class="check"><span>✓</span><b>Dispersion:</b> variability reported, not just a single average.</div>
+<div class="check"><span>✓</span><b>Parameter sweep:</b> fusion weighting investigated experimentally rather than assumed.</div>
+<div class="check"><span>✓</span><b>TF verification:</b> transform tree checked against the REP-105 convention used by the experiment.</div>
+<div class="check"><span>✓</span><b>Error closure:</b> report improvement or deterioration relative to raw wheel odometry.</div>
+<div class="check"><span>✓</span><b>Limitation:</b> explain why proprioceptive fusion can constrain orientation error but does not by itself bound position error.</div>
+</div>
+<div class="callout"><b>Strong conclusion structure:</b> “Under test condition X, estimator A produced lower error than B by metric Y; the result changed/held under condition Z; the parameter sweep indicates …; therefore fusion is beneficial under …, but cannot achieve … because ….”</div>
+</div>
+</section>
+
+<section>
+<div class="container">
+<div class="final reveal">
+<div class="eyebrow">13 · MISSION COMPLETE</div>
+<h2>Fusion doesn't make<br>bad sensors <span class="grad">perfect.</span><br>It makes their information useful.</h2>
+<p class="lead">Experiment 09 is the bridge from sensor processing to localisation reasoning. You implement fusion, design controlled tests, compare competing estimates, sweep a fusion parameter, verify TF, challenge the system with cumulative rotation and slip, and finally explain both the power and the limits of combining imperfect sensors.</p>
+<div class="actions" style="margin-top:25px"><a class="btn primary" href="#mission">↺ REPLAY EXP 09</a><a class="btn" href="#quiz">TAKE VIVA AGAIN</a></div>
+</div>
+</div>
+</section>
+
+<footer><div class="container"><strong>Department of Automation & Robotics</strong><br>ROS 2 Mobile Robotics Laboratory · 26EARP302 · Experiment 09<br><br>Student-first interactive tutorial. Exact sensor topics, node names, launch configuration, fusion parameters, reference method, test amplitudes, trial counts and statistical reporting conventions should follow the approved laboratory implementation and experimental plan.</div></footer>
+<div class="toast" id="toast"></div>
+
+<script>
+const theme=document.getElementById("theme"),ti=document.getElementById("ti"),tl=document.getElementById("tl");
+function setTheme(t){document.body.classList.toggle("light",t==="light");ti.textContent=t==="light"?"🌙":"☀️";tl.textContent=t==="light"?"DARK":"LIGHT";localStorage.setItem("exp09-theme",t)}
+setTheme(localStorage.getItem("exp09-theme")||"dark");
+theme.onclick=()=>{let t=document.body.classList.contains("light")?"dark":"light";setTheme(t);toast(t==="light"?"Light mode activated ☀️":"Dark mode activated 🌙")};
+
+const weight=document.getElementById("weight");
+function updateFusion(){
+ let w=+weight.value;document.getElementById("weightVal").textContent=w+" / "+(100-w);
+ document.getElementById("encInfluence").textContent=w+"%";
+ document.getElementById("imuInfluence").textContent=(100-w)+"%";
+ let y=120+(w/100)*(-35);document.getElementById("fusedDot").setAttribute("cy",y);
+ let path="M60 270 C165 "+(270-w*.10)+" 248 "+(240-w*.10)+" 325 "+(212-w*.10)+" C405 "+(180-w*.15)+" 472 "+(152-w*.25)+" 540 "+y;
+ document.getElementById("fusedPath").setAttribute("d",path);
+}
+weight.oninput=updateFusion;updateFusion();
+
+document.querySelectorAll(".option").forEach(b=>b.onclick=()=>{
+ let q=b.closest(".q"),fb=q.querySelector(".feedback");q.querySelectorAll(".option").forEach(x=>x.classList.remove("correct","wrong"));
+ if(b.dataset.correct==="true"){b.classList.add("correct");fb.textContent="Correct ✓ Now connect that principle to your experimental evidence."}
+ else{b.classList.add("wrong");fb.textContent="Not quite. Revisit the fusion, measurement and observability sections."}
+});
+const obs=new IntersectionObserver(es=>es.forEach(e=>{if(e.isIntersecting)e.target.classList.add("show")}),{threshold:.1});
+document.querySelectorAll(".reveal").forEach(e=>obs.observe(e));
+window.addEventListener("scroll",()=>{let h=document.documentElement.scrollHeight-innerHeight;document.getElementById("progress").style.width=(scrollY/h*100)+"%"});
+function toast(s){let t=document.getElementById("toast");t.textContent=s;t.classList.add("show");setTimeout(()=>t.classList.remove("show"),1800)}
+</script>
+
+<div class="lab-site-nav"><a href="exp08.html">← <span class="label">EXP 08</span></a><a class="home" href="index.html">⌂ <span class="label">LAB HOME</span></a><a href="exp10.html"><span class="label">EXP 10</span> →</a></div>
+</body>
+</html>
